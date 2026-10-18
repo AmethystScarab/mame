@@ -518,9 +518,12 @@ TIMER_CALLBACK_MEMBER(ppu2c0x_device::hblank_tick)
 
 TIMER_CALLBACK_MEMBER(ppu2c0x_device::nmi_tick)
 {
-	// Actually fire the VMI
-	m_int_callback(ASSERT_LINE);
-	m_int_callback(CLEAR_LINE);
+	// Actually fire the NMI, unless it was disabled again during the short delay
+	if (m_regs[PPU_CONTROL0] & PPU_CONTROL0_NMI)
+	{
+		m_int_callback(ASSERT_LINE);
+		m_int_callback(CLEAR_LINE);
+	}
 
 	m_nmi_timer->adjust(attotime::never);
 }
@@ -713,7 +716,7 @@ void ppu2c0x_device::draw_background(u8* line_priority)
 			draw_back_pen(dest, m_back_color);
 			dest++;
 
-			line_priority[i] ^= 0x02;
+			line_priority[i] &= ~0x02;
 		}
 	}
 }
@@ -866,8 +869,8 @@ void ppu2c0x_device::draw_sprites(u8 *line_priority)
 		if ((sprite_index == 0) && (sprite_xpos == 254))
 		{
 			sprite_ypos--;
-			/* set the "sprite 0 hit" flag if appropriate */
-			if (line_priority[sprite_xpos] & 0x02)
+			/* set the "sprite 0 hit" flag if appropriate, but only on scanlines the sprite covers */
+			if ((sprite_ypos <= m_scanline) && (m_scanline < (sprite_ypos + size)) && (line_priority[sprite_xpos] & 0x02))
 				m_regs[PPU_STATUS] |= PPU_STATUS_SPRITE0_HIT;
 		}
 
@@ -1071,15 +1074,16 @@ void ppu2c0x_device::update_visible_scanline()
 	if (m_regs[PPU_CONTROL1] & (PPU_CONTROL1_BACKGROUND | PPU_CONTROL1_SPRITES))
 	{
 		update_visible_enabled_scanline();
+
+		/* the vertical scroll increment only happens while rendering is enabled */
+		if (m_scanline_timer->remaining() == attotime::zero)
+		{
+			scanline_increment_fine_ycounter();
+		}
 	}
 	else
 	{
 		update_visible_disabled_scanline();
-	}
-
-	if (m_scanline_timer->remaining() == attotime::zero)
-	{
-		scanline_increment_fine_ycounter();
 	}
 }
 
@@ -1179,7 +1183,7 @@ u8 ppu2c0x_device::read(offs_t offset)
 			m_buffered_data = readbyte(m_videomem_addr);
 		}
 
-		m_videomem_addr += m_add;
+		m_videomem_addr = (m_videomem_addr + m_add) & m_videoram_addr_mask;
 		break;
 
 	default:
@@ -1246,6 +1250,8 @@ void ppu2c0x_device::write(offs_t offset, u8 data)
 	switch (offset & 7)
 	{
 	case PPU_CONTROL0: /* 0 */
+	{
+		const u8 old_control0 = m_regs[PPU_CONTROL0];
 		m_regs[PPU_CONTROL0] = data;
 
 		/* update the name table number on our refresh latches */
@@ -1258,7 +1264,15 @@ void ppu2c0x_device::write(offs_t offset, u8 data)
 
 		m_add = (data & PPU_CONTROL0_INC) ? m_line_write_increment_large : 1;
 		//logerror("control0 write: %02x (scanline: %d)\n", data, m_scanline);
-		break;
+
+		/* enabling NMI while the vblank flag is already set generates an NMI right away */
+		if (!(old_control0 & PPU_CONTROL0_NMI) && (data & PPU_CONTROL0_NMI) && (m_regs[PPU_STATUS] & PPU_STATUS_VBLANK))
+		{
+			m_int_callback(ASSERT_LINE);
+			m_int_callback(CLEAR_LINE);
+		}
+	}
+	break;
 
 	case PPU_CONTROL1: /* 1 */
 		//logerror("control1 write: %02x (scanline: %d)\n", data, m_scanline);
@@ -1328,7 +1342,7 @@ void ppu2c0x_device::write(offs_t offset, u8 data)
 		writebyte(tempAddr, data);
 
 		/* increment the address */
-		m_videomem_addr += m_add;
+		m_videomem_addr = (m_videomem_addr + m_add) & m_videoram_addr_mask;
 	}
 	break;
 
