@@ -1,9 +1,11 @@
 // license:BSD-3-Clause
-// copyright-holders:Fabio Priuli
+// copyright-holders:Fabio Priuli,Brian H. Gilbert
 /***********************************************************************************************************
 
 
  NES/Famicom cartridge emulation for Konami PCBs
+
+ iNES mappers: 21, 22, 23, 24, 25, 26, 73, 75, 85
 
 
  Here we emulate the following PCBs (multiple mappers needed due to different wirings in the pcbs
@@ -62,12 +64,12 @@ nes_konami_vrc2_device::nes_konami_vrc2_device(const machine_config &mconfig, co
 }
 
 nes_konami_vrc3_device::nes_konami_vrc3_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock)
-	: nes_nrom_device(mconfig, NES_VRC3, tag, owner, clock), m_irq_count(0), m_irq_count_latch(0), m_irq_enable(0), m_irq_enable_latch(0), m_irq_mode(0), irq_timer(nullptr)
+	: nes_nrom_device(mconfig, NES_VRC3, tag, owner, clock), m_irq_count(0), m_irq_count_latch(0), m_irq_enable(0), m_irq_enable_latch(0), m_irq_mode(0)
 {
 }
 
 nes_konami_vrc4_device::nes_konami_vrc4_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, u32 clock)
-	: nes_nrom_device(mconfig, type, tag, owner, clock), m_prg_flip(0), m_wram_enable(0), m_irq_count(0), m_irq_count_latch(0), m_irq_enable(0), m_irq_enable_latch(0), m_irq_mode(0), m_irq_prescale(0), irq_timer(nullptr)
+	: nes_nrom_device(mconfig, type, tag, owner, clock), m_prg_flip(0), m_wram_enable(0), m_irq_count(0), m_irq_count_latch(0), m_irq_enable(0), m_irq_enable_latch(0), m_irq_mode(0), m_irq_prescale(0)
 {
 }
 
@@ -123,8 +125,6 @@ void nes_konami_vrc2_device::pcb_reset()
 void nes_konami_vrc3_device::device_start()
 {
 	common_start();
-	irq_timer = timer_alloc(FUNC(nes_konami_vrc3_device::irq_timer_tick), this);
-	irq_timer->adjust(attotime::zero, 0, clocks_to_attotime(1));
 
 	save_item(NAME(m_irq_mode));
 	save_item(NAME(m_irq_enable));
@@ -149,8 +149,6 @@ void nes_konami_vrc3_device::pcb_reset()
 void nes_konami_vrc4_device::device_start()
 {
 	common_start();
-	irq_timer = timer_alloc(FUNC(nes_konami_vrc4_device::irq_timer_tick), this);
-	irq_timer->adjust(attotime::zero, 0, clocks_to_attotime(1));
 
 	save_item(NAME(m_irq_mode));
 	save_item(NAME(m_irq_prescale));
@@ -220,19 +218,21 @@ void nes_konami_vrc1_device::write_h(offs_t offset, u8 data)
 			prg8_x(BIT(offset, 13, 2), data & 0x0f);
 			break;
 		case 0x1000:
-			set_nt_mirroring(data & 1 ? PPU_MIRROR_HORZ : PPU_MIRROR_VERT);
+			// the mirroring bit is ignored on boards wired for four-screen VRAM (Vs. System VRC1 games; NESdev/Mesen)
+			if (get_mirroring() != PPU_MIRROR_4SCREEN)
+				set_nt_mirroring(data & 1 ? PPU_MIRROR_HORZ : PPU_MIRROR_VERT);
 			m_mmc_vrom_bank[0] = (m_mmc_vrom_bank[0] & 0x0f) | BIT(data, 1) << 4;
 			m_mmc_vrom_bank[1] = (m_mmc_vrom_bank[1] & 0x0f) | BIT(data, 2) << 4;
-			chr4_0(m_mmc_vrom_bank[0], CHRROM);
-			chr4_4(m_mmc_vrom_bank[1], CHRROM);
+			chr4_0(m_mmc_vrom_bank[0], m_chr_source);
+			chr4_4(m_mmc_vrom_bank[1], m_chr_source);
 			break;
 		case 0x6000:
 			m_mmc_vrom_bank[0] = (m_mmc_vrom_bank[0] & 0x10) | (data & 0x0f);
-			chr4_0(m_mmc_vrom_bank[0], CHRROM);
+			chr4_0(m_mmc_vrom_bank[0], m_chr_source);
 			break;
 		case 0x7000:
 			m_mmc_vrom_bank[1] = (m_mmc_vrom_bank[1] & 0x10) | (data & 0x0f);
-			chr4_4(m_mmc_vrom_bank[1], CHRROM);
+			chr4_4(m_mmc_vrom_bank[1], m_chr_source);
 			break;
 	}
 }
@@ -310,7 +310,7 @@ void nes_konami_vrc2_device::write_h(offs_t offset, u8 data)
 
  -------------------------------------------------*/
 
-TIMER_CALLBACK_MEMBER(nes_konami_vrc3_device::irq_timer_tick)
+void nes_konami_vrc3_device::irq_clock()
 {
 	if (m_irq_enable)
 	{
@@ -382,7 +382,7 @@ void nes_konami_vrc4_device::irq_tick()
 		m_irq_count++;
 }
 
-TIMER_CALLBACK_MEMBER(nes_konami_vrc4_device::irq_timer_tick)
+void nes_konami_vrc4_device::irq_clock()
 {
 	if (m_irq_enable)
 	{
@@ -415,11 +415,10 @@ void nes_konami_vrc4_device::irq_ctrl_w(u8 data)
 	m_irq_mode = data & 0x04;
 	m_irq_enable = data & 0x02;
 	m_irq_enable_latch = data & 0x01;
+	// NESdev VRC IRQ: any write acknowledges the IRQ and resets the prescaler; with E set the counter is also reloaded
+	m_irq_prescale = 341;
 	if (m_irq_enable)
-	{
 		m_irq_count = m_irq_count_latch;
-		m_irq_prescale = 341;
-	}
 	set_irq_line(CLEAR_LINE);
 }
 
@@ -533,6 +532,83 @@ void nes_konami_vrc4_device::write_h(offs_t offset, u8 data)
 
  -------------------------------------------------*/
 
+void nes_konami_vrc6_device::device_start()
+{
+	nes_konami_vrc4_device::device_start();
+	save_item(NAME(m_vrc6_chr));
+	save_item(NAME(m_vrc6_mode));
+}
+
+void nes_konami_vrc6_device::pcb_reset()
+{
+	nes_konami_vrc4_device::pcb_reset();
+	std::fill(std::begin(m_vrc6_chr), std::end(m_vrc6_chr), 0);
+	m_vrc6_mode = 0;
+	vrc6_update_ppu();
+}
+
+// $B003 PPU banking style (NESdev VRC6, behaviour as implemented by Mesen): bits 0-1 CHR layout, bit 5 pairs 1KiB
+// banks (A10 from the bank number), bit 4 nametables from CHR-ROM instead of CIRAM, bits 2-3/5 nametable arrangement
+void nes_konami_vrc6_device::vrc6_update_ppu()
+{
+	const u8 *r = m_vrc6_chr;
+	const u8 mask = BIT(m_vrc6_mode, 5) ? 0xfe : 0xff;
+	const u8 orv = BIT(m_vrc6_mode, 5) ? 0x01 : 0x00;
+
+	switch (m_vrc6_mode & 0x03)
+	{
+		case 0:
+			for (int i = 0; i < 8; i++)
+				chr1_x(i, r[i], m_chr_source);
+			break;
+		case 1:
+			for (int i = 0; i < 4; i++)
+			{
+				chr1_x(2 * i, r[i] & mask, m_chr_source);
+				chr1_x(2 * i + 1, (r[i] & mask) | orv, m_chr_source);
+			}
+			break;
+		default:
+			for (int i = 0; i < 4; i++)
+				chr1_x(i, r[i], m_chr_source);
+			chr1_x(4, r[4] & mask, m_chr_source);
+			chr1_x(5, (r[4] & mask) | orv, m_chr_source);
+			chr1_x(6, r[5] & mask, m_chr_source);
+			chr1_x(7, (r[5] & mask) | orv, m_chr_source);
+			break;
+	}
+
+	u8 nt[4];
+	switch (m_vrc6_mode & 0x2f)
+	{
+		case 0x20: case 0x27: nt[0] = r[6] & 0xfe; nt[1] = (r[6] & 0xfe) | 1; nt[2] = r[7] & 0xfe; nt[3] = (r[7] & 0xfe) | 1; break;
+		case 0x23: case 0x24: nt[0] = r[6] & 0xfe; nt[1] = r[7] & 0xfe; nt[2] = (r[6] & 0xfe) | 1; nt[3] = (r[7] & 0xfe) | 1; break;
+		case 0x28: case 0x2f: nt[0] = nt[1] = r[6] & 0xfe; nt[2] = nt[3] = r[7] & 0xfe; break;
+		case 0x2b: case 0x2c: nt[0] = nt[2] = (r[6] & 0xfe) | 1; nt[1] = nt[3] = (r[7] & 0xfe) | 1; break;
+		default:
+			switch (m_vrc6_mode & 0x07)
+			{
+				case 1: case 5: nt[0] = r[4]; nt[1] = r[5]; nt[2] = r[6]; nt[3] = r[7]; break;
+				case 2: case 3: case 4: nt[0] = nt[2] = r[6]; nt[1] = nt[3] = r[7]; break;
+				default: nt[0] = nt[1] = r[6]; nt[2] = nt[3] = r[7]; break;   // 0, 6, 7
+			}
+			break;
+	}
+	for (int page = 0; page < 4; page++)
+	{
+		if (BIT(m_vrc6_mode, 4))
+		{
+			// nametables from CHR memory: CHR-ROM, or the board's CHR-RAM when it has no CHR-ROM
+			if (m_vrom_chunks)
+				set_nt_page(page, VROM, nt[page], 0);
+			else
+				set_nt_page(page, VRAM_NT, nt[page] & ((get_vram_size() / 0x400) - 1), 1);
+		}
+		else
+			set_nt_page(page, CIRAM, nt[page] & 0x01, 1);
+	}
+}
+
 void nes_konami_vrc6_device::write_h(offs_t offset, u8 data)
 {
 	LOG("VRC-6 write_h, offset: %04x, data: %02x\n", offset, data);
@@ -556,15 +632,17 @@ void nes_konami_vrc6_device::write_h(offs_t offset, u8 data)
 		case 0x3000:
 			if (addr_lines == 3)
 			{
-				set_mirror(data >> 2);
+				m_vrc6_mode = data;
 				m_wram_enable = BIT(data, 7);
+				vrc6_update_ppu();
 			}
 			else    // saw
 				m_vrc6snd->write(addr_lines | 0x200, data);
 			break;
 		case 0x5000:
 		case 0x6000:
-			chr1_x(4 * BIT(offset, 13) + addr_lines, data, CHRROM);
+			m_vrc6_chr[4 * BIT(offset, 13) + addr_lines] = data;
+			vrc6_update_ppu();
 			break;
 		case 0x7000:
 			switch (addr_lines)
@@ -598,7 +676,8 @@ void nes_konami_vrc6_device::device_add_mconfig(machine_config &config)
 
 	// TODO: this is not how VRC6 clock signaling works!
 	// The board uses the CLK pin in reality, not hardcoded NTSC values!
-	VRC6(config, m_vrc6snd, XTAL(21'477'272)/12).add_route(ALL_OUTPUTS, "addon", 1.0);
+	// level measured with nes-audio-tests db_vrc6 against the hardware survey (+0.2 dB vs a full-volume APU square)
+	VRC6(config, m_vrc6snd, XTAL(21'477'272)/12).add_route(ALL_OUTPUTS, "addon", 1.175);
 }
 
 /*-------------------------------------------------
@@ -617,7 +696,23 @@ void nes_konami_vrc7_device::write_h(offs_t offset, u8 data)
 {
 	LOG("VRC-7 write_h, offset: %04x, data: %02x\n", offset, data);
 
-	u8 reg = bitswap<4>(offset, 14, 13, 12, m_vrc_ls_prg_a);
+	// one decode for both wirings (as Mesen): the audio registers are $9010 (select) and $9030 (data) on VRC7a and
+	// VRC7b alike; any other address with A4 set acts as A3, so VRC7a (A4) and VRC7b (A3) games both work without a
+	// submapper (unspecified mapper 85 images were decoded as VRC7b only, which put VRC7a audio writes on PRG banks)
+	u16 addr = offset | 0x8000;
+	if ((addr & 0xf038) == 0x9010)
+	{
+		m_vrc7snd->address_w(data);
+		return;
+	}
+	if ((addr & 0xf038) == 0x9030)
+	{
+		m_vrc7snd->data_w(data);
+		return;
+	}
+	if (BIT(addr, 4))
+		addr = (addr | 0x08) & ~0x10;
+	u8 reg = bitswap<4>(addr, 14, 13, 12, 3);
 
 	switch (reg)
 	{
@@ -626,11 +721,7 @@ void nes_konami_vrc7_device::write_h(offs_t offset, u8 data)
 		case 0x2:
 			prg8_x(reg, data & 0x3f);
 			break;
-		case 0x3:
-			if (BIT(offset, 5))
-				m_vrc7snd->data_w(data);
-			else
-				m_vrc7snd->address_w(data);
+		case 0x3:   // $9008/$9028: no register
 			break;
 		case 0x4:
 		case 0x5:
@@ -684,5 +775,6 @@ void nes_konami_vrc7_device::device_add_mconfig(machine_config &config)
 
 	// TODO: this is not how VRC7 clock signaling works!
 	// The board uses the CLK pin in reality, not hardcoded NTSC values!
-	DS1001(config, m_vrc7snd, XTAL(21'477'272)/6).add_route(0, "addon", 1.0).add_route(1, "addon", 0.0);
+	// level measured with nes-audio-tests db_vrc7 against the hardware survey (+11.3 dB vs a full-volume APU square)
+	DS1001(config, m_vrc7snd, XTAL(21'477'272)/6).add_route(0, "addon", 2.43).add_route(1, "addon", 0.0);
 }

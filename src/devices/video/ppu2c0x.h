@@ -1,5 +1,5 @@
 // license:BSD-3-Clause
-// copyright-holders:Ernesto Corvi,Brad Oliver
+// copyright-holders:Ernesto Corvi,Brad Oliver,Brian H. Gilbert
 /******************************************************************************
 
     Nintendo 2C0x PPU emulation.
@@ -47,6 +47,10 @@ class ppu2c0x_device :  public device_t,
 public:
 	typedef device_delegate<void (int scanline, bool vblank, bool blanked)> scanline_delegate;
 	typedef device_delegate<void (int scanline, bool vblank, bool blanked)> hblank_delegate;
+	typedef device_delegate<void ()> a12_delegate;
+	typedef device_delegate<void (int)> a12_level_delegate;
+	typedef device_delegate<void (u16)> addr_bus_delegate;
+	typedef device_delegate<bool (const attotime &, const attotime &)> a12_filter_delegate;
 	typedef device_delegate<void (int *ppu_regs)> nmi_delegate;
 	typedef device_delegate<void (offs_t offset)> latch_delegate;
 
@@ -85,6 +89,28 @@ public:
 	int get_current_scanline() { return m_scanline; }
 	template <typename... T> void set_scanline_callback(T &&... args) { m_scanline_callback_proc.set(std::forward<T>(args)...); m_scanline_callback_proc.resolve(); /* FIXME: if this is supposed to be set at config time, it should be resolved on start */ }
 	template <typename... T> void set_hblank_callback(T &&... args) { m_hblank_callback_proc.set(std::forward<T>(args)...); m_hblank_callback_proc.resolve(); /* FIXME: if this is supposed to be set at config time, it should be resolved on start */ }
+	// dot renderer: called on every filtered rising edge of PPU A12 (MMC3-style scanline counters)
+	template <typename... T> void set_a12_callback(T &&... args) { m_a12_callback_proc.set(std::forward<T>(args)...); m_a12_callback_proc.resolve(); }
+	// whether this PPU runs the dot renderer with its own timing (MMC5 uses it to pick its IRQ/in-frame model)
+	bool rendering_now() const;   // public: cartridge mappers (MMC5) use it to tell when the PPU stops fetching
+	bool dot_timing() const { return m_own_timing; }
+	// unfiltered PPU A12 level, reported on every change (MMC1: in 4K CHR mode, A12 selects which CHR register drives its upper outputs)
+	template <typename... T> void set_a12_level_callback(T &&... args) { m_a12_level_proc.set(std::forward<T>(args)...); m_a12_level_proc.resolve(); }
+	// PPU address bus, reported whenever A13/A12 change (Oeka Kids latches A8-A9 when they become 1/0); unlike the read
+	// latch this sees every bus change, including $2006 writes outside rendering, which change the bus without an access
+	template <typename... T> void set_addr_bus_callback(T &&... args) { m_addr_bus_proc.set(std::forward<T>(args)...); m_addr_bus_proc.resolve(); }
+	// Acclaim MC-ACC: the counter is clocked when A12 falls after a counted rise (NESdev: "typically four pixels later than Sharp MMC3")
+	void set_a12_on_fall(bool on_fall) { m_a12_on_fall = on_fall; }
+	// NES: the console reset line also resets the PPU; Famicom: it does not (NESdev PPU power up state)
+	void set_console_reset(bool resets_ppu) { m_console_reset = resets_ppu; }
+	// Where the PPU dot grid sits relative to the start of a CPU cycle, in master clocks (NESdev "CPU/PPU alignment":
+	// the CPU divides the master clock by 12 and the PPU by 4, so on NTSC there are four possible power-on alignments,
+	// 0-3; the 2C07 divides by 5, so 0-4).  It is fixed for the life of the machine.  Must be set before start.
+	void set_cpu_ppu_alignment(u8 master_clocks) { m_cpu_ppu_align = master_clocks; }
+	// optional board filter on the rising edges of PPU A12 reported to the A12 callback: it is given the time A12 went low and
+	// the time it rose and returns whether the edge counts (MMC3: three falling edges of M2); without it, A12 has to have
+	// been low for 10 PPU clocks
+	template <typename... T> void set_a12_filter_callback(T &&... args) { m_a12_filter_proc.set(std::forward<T>(args)...); m_a12_filter_proc.resolve(); }
 	void set_scanlines_per_frame(int scanlines) { m_scanlines_per_frame = scanlines; }
 
 	// MMC5 has to be able to check this
@@ -94,6 +120,9 @@ public:
 
 	//27/12/2002 (HACK!)
 	template <typename... T> void set_latch(T &&... args) { m_latch.set(std::forward<T>(args)...); m_latch.resolve(); /* FIXME: if this is supposed to be set at config time, it should be resolved on start */ }
+	// dot renderer: called after every pattern table read (background, sprites, PPUDATA) with the exact address read
+	// (MMC2/MMC4 latches); when set, the before-read latch call above is not used by the dot renderer
+	template <typename... T> void set_read_latch(T &&... args) { m_read_latch.set(std::forward<T>(args)...); m_read_latch.resolve(); }
 
 	//  void update_screen(bitmap_t &bitmap, const rectangle &cliprect);
 
@@ -105,6 +134,12 @@ public:
 	void ppu_vram_direct_write(offs_t address, u8 data);
 
 	bool in_vblanking() { return (m_scanline >= m_vblank_first_scanline - 1); }
+	// Forces the dot renderer to finish all fetches for real time that has already elapsed, using whatever
+	// state (CHR/PRG banks, scroll, etc.) was in effect at the moment each dot was supposed to occur. Call this
+	// before applying any mapper-side state change that the dot renderer's pending fetches should not retroactively
+	// see (e.g. CHR bank switches) - otherwise already-elapsed dots can be rendered with the new value instead
+	// of the one that was actually active when real time reached them.
+	void catch_up() { if (use_dot_renderer()) dot_run_to(current_line_dot()); }
 protected:
 	ppu2c0x_device(const machine_config& mconfig, device_type type, const char* tag, device_t* owner, u32 clock, address_map_constructor internal_map);
 
@@ -147,6 +182,7 @@ protected:
 	ppu2c0x_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, u32 clock = 0);
 
 	virtual void device_start() override ATTR_COLD;
+	virtual void device_reset() override ATTR_COLD;
 	virtual void device_config_complete() override;
 
 	// device_config_memory_interface overrides
@@ -157,9 +193,9 @@ protected:
 	TIMER_CALLBACK_MEMBER(hblank_tick);
 	TIMER_CALLBACK_MEMBER(nmi_tick);
 	TIMER_CALLBACK_MEMBER(scanline_tick);
+	TIMER_CALLBACK_MEMBER(vbl_tick);
 
 	/* routines */
-	void apply_color_emphasis_and_clamp(bool is_pal_or_dendy, int color_emphasis, double& R, double& G, double& B);
 	rgb_t nespal_to_RGB(int color_intensity, int color_num, int color_emphasis, bool is_pal_or_dendy);
 	virtual void init_palette_tables();
 
@@ -190,6 +226,51 @@ protected:
 	void update_visible_scanline();
 	void update_scanline();
 
+	// dot-based renderer: the standard 2C0x PPUs emulate every dot of a rendered scanline, and CPU register
+	// accesses first bring the PPU up to the current beam position; clones with their own drawing keep the
+	// scanline renderer above
+	virtual bool use_dot_renderer() const { return true; }
+	int current_line_dot();
+	int line_dot_at(const attotime &when);
+	attotime event_fire_time(const attotime &when);
+	void arm_event(emu_timer *timer, const attotime &when, int param = 0);
+	attotime m_next_line_start;   // logical start of the next line (the scanline timer may fire up to a CPU cycle later)
+	attotime m_vbl_event_time;
+	bool m_render_prev = false;    // m_render_eff as it was on the previous dot
+	bool m_s0hit_pending = false;  // sprite 0 hit detected, flag not visible yet
+	attotime m_s0hit_time;        // when it becomes visible in $2002    // logical time of the pending VBL-timer event
+	u8 sprite_flags_at_m2_fall();
+	void dot_run_to(int target);
+	void dot_step(int dot);
+	void dot_oam_row_corruption(int dot, bool apply);
+	void dot_reload_shifters();
+	void dot_fetch_nt(int dot);
+	void dot_fetch_at();
+	void dot_fetch_pattern(bool high);
+	void dot_read_nt();
+	void dot_read_at();
+	void dot_read_pattern(bool high);
+	void dot_increment_x();
+	void dot_evaluate_sprites();
+	void dot_fetch_sprite_slot(int slot);
+	void bus_ale(u16 addr);
+	u8 bus_read(u16 addr_now);
+	void dot_oam_step(int dot, bool rendering);
+	void oam2_increment();
+	void dot_sprite_evaluation_step(int dot);
+	void dot_output_pixel(int x, bool rendering);
+	int hblank_dot();
+	attotime dot_time(int dots);
+	void schedule_next_line();
+	u8 dot_oam_bus(int dot);
+	u8 io_latch();
+	void ppu_bus(u16 addr, attotime when);
+	void ppu_bus_idle();
+	void data_port_increment();
+	attotime dot_when(int dot);
+	void io_latch_refresh(u8 value, u8 mask);
+	void update_nmi_line();
+
 	// address space configurations
 	const address_space_config      m_space_config;
 
@@ -218,8 +299,65 @@ protected:
 	s32                         m_refresh_data;         /* refresh-related */
 	u8                          m_x_fine;               /* refresh-related */
 	bool                        m_toggle;               /* used to latch hi-lo scroll */
+	bool                        m_render_enabled_hblank; /* BG/sprite rendering state sampled in hblank, used for the scroll increment */
 	s32                         m_tilecount;            /* MMC5 can change attributes to subsets of the 34 visible tiles */
+	int                         m_line_dot;             /* dot renderer: next dot of the current scanline still to be emulated */
+	u16                         m_bg_shift_lo, m_bg_shift_hi, m_at_shift_lo, m_at_shift_hi; /* dot renderer: background shifters */
+	u8                          m_bg_next_nt, m_bg_next_at, m_bg_next_lo, m_bg_next_hi;     /* dot renderer: fetched tile latches */
+	u8                          m_spr_count;            /* dot renderer: sprites found for the current line */
+	u8                          m_spr_x[8], m_spr_attr[8], m_spr_lo[8], m_spr_hi[8];
+	// the eight sprite output units (NESdev PPU rendering; TriCNES): X down-counter, attribute latch and the two pattern
+	// shift registers, loaded during the sprite fetches of dots 257-320
+	u8                          m_sp_ctr[8], m_sp_attr[8], m_sp_lo[8], m_sp_hi[8];
+	u8                          m_at_latch;
+	bool                        m_spr_in_range[8] = { };
+	// sprite evaluation as the 2C02 does it (TriCNES): it walks OAMADDR itself, writes secondary OAM through its own 5-bit
+	// address, which freezes once it wraps until reset on dots 63/255/339, and passes every byte through the OAM buffer
+	// PPU memory bus (TriCNES): an access takes two dots, an address-latch dot that puts the address on the bus and
+	// captures its low 8 bits in the external octal latch, then a read dot whose address is the high bits as they are then
+	// with the latched low byte
+	u8                          m_line_pal[256] = { };   // palette value of each pixel of the line, before greyscale/emphasis
+	int                         m_line_pal_y = -1;
+	u8                          m_out_mask = 0, m_out_mask_next = 0, m_out_mask_delay = 0;   // PPUMASK greyscale/emphasis as the pixel output sees them
+	u16                         m_bus_addr = 0;
+	u8                          m_octal = 0;
+	u16                         m_pat_addr = 0;     // pattern address register: the background pattern fetch being made
+	// PPUDATA access state machines (TriCNES PPU_DATA_StateMachine*): a CPU read/write sets an SR latch at the end of the
+	// access, which ripples through a chain of latches stepped on full and half dots and produces an address-latch
+	// strobe, then the buffer read / VRAM write and the v increment
+	bool m_r_sr = false, m_r_req = false, m_rl[5] = { }, m_pd_rb = false, m_r_ale = false;
+	bool m_w_sr = false, m_w_req = false, m_wl[5] = { }, m_w_ale = false, m_db_par = false, m_tstep_latch = false;
+	bool m_blnk_latch = true, m_pal_en = false, m_bus_read = false, m_bus_ale = false;
+	u8 m_w_data = 0;
+	attotime m_r_start, m_w_start;   // end of the CPU access that starts the read/write machine (never: none pending)
+	u8 m_2006_delay = 0;             // dots until a $2006 second write reaches v and the bus
+	u16 m_2006_new = 0, m_2006_old = 0;
+	bool m_copyv = false;           // v was loaded from $2006 on this dot (a Y increment on the same dot ANDs the two)
+	bool use_data_pipeline() const { return use_dot_renderer() && m_own_timing; }
+	u8 bus_fetch();
+	u16 m_fetch_addr = 0;
+	void dot_step_main(int dot);
+	void bus_write_vram(u8 data);
+	void data_sm_full(int dot);
+	void data_sm_full_end();
+	void data_sm_half(int dot);
+	void data_increment_y();
+	// the lazily run PPU must still reach the dots where a PPUADDR/PPUDATA access takes effect when nothing else makes
+	// it catch up (its bus changes drive A12 for the cartridge)
+	emu_timer *m_pipe_timer = nullptr;
+	TIMER_CALLBACK_MEMBER(pipe_tick);
+	void pipe_catchup(int dots);
+	u8                          m_oam_buf = 0xff;   // OAM buffer (what $2004 reads while rendering)
+	u8                          m_oam2_addr = 0;
+	bool                        m_oam2_ovf = false;
+	u8                          m_oam2_reset = 0;   // dots until a pending secondary-OAM address reset
+	u8                          m_eval_tick = 0;    // 0: Y range check, 1-3: tile, attribute, X
+	bool                        m_eval_nine = false;
+	bool                        m_eval_addr_ovf = false;
+	u8                          m_fetch_y = 0xff, m_fetch_tile = 0xff, m_fetch_attr = 0xff, m_fetch_x = 0xff;   // attribute bits feeding the attribute shifters' serial inputs
+	bool                        m_spr_zero_in_line;     /* dot renderer: slot 0 holds OAM sprite 0 */
 	latch_delegate              m_latch;
+	latch_delegate              m_read_latch;
 
 	u16                         m_spriteramsize;
 
@@ -233,6 +371,41 @@ private:
 
 	scanline_delegate           m_scanline_callback_proc;   /* optional scanline callback */
 	hblank_delegate             m_hblank_callback_proc; /* optional hblank callback */
+	a12_delegate                m_a12_callback_proc;    /* optional A12 rising-edge callback (dot renderer) */
+	a12_level_delegate          m_a12_level_proc;       /* optional unfiltered A12 level callback (dot renderer) */
+	addr_bus_delegate           m_addr_bus_proc;        /* optional address bus callback on A13/A12 changes (dot renderer) */
+	u8                          m_bus_a13a12;           /* A13/A12 last driven on the PPU address bus */
+	a12_filter_delegate         m_a12_filter_proc;      /* optional board filter on A12 rising edges (dot renderer) */
+	emu_timer                   *m_a12_timer;
+	emu_timer                   *m_a12_catchup_timer;
+	TIMER_CALLBACK_MEMBER(a12_tick);
+	TIMER_CALLBACK_MEMBER(a12_catchup_tick);
+	bool                        m_a12;                  /* level of PPU A12 on the address bus */
+	bool                        m_a12_on_fall = false;  /* MC-ACC: report on the fall after a counted rise */
+	bool                        m_a12_armed = false;    /* MC-ACC: a counted rise is waiting for its fall */
+	bool                        m_console_reset = true; /* the console reset reaches the PPU (NES yes, Famicom no) */
+	u8                          m_cpu_ppu_align = 0;    /* master clocks the PPU dot grid leads the CPU cycle grid by */
+	bool                        m_powered = false;      /* the first reset is the cold power-on */
+	bool                        m_render_eff = false;   /* internal rendering-enabled state (follows PPUMASK 2 dots late) */
+	bool                        m_render_pending = false;
+	int                         m_render_delay = 0;     /* dots until m_render_pending takes effect (0 = none) */
+	u8                          m_rdbuf_value = 0;      /* PPUDATA read: byte fetched at the read, entering the read buffer later */
+	int                         m_rdbuf_delay = 0;      /* dots until that refill happens (0 = none pending) */
+	u8                          m_eval_start = 0;
+	bool                        m_oamw_pending = false; /* OAMDATA write waiting to reach OAM (it lands a few dots after the CPU write) */
+	u8                          m_oamw_data = 0;
+	int                         m_oamw_delay = 0;       /* dots until it lands (0 = none pending) */
+	int                         m_oamw_latency = 3;
+	int                         m_mask_latency = 3;     /* dots after a PPUMASK write until rendering turns on/off */     /* how many dots after the CPU write an OAMDATA write lands */
+	void oam_data_write_apply(u8 data);
+	void oam_data_write_flush();       /* OAMADDR as of dot 65: where this line's sprite evaluation starts */
+	u32                         m_oam_corrupt_rows = 0; /* pending rendering-transition OAM row copies */
+	bool                        m_oam_start_copied = false; /* the render-start OAM copy has been done on this pre-render line */
+	attotime                    m_warmup_until;         /* writes to $2000/$2001/$2005/$2006 are ignored until then */
+	void a12_report(attotime when);
+	attotime                    m_a12_low_since;        /* when A12 last went low */
+	u16                         m_spr_addr[8];          /* sprite pattern addresses fetched on dots 257-320 */
+	int                         m_ovf_dot;              /* dot of the current line on which sprite evaluation sets the overflow flag (-1: none) */
 	devcb_write_line            m_int_callback;         /* nmi access callback from interface */
 
 	s32                         m_refresh_latch;        /* refresh-related */
@@ -248,6 +421,24 @@ private:
 	emu_timer                   *m_hblank_timer;        /* hblank period at end of each scanline */
 	emu_timer                   *m_nmi_timer;           /* NMI timer */
 	emu_timer                   *m_scanline_timer;      /* scanline timer */
+	emu_timer                   *m_vbl_timer;           /* dot renderer: VBL flag set/clear at dot 1 */
+	bool                        m_vbl_suppress;         /* dot renderer: $2002 read one clock early suppresses this frame's VBL */
+	bool                        m_vbl_set_pending;      /* dot renderer: the VBL flag for this frame has not been set yet */
+	bool                        m_nmi_line;             /* dot renderer: current level of /NMI (VBL && NMI enable) */
+	bool                        m_own_timing;           /* dot renderer: PPU keeps its own dot clock instead of following the screen refresh */
+	attotime                    m_dot_period;           /* dot renderer: one PPU clock */
+	attotime                    m_line_start;           /* dot renderer: when the current line began */
+	bool                        m_odd_frame;            /* dot renderer: NTSC odd frames skip one clock while rendering */
+	bool                        m_nmi_vbl;              /* dot renderer: vblank as seen by the NMI logic (ends one clock before the readable flag) */
+	u8                          m_sec_oam[32];          /* dot renderer: secondary OAM for the next line (exposed through $2004 during rendering) */
+	u8                          m_eval_n, m_eval_m;     /* dot renderer: primary OAM sprite/byte indices */
+	u8                          m_eval_sec;             /* dot renderer: next secondary OAM byte */
+	u8                          m_eval_latch;           /* dot renderer: primary OAM read latch */
+	u8                          m_eval_found;           /* dot renderer: sprites copied to secondary OAM */
+	u8                          m_eval_sprite0_mask;    /* dot renderer: selected slots originating from OAM sprite 0 */
+	bool                        m_eval_copying;         /* dot renderer: copying tile/attribute/X of an in-range sprite */
+	bool                        m_eval_done;            /* dot renderer: primary OAM scan wrapped/completed */
+	attotime                    m_decay_refresh[8];     /* PPU open bus: when each bit of the I/O latch was last refreshed (bits decay after ~600 ms) */
 };
 
 class ppu2c0x_rgb_device : public ppu2c0x_device {
@@ -316,6 +507,7 @@ protected:
 	virtual void device_start() override ATTR_COLD;
 
 	virtual u32 palette_entries() const noexcept override { return 0x40 * 2; }
+	virtual bool use_dot_renderer() const override { return false; }
 
 	virtual void draw_background(u8 *line_priority) override;
 	virtual void draw_sprite_pixel(int sprite_xpos, int color, int pixel, u8 pixel_data, bitmap_rgb32 &bitmap) override;

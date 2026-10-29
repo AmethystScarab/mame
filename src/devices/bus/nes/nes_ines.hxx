@@ -1,5 +1,5 @@
 // license:BSD-3-Clause
-// copyright-holders:Fabio Priuli
+// copyright-holders:Fabio Priuli,Brian H. Gilbert
 /*****************************************************************************************
 
     NES MMC Emulation
@@ -67,7 +67,7 @@ static const nes_mmc mmc_list[] =
 	{ 32, IREM_G101 },
 	{ 33, TAITO_TC0190FMC },
 	{ 34, STD_BXROM },
-	{ 35, UNL_SC127 },
+	{ 35, JYCOMPANY_C },
 	{ 36, TXC_STRIKEW },
 	{ 37, PAL_ZZ },
 	{ 38, DIS_74X161X138 },
@@ -101,7 +101,7 @@ static const nes_mmc mmc_list[] =
 	{ 66, STD_GXROM },
 	{ 67, SUNSOFT_3 },
 	{ 68, SUNSOFT_DCS },
-	{ 69, SUNSOFT_FME7 },
+	{ 69, SUNSOFT_5 },    // FME-7/5A/5B family: the 5B board is a superset (audio at $C000/$E000, unused by FME-7 games)
 	{ 70, DIS_74X161X161X32 },
 	{ 71, CAMERICA_BF9093 },
 	{ 72, JALECO_JF17 },
@@ -195,7 +195,7 @@ static const nes_mmc mmc_list[] =
 	{ 159, BANDAI_LZ93EX1 }, // with 24c01
 	{ 160, SACHEN_SA009 },
 	// 161 Unused
-	{ 162, WAIXING_FS304 },  // not confirmed, but a lot of chinese releases use it like this...
+	{ 162, WAIXING_FS304 },  // Waixing FS304 (NESdev), a few Nanjing games use a compatible board
 	{ 163, NANJING_BOARD },
 	{ 164, WAIXING_FFV },
 	{ 165, WAIXING_SH2 },
@@ -209,7 +209,7 @@ static const nes_mmc mmc_list[] =
 	{ 173, TXC_MJBLOCK },
 	{ 174, BMC_2751 },
 	{ 175, KAISER_KS7022 },
-	{ 176, UNL_XIAOZY },
+	{ 176, UNL_XIAOZY },            // legacy iNES 1.0 Xiao Zhuan Yuan; NES 2.0 mapper 176 is routed by submapper (see below)
 	{ 177, HENGG_SRICH },
 	{ 178, WAIXING_SGZLZ },
 	{ 179, HENGG_XHZS },
@@ -274,7 +274,7 @@ static const nes_mmc mmc_list[] =
 	{ 238, UNL_603_5052 },
 	// 239 Unused
 	{ 240, CNE_SHLZ },
-	{ 241, TXC_COMMANDOS },
+	{ 241, TXC_MXMDHTWO },
 	{ 242, WAIXING_WXZS },
 	{ 243, SACHEN_74LS374_ALT },
 	{ 244, CNE_DECATHLON },
@@ -457,7 +457,7 @@ static const nes_mmc mmc_list[] =
 	// 419 VT03 PnPs
 	// 420 Kasheng A971210 board
 	// 421 JY SC871115C board
-	// 422 BS-300 etc multicarts related to mappers 126 and 534
+	{ 422, BMC_BS300 },             // BS-300 / ING003C family multicarts (same ASIC family as mappers 126 and 534)
 	// 423 Lexibook PnP
 	// 424 Lexibook PnP
 	// 425 Cube Tech PnP
@@ -492,11 +492,11 @@ static const nes_mmc mmc_list[] =
 	// 454...511 Unused
 	{ 512, SACHEN_ZGDH },
 	{ 513, SACHEN_SA9602B },
-	// 514 seems to be for skaraok, currently set to UNKNOWN in nes.xml
+	{ 514, SUBOR_KARAOKE },          // Subor Karaoke
 	// 515 Korean Family Noraebang karaoke cart with expansion cart, mic, and YM2413!
 	{ 516, COCOMA_BOARD },
 	// 517 another Korean karaoke cart with mic
-	// 518 Subor UNL-DANCE2000 and a few others
+	{ 518, SUBOR_TYPE2 },           // Subor 999, Subor V, Dance 2000 12-in-1 (UNL-DANCE2000)
 	{ 519, UNL_EH8813A },          // Dr Mario II Chinese pirate
 	{ 520, BTL_2YUDB },
 	{ 521, DREAMTECH_BOARD },      // Korean Igo
@@ -512,7 +512,7 @@ static const nes_mmc mmc_list[] =
 	// 531 Used by Asder PC-95 Famicom clone built into a keyboard
 	// 532 Emulator only mapper for Chinese version of sangoht2?
 	{ 533, SACHEN_3014 },          // Dong Dong Nao II
-	// 534 Are these all PnPs? Is one mc_101 or a clone not in nes.xml?
+	{ 534, BMC_ING022 },            // ING-022 multicarts (MMC3 IRQ latch is inverted)
 	{ 535, UNL_LH53 },             // Nazo no Murasamejo FDS conversion
 	// 536 and 537 Waixing FS303, mapper 195 variants?
 	// { 538, BTL_60106416L }, Exciting Soccer bootleg, not in nes.xml (available baddump needs banks rearranged?)
@@ -633,14 +633,26 @@ void nes_cart_slot_device::call_load_ines()
 	{
 		if (4 == sscanf(mapinfo.c_str(),"%d %d %d %d", &mapint1, &mapint2, &mapint3, &mapint4))
 		{
-			/* image is present in nes.hsi: overwrite the header settings with these */
-			mapper = mapint1;
-			local_options = mapint2 & 0x0f;
-			crc_hack = (mapint2 & 0xf0) >> 4; // this is used to differentiate among variants of the same Mapper (see below)
-			prg16k = (mapint3 == 1);
-			prg_size = prg16k ? 2 * 0x4000 : mapint3 * 0x4000;
-			vrom_size = mapint4 * 0x2000;
-			logerror("NES.HSI info: %d %d %d %d\n", mapint1, mapint2, mapint3, mapint4);
+			if (!ines20)
+			{
+				/* image is present in nes.hsi: overwrite the header settings with these */
+				mapper = mapint1;
+				local_options = mapint2 & 0x0f;
+				crc_hack = (mapint2 & 0xf0) >> 4; // this is used to differentiate among variants of the same Mapper (see below)
+				prg16k = (mapint3 == 1);
+				prg_size = prg16k ? 2 * 0x4000 : mapint3 * 0x4000;
+				vrom_size = mapint4 * 0x2000;
+				logerror("NES.HSI info: %d %d %d %d\n", mapint1, mapint2, mapint3, mapint4);
+			}
+			else if (mapint1 == (mapper | ((header[8] & 0x0f) << 8)))
+			{
+				// NES 2.0 header: it is authoritative for mapper, mirroring/battery/trainer/four-screen and sizes; nes.hsi
+				// only supplies MAME's variant code (which no header can carry), and only when it describes the same mapper
+				crc_hack = (mapint2 & 0xf0) >> 4;
+				logerror("NES.HSI info: %d %d %d %d (NES 2.0 header kept, variant code %d taken)\n", mapint1, mapint2, mapint3, mapint4, crc_hack);
+			}
+			else
+				logerror("NES.HSI info: %d %d %d %d ignored (NES 2.0 header says mapper %d)\n", mapint1, mapint2, mapint3, mapint4, mapper | ((header[8] & 0x0f) << 8));
 		}
 		else
 		{
@@ -681,20 +693,82 @@ void nes_cart_slot_device::call_load_ines()
 			vrom_size += ((header[9] & 0xf0) << 4) * 0x2000;
 	}
 	ines_mapr_setup(mapper, &pcb_id);
+	// NES 2.0 mapper 176 is the 8025 enhanced MMC3 family, selected by submapper:
+	// 0 = LP-8002KB/SFC-12B (Super24in1SC03), 1 = FK-xxx/BS-xxx (FK23C/FK23CA), 2 = FS005, 3 = JX9003B, 4 = GameStar, 5 = HST-162:
+	// all of them are emulated by nes_8025_device, which follows the NESdev register description.
+	// The older BMC-SUPER24IN1SC03 and BMC-FK23C/FK23CA boards remain for UNIF files and software list entries.
+	// iNES 1.0 images have no submapper and keep the legacy Xiao Zhuan Yuan board (pirate.cpp).
+	if (mapper == 176 && ines20)
+	{
+		if (submapper <= 5)
+			pcb_id = BMC_8025;
+		else
+			logerror("Unimplemented NES 2.0 mapper 176 submapper: %d\n", submapper);
+	}
+
+	// NES 2.0 submappers of boards that implement several incompatible hardware variants
+	if ((mapper == 126 || mapper == 422 || mapper == 534) && submapper <= 4)
+		m_cart->set_pjoy_submapper(submapper);
+	if (mapper == 208 && submapper <= 1)
+		m_cart->set_gouder_submapper(submapper);
+	if (mapper == 268 && submapper <= 11)
+		m_cart->set_smd133_submapper(submapper);
+	if (mapper == 411 && submapper <= 2)
+		m_cart->set_a88s1_submapper(submapper);
+	if (mapper == 176 && submapper <= 5)
+		m_cart->set_8025_submapper(submapper);
+	// 191: submapper 1 has the outer bank register at $90aa; iNES 1.0 images are told apart by their CHR-ROM size
+	if (mapper == 191)
+		m_cart->set_waixing_b_submapper(ines20 ? (submapper == 1 ? 1 : 0) : (vrom_size == 0x40000 ? 1 : 0));
+
+	// MMC3 IRQ variants selected by NES 2.0 submapper (3 = MC-ACC, 4 = NEC MMC3)
+	if (mapper == 4 && (submapper == 3 || submapper == 4))
+		m_cart->set_mmc3_irq_variant(submapper);
+	// iNES 1.0 mapper 4 images flagged in nes.hsi with crc_hack 4 use the old-style (MMC3A/NEC) IRQ: blargg's
+	// mmc3_irq_tests 5.MMC3_rev_A and mmc3_test 6-MMC3_alt need it, while the default stays the new-style Sharp IRQ
+	else if (mapper == 4 && !ines20 && crc_hack == 4)
+		m_cart->set_mmc3_irq_variant(4);
+	// iNES 1.0 mapper 4 images flagged in nes.hsi with crc_hack 1 are MMC6 (HKROM), as NES 2.0 submapper 1 would say:
+	// blargg's mmc3_test 6-MMC6
+	if (mapper == 4 && !ines20 && crc_hack == 1)
+		pcb_id = STD_HKROM;
+
+	// Waixing T9552: mapper 4 submapper 5 images store the banks in the $5000=$02 order (mapper 249 uses $5000=$00)
+	if (mapper == 4 && submapper == 5)
+		m_cart->set_t9552_file_order(2);
 
 	// handle submappers
 	if (submapper)
 	{
 		// 001: MMC1 (other submappers are deprecated)
+		// 001: submapper 5 (SEROM/SHROM/SH1ROM, fixed 32K PRG) is handled by the SxROM board; it must be claimed here,
+		// or the catch-all at the end of this chain resets the submapper to 0
 		if (mapper == 1 && submapper == 5)
-			logerror("Unimplemented NES 2.0 submapper: SEROM/SHROM/SH1ROM.\n");
+		{
+		}
 		// 002, 003, 007: UxROM, CNROM, AxROM
 		else if (mapper == 2 && submapper == 2)
 			bus_conflict = true;
+		else if (mapper == 2 && submapper == 1)
+			bus_conflict = false;    // submapper 1: no bus conflicts (this is also the iNES default here)
 		else if (mapper == 3 && submapper == 2)
 			bus_conflict = true;
+		else if (mapper == 3 && submapper == 1)
+			bus_conflict = false;    // submapper 1: no bus conflicts (this is also the iNES default here)
 		else if (mapper == 7 && submapper == 2)
 			bus_conflict = true;
+		else if (mapper == 7 && submapper == 1)
+			bus_conflict = false;    // submapper 1: no bus conflicts (this is also the iNES default here)
+		// 011: Color Dreams
+		else if (mapper == 11 && submapper == 2)
+			bus_conflict = true;
+		else if (mapper == 11 && submapper == 1)
+			bus_conflict = false;    // submapper 1: no bus conflicts (this is also the iNES default here)
+		// 004: NES 2.0 submappers (NESdev): 1 = MMC6 (HKROM), 3 = Acclaim MC-ACC, 4 = NEC MMC3 ("old" IRQ), 5 = Waixing T9552
+		else if (mapper == 4 && submapper == 1)
+			pcb_id = STD_HKROM;
+		else if (mapper == 4 && submapper == 5)
+			pcb_id = WAIXING_SECURITY;
 		// 019: Namcot N163
 		else if (mapper == 19)
 		{
@@ -705,7 +779,23 @@ void nes_cart_slot_device::call_load_ines()
 				m_cart->set_n163_vol(vol);
 			}
 		}
-		// 021, 023, 025: VRC4 / VRC2
+		// 021, 023, 025: VRC2 / VRC4.  NESdev NES 2.0 submappers 1-3 (lines given as chip A1, chip A0):
+		// 21/1 VRC4a (A2,A1), 21/2 VRC4c (A7,A6), 23/1 VRC4f (A1,A0), 23/2 VRC4e (A3,A2), 23/3 VRC2b (A1,A0),
+		// 25/1 VRC4b (A0,A1), 25/2 VRC4d (A2,A3), 25/3 VRC2c (A0,A1).  Other submappers keep the older line encoding.
+		else if ((mapper == 21 || mapper == 23 || mapper == 25) && submapper >= 1 && submapper <= 3)
+		{
+			static const struct { int mapper, sub, a1, a0; bool vrc2; } vrc_subs[] = {
+				{ 21, 1, 2, 1, false }, { 21, 2, 7, 6, false },
+				{ 23, 1, 1, 0, false }, { 23, 2, 3, 2, false }, { 23, 3, 1, 0, true },
+				{ 25, 1, 0, 1, false }, { 25, 2, 2, 3, false }, { 25, 3, 0, 1, true } };
+			for (const auto &v : vrc_subs)
+				if (v.mapper == mapper && v.sub == submapper)
+				{
+					pcb_id = v.vrc2 ? KONAMI_VRC2 : KONAMI_VRC4;
+					m_cart->set_vrc_lines(v.a1, v.a0, 0);
+				}
+		}
+		// 021, 023, 025: VRC4 / VRC2 (submappers other than 1-3: older line encoding)
 		else if (mapper == 21 || mapper == 23 || mapper == 25)
 		{
 			// 021, 023, 025: VRC4
@@ -727,10 +817,24 @@ void nes_cart_slot_device::call_load_ines()
 		{
 			m_cart->set_mirroring(PPU_MIRROR_HIGH); // Major League has hardwired mirroring
 		}
+		// iNES Mapper 016 (NESdev): submapper 4 = Bandai FCG-1/2 (registers at $6000-$7FFF only, no EEPROM),
+		// submapper 5 = LZ93D50 with 24C02 (registers at $8000-$FFFF only)
+		else if (mapper == 16 && submapper == 4)
+		{
+			pcb_id = BANDAI_FCG;
+		}
+		else if (mapper == 16 && submapper == 5)
+		{
+			m_cart->set_bandai_submapper(5);
+		}
 		// iNES Mapper 034
 		else if (mapper == 34 && submapper == 1)
 		{
 			pcb_id = AVE_NINA01; // Mapper 34 is used for 2 diff boards
+		}
+		else if (mapper == 34 && submapper == 2)
+		{
+			bus_conflict = true;    // submapper 2: BNROM, which is always subject to bus conflicts
 		}
 		// iNES Mapper 068 / Sunsoft 4
 		else if (mapper == 68 && submapper == 1)
@@ -756,26 +860,42 @@ void nes_cart_slot_device::call_load_ines()
 		{
 			pcb_id = SOMARI_HUANG2; // Mapper 116 is used for 2 diff boards
 		}
-		// iNES Mapper 185
-		else if (mapper == 185)
+		// iNES Mapper 185: submappers 4-7 enable CHR-ROM when bits 0-1 of the latch hold 0-3 (other values use the crc_hack below)
+		else if (mapper == 185 && submapper >= 4 && submapper <= 7)
 		{
-			int ce_state = (submapper & 0x0c) >> 2;
-			m_cart->set_ce(0x03, ce_state);
+			m_cart->set_ce(0x03, submapper & 0x03);
+			// NESdev lists these CNROM copy-protection boards as subject to bus conflicts; a submapper identifies the
+			// board exactly (images without one keep the default, as their board is not known)
+			bus_conflict = true;
 		}
 		// iNES Mapper 232
 		else if (mapper == 232 && submapper == 1)
 		{
 			pcb_id = CAMERICA_BF9096_ALT;
 		}
-		// 268: SMD133 boards
-		else if (mapper == 268)
+		// 126, 422, 534: TEC9719 / BS-300 family / ING-022, PRG/CHR wiring selected by submapper 0-4
+		else if ((mapper == 126 || mapper == 422 || mapper == 534) && submapper <= 4)
 		{
-			if (submapper == 0)
-				m_cart->set_smd133_addr(0x6000);
-			else if (submapper == 1)
-				m_cart->set_smd133_addr(0x5000);
-			else
-				logerror("Unimplemented NES 2.0 submapper: %d\n", submapper);
+		}
+		// 176: 8025 family, boards selected by submapper 0-5 above
+		else if (mapper == 176 && submapper <= 5)
+		{
+		}
+		// 191: Waixing Sugoro Quest board, submappers 0-1 handled by the board
+		else if (mapper == 191 && submapper <= 1)
+		{
+		}
+		// 208: Gouder (0) and MMC3-register-6 PRG variant (1); 215: UNL-8237A; 411: A88S-1 variants 0-2
+		else if ((mapper == 208 && submapper <= 1) || (mapper == 215 && submapper == 1) || (mapper == 411 && submapper <= 2))
+		{
+		}
+		// 210: Namco 175 (1) / Namco 340 (2), routed after this chain
+		else if (mapper == 210 && submapper <= 2)
+		{
+		}
+		// 268: AA6023 / SMD132/133 boards, register address and wiring selected by submapper 0-11
+		else if (mapper == 268 && submapper <= 11)
+		{
 		}
 		// 313: BMC RESET-TXROM
 		else if (mapper == 313)
@@ -803,12 +923,26 @@ void nes_cart_slot_device::call_load_ines()
 			else
 				logerror("Unimplemented NES 2.0 submapper: %d\n", submapper);
 		}
+		// UNROM 512 (mapper 30): submappers 1 (no bus conflicts) and 2 (bus conflicts) are kept for the bus conflict setup below
+		else if (mapper == 30 && submapper >= 1 && submapper <= 4)
+		{
+		}
 		else if (submapper)
 		{
 			submapper = 0;
 			logerror("Undocumented NES 2.0 submapper, please report it to the MAME boards!\n");
 		}
 	}
+
+	// 210: Namco 175 (submapper 1) or Namco 340 (submapper 2); without a submapper, NESdev's rule is a 175 when the battery
+	// bit is set and a 340 otherwise, which fits every commercial game (INES Mapper 210)
+	if (mapper == 210)
+		pcb_id = (submapper == 1 || (submapper != 2 && BIT(local_options, 1))) ? NAMCOT_175 : NAMCOT_340;
+
+	// 034: NINA-001/002 (submapper 1) or BNROM (submapper 2); without a submapper, NESdev's rule is BNROM for 0-8 KiB of CHR
+	// and NINA-001/002 above that (INES Mapper 034)
+	if (mapper == 34 && submapper == 0 && vrom_size > 0x2000)
+		pcb_id = AVE_NINA01;
 
 	// SETUP step 3: storing the info needed for emulation
 	m_pcb_id = pcb_id;
@@ -863,6 +997,8 @@ void nes_cart_slot_device::call_load_ines()
 				m_pcb_id = STD_SZROM;
 			if (mapper == 155)
 				m_cart->set_mmc1_type(device_nes_cart_interface::mmc1_type::MMC1A);
+			if (mapper == 1 && submapper == 5)
+				m_cart->set_mmc1_fixed_prg(true);
 			break;
 
 		case NOCASH_NOCHR:
@@ -974,9 +1110,9 @@ void nes_cart_slot_device::call_load_ines()
 			break;
 
 		case SUNSOFT_2:
-			if (mapper == 93)
-				m_cart->set_mirroring(PPU_MIRROR_VERT); // only hardwired mirroring makes different mappers 89 & 93
-			else
+			// mapper 89 (Sunsoft-3 board) has mapper-controlled one-screen mirroring; mapper 93 (Sunsoft-3R) is hardwired and
+			// keeps the header's setting (Fantasy Zone is horizontal, Shanghai vertical)
+			if (mapper != 93)
 				m_cart->set_pcb_ctrl_mirror(true);
 			break;
 
@@ -1053,7 +1189,11 @@ void nes_cart_slot_device::call_load_ines()
 			break;
 
 		case NAMCOT_163:
-			mapper_sram_size = m_cart->get_mapper_sram_size();
+			// the chip's 128 bytes of RAM are save RAM only on boards with a battery (NESdev INES Mapper 019)
+			if (BIT(local_options, 1))
+				mapper_sram_size = m_cart->get_mapper_sram_size();
+			else
+				m_cart->set_mapper_sram_size(0);   // no battery: nothing is saved
 			break;
 
 		case BMC_EL860947C:
@@ -1067,9 +1207,33 @@ void nes_cart_slot_device::call_load_ines()
 		//FIXME: we also have to fix Action 52 PRG loading somewhere...
 
 		case BANDAI_DATACH:
-			fatalerror("Bandai Datach games have to be mounted in the Datach subslot!\n");
+			// a mapper 157 image is the game ROM itself: it is mapped by the Datach base board, which reads its own PRG
+			// when no Datach ROM is mounted in the subslot (no barcode cards and no second EEPROM in this case)
 			break;
 	}
+
+	// iNES mapper 180 (Crazy Climber) is the UNROM PCB with an AND gate instead of the OR gate, so bus conflicts occur
+	if (mapper == 180)
+		bus_conflict = true;
+
+	// iNES mapper 13 is only Nintendo's NES-CPROM (Videomation), which NESdev lists as subject to bus conflicts
+	if (mapper == 13)
+		bus_conflict = true;
+
+	// UNROM 512 (mapper 30): NES 2.0 submapper 1 = no bus conflicts, 2 = bus conflicts (as used by NES 2.0 headers, e.g.
+	// No-Intro's); otherwise NESdev's rule - the battery flag marks the self-flashable board, which has no bus conflicts.
+	// Whether the board is flashable always follows the battery flag (submapper 1 boards without it are not flashable)
+	if (mapper == 30)
+	{
+		// NESdev UNROM 512 submappers: 0 = bus conflicts unless the battery bit is set, 1/3/4 = none, 2 = present
+		bus_conflict = (submapper == 2) ? true : (submapper == 0) ? !BIT(local_options, 1) : false;
+		m_cart->set_unrom512_flashable(BIT(local_options, 1));
+		m_cart->set_unrom512_submapper(submapper);
+	}
+
+	// iNES Mapper 159 (NESdev): LZ93D50 with 24C01 - its registers are at $8000-$FFFF only
+	if (mapper == 159)
+		m_cart->set_bandai_submapper(5);
 
 	// Finally turn off bus conflict emulation, because the pirate variants of the boards are bus conflict free and games would glitch
 	m_cart->set_bus_conflict(bus_conflict);
@@ -1226,9 +1390,14 @@ const char * nes_cart_slot_device::get_default_card_ines(get_default_card_softwa
 	{
 		if (4 == sscanf(mapinfo.c_str(),"%d %d %d %d", &mapint1, &mapint2, &mapint3, &mapint4))
 		{
-			/* image is present in nes.hsi: overwrite the header settings with these */
-			mapper = mapint1;
-			crc_hack = (mapint2 & 0xf0) >> 4; // this is used to differentiate among variants of the same Mapper (see below)
+			if (!ines20)
+			{
+				/* image is present in nes.hsi: overwrite the header settings with these */
+				mapper = mapint1;
+				crc_hack = (mapint2 & 0xf0) >> 4; // this is used to differentiate among variants of the same Mapper (see below)
+			}
+			else if (mapint1 == (mapper | ((ROM[8] & 0x0f) << 8)))
+				crc_hack = (mapint2 & 0xf0) >> 4;   // NES 2.0 header kept; only MAME's variant code is taken from nes.hsi
 		}
 	}
 
@@ -1241,14 +1410,36 @@ const char * nes_cart_slot_device::get_default_card_ines(get_default_card_softwa
 	}
 
 	ines_mapr_setup(mapper, &pcb_id);
+	// NES 2.0 mapper 176 is the 8025 enhanced MMC3 family, selected by submapper:
+	// 0 = LP-8002KB/SFC-12B (Super24in1SC03), 1 = FK-xxx/BS-xxx (FK23C/FK23CA), 2 = FS005, 3 = JX9003B, 4 = GameStar, 5 = HST-162:
+	// all of them are emulated by nes_8025_device, which follows the NESdev register description.
+	// The older BMC-SUPER24IN1SC03 and BMC-FK23C/FK23CA boards remain for UNIF files and software list entries.
+	// iNES 1.0 images have no submapper and keep the legacy Xiao Zhuan Yuan board (pirate.cpp).
+	if (mapper == 176 && ines20)
+	{
+		if (submapper <= 5)
+			pcb_id = BMC_8025;
+		else
+			logerror("Unimplemented NES 2.0 mapper 176 submapper: %d\n", submapper);
+	}
+
+	// iNES 1.0 mapper 4 images flagged in nes.hsi with crc_hack 1 are MMC6 (HKROM), as NES 2.0 submapper 1 would say
+	if (mapper == 4 && !ines20 && crc_hack == 1)
+		pcb_id = STD_HKROM;
 
 	// handle submappers
 	if (submapper)
 	{
+		// 004: submapper 1 = MMC6 (HKROM), submapper 5 = Waixing T9552
+		if (mapper == 4 && submapper == 1)
+			pcb_id = STD_HKROM;
+		else if (mapper == 4 && submapper == 5)
+			pcb_id = WAIXING_SECURITY;
 		// 001: MMC1 (other submappers are deprecated)
-		if (mapper == 1 && submapper == 5)
-			logerror("Unimplemented NES 2.0 submapper: SEROM/SHROM/SH1ROM.\n");
-		// 021, 023, 025: VRC4 / VRC2
+		// 001: submapper 5 = SEROM/SHROM/SH1ROM (fixed 32K PRG), handled by the SxROM board
+		// 021, 023, 025: VRC4 / VRC2 (NESdev NES 2.0 submappers 1-3: 23/3 and 25/3 are VRC2, the rest VRC4)
+		if ((mapper == 21 || mapper == 23 || mapper == 25) && submapper >= 1 && submapper <= 3)
+			pcb_id = ((mapper == 23 || mapper == 25) && submapper == 3) ? KONAMI_VRC2 : KONAMI_VRC4;
 		else if (mapper == 21 || mapper == 23 || mapper == 25)
 		{
 			// 021, 023, 025: VRC4
@@ -1258,6 +1449,11 @@ const char * nes_cart_slot_device::get_default_card_ines(get_default_card_softwa
 				pcb_id = KONAMI_VRC4;
 			else if (submapper == 15)
 				pcb_id = KONAMI_VRC2;
+		}
+		// iNES Mapper 016 submapper 4: Bandai FCG-1/2
+		else if (mapper == 16 && submapper == 4)
+		{
+			pcb_id = BANDAI_FCG;
 		}
 		// iNES Mapper 034
 		else if (mapper == 34 && submapper == 1)
@@ -1283,6 +1479,11 @@ const char * nes_cart_slot_device::get_default_card_ines(get_default_card_softwa
 			pcb_id = CAMERICA_BF9096_ALT;
 		}
 	}
+
+	// 210: Namco 175 (submapper 1) or Namco 340 (submapper 2); without a submapper, NESdev's rule is a 175 when the battery
+	// bit is set and a 340 otherwise, which fits every commercial game (INES Mapper 210)
+	if (mapper == 210)
+		pcb_id = (submapper == 1 || (submapper != 2 && BIT(ROM[6], 1))) ? NAMCOT_175 : NAMCOT_340;
 
 	// solve mapper conflicts
 	switch (pcb_id)
@@ -1355,6 +1556,10 @@ const char * nes_cart_slot_device::get_default_card_ines(get_default_card_softwa
 				pcb_id = RCM_GS2013;
 			break;
 	}
+
+	// 034: without a submapper, NESdev's rule is BNROM for 0-8 KiB of CHR and NINA-001/002 above that (INES Mapper 034)
+	if (mapper == 34 && submapper == 0 && (ROM[5] > 1 || (ines20 && (ROM[9] & 0xf0))))
+		pcb_id = AVE_NINA01;
 
 	return nes_get_slot(pcb_id);
 }

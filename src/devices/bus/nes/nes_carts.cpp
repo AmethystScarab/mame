@@ -39,13 +39,13 @@
 #include "camerica.h"
 #include "cne.h"
 #include "cony.h"
+#include "ffe.h"
 #include "ggenie.h"
 #include "hes.h"
 #include "henggedianzi.h"
 #include "jncota.h"
 #include "jy.h"
 #include "kaiser.h"
-#include "legacy.h"
 #include "nanjing.h"
 #include "ntdec.h"
 #include "racermate.h"
@@ -218,8 +218,8 @@ void nes_cart(device_slot_interface &device)
 	device.option_add_internal("s8259b",           NES_SACHEN_8259B);
 	device.option_add_internal("s8259c",           NES_SACHEN_8259C);
 	device.option_add_internal("s8259d",           NES_SACHEN_8259D);
-	device.option_add_internal("s74x374",          NES_SACHEN_74X374);
-	device.option_add_internal("s74x374a",         NES_SACHEN_74X374_ALT);  // FIXME: Made up boards some different handling
+	device.option_add_internal("s74x374",          NES_SACHEN_74X374);      // Sachen SA-015 / SA-630 (mapper 150)
+	device.option_add_internal("s74x374a",         NES_SACHEN_74X374_ALT);  // Sachen SA-020A (mapper 243)
 	device.option_add_internal("tcu01",            NES_SACHEN_TCU01);
 	device.option_add_internal("tcu02",            NES_SACHEN_TCU02);
 	device.option_add_internal("tengen_800032",    NES_TENGEN_800032);
@@ -229,9 +229,8 @@ void nes_cart(device_slot_interface &device)
 	device.option_add_internal("txc_dumarc",       NES_TXC_DUMARACING);
 	device.option_add_internal("txc_mjblock",      NES_TXC_MJBLOCK);
 	device.option_add_internal("txc_strikew",      NES_TXC_STRIKEW);
-	device.option_add_internal("txc_commandos",    NES_TXC_COMMANDOS);
+	device.option_add_internal("txc_mxmdhtwo",    NES_TXC_MXMDHTWO);
 	device.option_add_internal("waixing_a",        NES_WAIXING_A);
-	device.option_add_internal("waixing_a1",       NES_WAIXING_A1);   // FIXME: Made up boards the different CHRRAM banks (see Ji Jia Zhan Shi)
 	device.option_add_internal("waixing_b",        NES_WAIXING_B);
 	device.option_add_internal("waixing_c",        NES_WAIXING_C);
 	device.option_add_internal("waixing_d",        NES_WAIXING_D);
@@ -240,7 +239,7 @@ void nes_cart(device_slot_interface &device)
 	device.option_add_internal("waixing_f1",       NES_WAIXING_F1);
 	device.option_add_internal("waixing_g",        NES_WAIXING_G);
 	device.option_add_internal("waixing_h",        NES_WAIXING_H);
-	device.option_add_internal("waixing_h1",       NES_WAIXING_H1);   // FIXME: Made up boards the different WRAM protect banks (see Shen Mi Jin San Jiao)
+	device.option_add_internal("waixing_h1",       NES_WAIXING_H1);   // same as waixing_h, but honors the WRAM protect bit (Shen Mi Jin San Jiao)
 	device.option_add_internal("waixing_i",        NES_WAIXING_I);
 	device.option_add_internal("waixing_j",        NES_WAIXING_J);
 	device.option_add_internal("waixing_sgzlz",    NES_WAIXING_SGZLZ);
@@ -288,6 +287,7 @@ void nes_cart(device_slot_interface &device)
 	device.option_add_internal("subor0",           NES_SUBOR0);
 	device.option_add_internal("subor1",           NES_SUBOR1);
 	device.option_add_internal("subor2",           NES_SUBOR2);
+	device.option_add_internal("subor_karaoke",    NES_SUBOR_KARAOKE);
 	device.option_add_internal("unl_158b",         NES_158B);
 	device.option_add_internal("cc21",             NES_CC21);
 	device.option_add_internal("xiaozy",           NES_XIAOZY);
@@ -298,7 +298,6 @@ void nes_cart(device_slot_interface &device)
 	device.option_add_internal("unl_eh8813a",      NES_EH8813A);   // used by Dr. Mario II
 	device.option_add_internal("zemina",           NES_ZEMINA);    // mapper 190 - Magic Kid GooGoo
 // misc bootleg boards
-	device.option_add_internal("sc127",            NES_SC127);
 	device.option_add_internal("mariobaby",        NES_MARIOBABY);
 	device.option_add_internal("asnicol",          NES_ASN);
 	device.option_add_internal("smb3pirate",       NES_SMB3PIRATE);
@@ -488,6 +487,9 @@ void nes_cart(device_slot_interface &device)
 	device.option_add_internal("bmc_yy841101c",    NES_BMC_YY841101C);
 	device.option_add_internal("bmc_yy841155c",    NES_BMC_YY841155C);
 	device.option_add_internal("pjoy84",           NES_PJOY84);
+	device.option_add_internal("bs300",            NES_BS300);
+	device.option_add_internal("ing022",           NES_ING022);
+	device.option_add_internal("bmc_8025",         NES_8025);
 	device.option_add_internal("nocash_nochr",     NES_NOCHR);
 	device.option_add_internal("action53",         NES_ACTION53);
 	device.option_add_internal("batmap_000",       NES_BATMAP_000);
@@ -509,7 +511,7 @@ void nes_cart(device_slot_interface &device)
 	device.option_add_internal("konami_qtai",      NES_NROM); //  [mentioned in FCEUMM source - we need more info] - UNSUPPORTED
 	device.option_add_internal("unl_3d_block",     NES_NROM); //  [mentioned in FCEUMM source - we need more info] - UNSUPPORTED
 	device.option_add_internal("unl_c_n22m",       NES_NROM); //  [mentioned in FCEUMM source - we need more info] - UNSUPPORTED
-// legacy boards for FFE copier mappers (are there images available to fix/improve emulation?)
+// FFE (Front Fareast) Super Magic Card / Magic Card 1M-2M copier boards (mappers 6, 8, 17)
 	device.option_add_internal("ffe3",             NES_FFE3);
 	device.option_add_internal("ffe4",             NES_FFE4);
 	device.option_add_internal("ffe8",             NES_FFE8);

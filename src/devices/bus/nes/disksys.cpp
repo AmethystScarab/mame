@@ -5,6 +5,8 @@
 
  NES/Famicom cartridge emulation for Disk System expansion
 
+ iNES mappers: none (iNES mapper 20 is reserved for emulator use for FDS emulation)
+
 
  Here we emulate the RAM expansion + Disk Drive which form the
  Famicom Disk System.
@@ -56,7 +58,8 @@ void nes_disksys_device::device_add_mconfig(machine_config &config)
 	SPEAKER(config, "addon").front_center(); // connected to motherboard
 
 	RP2C33_SOUND(config, m_sound, XTAL(21'477'272)/12); // clock driven from motherboard?
-	m_sound->add_route(0, "addon", 0.2);
+	// level measured with nes-audio-tests db_fds against the hardware survey (+6.6 dB vs a full-volume APU square)
+	m_sound->add_route(0, "addon", 0.227);
 }
 
 
@@ -106,7 +109,7 @@ nes_disksys_device::nes_disksys_device(const machine_config &mconfig, const char
 	, m_fds_data(nullptr)
 	, m_disk(*this, "floppy0")
 	, m_sound(*this, "rp2c33snd")
-	, irq_timer(nullptr)
+	, irq_timer(nullptr), transfer_timer(nullptr)
 	, m_irq_count(0), m_irq_count_latch(0), m_irq_enable(false), m_irq_repeat(false), m_irq_transfer(false), m_disk_reg_enable(false), m_sound_en(false)
 	, m_fds_motor_on(0), m_fds_door_closed(0), m_fds_current_side(0), m_fds_head_position(0), m_fds_status0(0), m_read_mode(0), m_drive_ready(0)
 	, m_fds_sides(0), m_fds_last_side(0), m_fds_count(0)
@@ -121,8 +124,8 @@ void nes_disksys_device::device_start()
 	m_disk->floppy_install_load_proc(nes_disksys_device::load_proc);
 	m_disk->floppy_install_unload_proc(nes_disksys_device::unload_proc);
 
-	irq_timer = timer_alloc(FUNC(nes_disksys_device::irq_timer_tick), this);
-	irq_timer->adjust(attotime::zero, 0, clocks_to_attotime(1));
+	transfer_timer = timer_alloc(FUNC(nes_disksys_device::transfer_tick), this);
+	transfer_timer->adjust(attotime::zero, 0, clocks_to_attotime(TRANSFER_CYCLES));
 
 	save_item(NAME(m_fds_motor_on));
 	save_item(NAME(m_fds_door_closed));
@@ -214,9 +217,9 @@ uint8_t nes_disksys_device::read_m(offs_t offset)
 	return m_prgram[offset];
 }
 
-void nes_disksys_device::hblank_irq(int scanline, bool vblank, bool blanked)
+TIMER_CALLBACK_MEMBER(nes_disksys_device::transfer_tick)
 {
-	// FIXME: This looks like a gross hack that ties the disk byte transfer IRQ to the PPU. Seriously?
+	// fires at the disk's real ~96.4 kHz/149-CPU-cycle byte transfer rate (see header note on TRANSFER_CYCLES)
 	if (m_irq_transfer)
 	{
 		set_irq_line(ASSERT_LINE);
@@ -262,6 +265,9 @@ void nes_disksys_device::write_ex(offs_t offset, uint8_t data)
 			{
 				m_irq_enable = 0;
 				set_irq_line(CLEAR_LINE);
+				// disabling the disk registers indirectly sets $4025 = $06 on hardware, which also resets the nametable
+				// arrangement and clears $4030.D3 (TakuikaNinja's FDS Mirroring Test, verified on a Sharp Twin Famicom)
+				write_ex(0x05, 0x06);
 			}
 			m_sound_en = BIT(data, 1);
 			break;
@@ -279,7 +285,7 @@ void nes_disksys_device::write_ex(offs_t offset, uint8_t data)
 			// bit0 - Drive Motor Control (0: Stop motor; 1: Turn on motor)
 			// bit1 - Transfer Reset (Set 1 to reset transfer timing to the initial state)
 			// bit2 - Read / Write mode (0: write; 1: read)
-			// bit3 - Mirroring (0: horizontal; 1: vertical)
+			// bit3 - Mirroring (0: vertical; 1: horizontal)
 			// bit4 - CRC control (set during CRC calculation of transfer)
 			// bit5 - Always set to '1'
 			// bit6 - Read/Write Start (Set to 1 when the drive becomes ready for read/write)

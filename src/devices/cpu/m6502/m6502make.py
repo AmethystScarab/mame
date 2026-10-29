@@ -6,6 +6,7 @@ from __future__ import print_function
 
 import io
 import logging
+import re
 import sys
 
 USAGE = """
@@ -80,12 +81,35 @@ def samples_interrupt(ins, single_cycle):
     return (single_cycle or "read_sync" not in ins) and "_noirq" not in ins
 
 
-RDY_GATED_DEVICES = {"m6502", "m6510"}
+RDY_GATED_DEVICES = {"m6502", "m6510", "rp2a03_core"}
+# every cycle spent halted on RDY is reported to dma_halt_cycle() with the address of the read being repeated
+# (a no-op except on CPUs with a DMA unit that needs it, like the 2A03)
+RDY_HALT_HOOK_DEVICES = RDY_GATED_DEVICES
+
+
+def read_address(ins):
+    """address expression of the memory read performed by an instruction line"""
+    for fn in ("read_sync", "read_arg_noirq", "read_arg", "read_pc_noirq", "read_pc", "read"):
+        m = re.search(r"\b" + fn + r"\(", ins)
+        if not m:
+            continue
+        if fn in ("read_pc", "read_pc_noirq"):
+            return "m_PC"
+        depth, start = 1, m.end()
+        for i in range(start, len(ins)):
+            if ins[i] == "(":
+                depth += 1
+            elif ins[i] == ")":
+                depth -= 1
+                if depth == 0:
+                    return ins[start:i]
+    raise ValueError("no read address in: " + ins)
 CMOS_DEVICES = {"w65c02", "r65c02", "r65c19", "w65c02s", "m65ce02", "m4510", "w65816"}
 
 
 def save_opcodes(f, device, opcodes):
     rdy_gated = device in RDY_GATED_DEVICES
+    halt_hook = device in RDY_HALT_HOOK_DEVICES
     interrupt_sampled = device not in CMOS_DEVICES
     for name, instructions in opcodes:
         single_cycle = sum(identify_line_type(ins) in ("MEMORY_READ", "MEMORY_WRITE") for ins in instructions) == 1
@@ -103,6 +127,8 @@ def save_opcodes(f, device, opcodes):
             elif line_type in ("MEMORY_READ", "MEMORY_WRITE"):
                 if rdy_gated and line_type == "MEMORY_READ":
                     emit(f, "\twhile(!m_rdy_state) {")
+                    if halt_hook:
+                        emit(f, "\t\tdma_halt_cycle(%s);" % read_address(ins))
                     emit(f, "\t\tm_icount--;")
                     emit(f, "\t\tif(m_icount <= 0) {")
                     emit(f, "\t\t\tm_inst_substate = %d;" % substate)
@@ -146,6 +172,8 @@ def save_opcodes(f, device, opcodes):
                 emit(f, "case %d:" % substate)
                 if rdy_gated and line_type == "MEMORY_READ":
                     emit(f, "\twhile(!m_rdy_state) {")
+                    if halt_hook:
+                        emit(f, "\t\tdma_halt_cycle(%s);" % read_address(ins))
                     emit(f, "\t\tm_icount--;")
                     emit(f, "\t\tif(m_icount <= 0) {")
                     emit(f, "\t\t\tm_inst_substate = %d;" % substate)

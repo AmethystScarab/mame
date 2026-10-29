@@ -36,18 +36,6 @@ protected:
 };
 
 
-// ======================> nes_waixing_a1_device
-
-class nes_waixing_a1_device : public nes_waixing_a_device
-{
-public:
-	// construction/destruction
-	nes_waixing_a1_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
-
-	virtual void chr_cb(int start, int bank, int source) override;
-};
-
-
 // ======================> nes_waixing_b_device
 
 class nes_waixing_b_device : public nes_waixing_a_device
@@ -56,7 +44,18 @@ public:
 	// construction/destruction
 	nes_waixing_b_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
+	virtual void set_waixing_b_submapper(u8 val) override { m_submapper = val; }
+	virtual void waixing_write(offs_t offset, uint8_t data) override;
+	virtual void prg_cb(int start, int bank) override;
 	virtual void chr_cb(int start, int bank, int source) override;
+	virtual void pcb_reset() override;
+
+protected:
+	// device-level overrides
+	virtual void device_start() override ATTR_COLD;
+
+	u8 m_submapper;
+	u8 m_outer;
 };
 
 
@@ -92,7 +91,22 @@ public:
 	// construction/destruction
 	nes_waixing_e_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
+	virtual uint8_t read_l(offs_t offset) override;
+	virtual void write_l(offs_t offset, uint8_t data) override;
 	virtual void chr_cb(int start, int bank, int source) override;
+	virtual void chr_w(offs_t offset, uint8_t data) override;
+
+	virtual void pcb_reset() override;
+
+protected:
+	// device-level overrides
+	virtual void device_start() override ATTR_COLD;
+
+private:
+	bool gal_chr_is_ram(int bank) const;
+
+	uint8_t m_ram5000[0x1000];  // 4K of non-battery-backed RAM at $5000-$5fff
+	uint8_t m_gal;              // last CHR RAM command written to the GAL (see waixing.cpp)
 };
 
 
@@ -106,8 +120,11 @@ public:
 
 	virtual u8 read_l(offs_t offset) override;
 	virtual void write_l(offs_t offset, u8 data) override;
+	virtual void prg_cb(int start, int bank) override;
 
 protected:
+	u8 *exram_ptr(offs_t offset);
+
 	// construction/destruction
 	nes_waixing_f_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, u32 clock);
 };
@@ -346,13 +363,14 @@ protected:
 	// device-level overrides
 	virtual void device_start() override ATTR_COLD;
 
+	void update_prg();
+
 	uint8_t m_reg[4];
 };
 
 
 // device type definition
 DECLARE_DEVICE_TYPE(NES_WAIXING_A,     nes_waixing_a_device)
-DECLARE_DEVICE_TYPE(NES_WAIXING_A1,    nes_waixing_a1_device)
 DECLARE_DEVICE_TYPE(NES_WAIXING_B,     nes_waixing_b_device)
 DECLARE_DEVICE_TYPE(NES_WAIXING_C,     nes_waixing_c_device)
 DECLARE_DEVICE_TYPE(NES_WAIXING_D,     nes_waixing_d_device)

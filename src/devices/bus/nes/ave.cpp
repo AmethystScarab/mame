@@ -5,11 +5,13 @@
 
  NES/Famicom cartridge emulation for AVE PCBs
 
+ iNES mappers: 34, 79, 146, 234
+
 
  Here we emulate the following PCBs
 
    * AVE Nina-001 [mapper 34]
-   * AVE Nina-006/Nina-003/MB-91 [mapper 79]
+   * AVE Nina-006/Nina-003/MB-91 [mapper 79 & 146]
    * AVE Maxi 15 [mapper 234]
 
 
@@ -80,6 +82,10 @@ void nes_maxi15_device::pcb_reset()
 
  AVE NINA-001 board emulation
 
+ The registers are decoded at exactly 0x7ffd (1 bit of 32K PRG bank) and at 0x7ffe
+ and 0x7fff (4K CHR banks at PPU 0x0000 and 0x1000, 4 bits each). There are no
+ bus conflicts. NES 2.0 submapper 1 of mapper 34 selects this board.
+
  iNES: mapper 34
 
  Notice that in this board the bankswitch regs
@@ -118,6 +124,10 @@ void nes_nina001_device::write_m(offs_t offset, u8 data)
  Games: Krazy Kreatures, Poke Block, Puzzle, Pyramid,
  Solitaire, Ultimate League Soccer
 
+ The register is decoded at 0x4100-0x5fff wherever address bit 8 is set. Bit 3
+ selects the 32K PRG bank and bits 2-0 the 8K CHR bank. There are no bus conflicts.
+ Mapper 146 (Sachen 3015) is functionally identical.
+
  iNES: mapper 79
 
  In MAME: Supported.
@@ -131,7 +141,7 @@ void nes_nina006_device::write_l(offs_t offset, u8 data)
 	offset += 0x100;
 	if (BIT(offset, 8)) // $41xx, $43xx, ... $5fxx
 	{
-		prg32(data >> 3);
+		prg32(BIT(data, 3));
 		chr8(data & 7, CHRROM);
 	}
 }
@@ -142,24 +152,27 @@ void nes_nina006_device::write_l(offs_t offset, u8 data)
 
  Games: Maxi 15
 
+ Banking happens on the value on the bus when the CPU accesses 0xff80-0xff9f (outer
+ register, MOQq BBBb) or 0xffe8-0xfff7 (inner register, .cCC ...P). A read gives the
+ ROM byte; a write has an AND-type bus conflict with the ROM, so the register takes
+ the written value ANDed with the ROM byte. The Q and q bits, which select and disable
+ ROMs 3 and 4, are not emulated: the usual cart has only ROMs 1 and 2 fitted. The
+ lockout defeat register at 0xffc0-0xffdf is not emulated either (NESdev: not needed).
+
  iNES: mapper 234
 
  In MAME: Supported.
 
  -------------------------------------------------*/
 
-u8 nes_maxi15_device::read_h(offs_t offset)
+void nes_maxi15_device::latch(offs_t offset, u8 value)
 {
-	LOG("Maxi 15 read_h, offset: %04x\n", offset);
-
-	u8 temp = hi_access_rom(offset);
-
 	if ((offset >= 0x7f80 && offset < 0x7fa0) || (offset >= 0x7fe8 && offset < 0x7ff8))
 	{
 		int reg = BIT(offset, 6);
 		if (reg || !(m_reg[0] & 0x3f))    // inner banks always modifiable, outer banks locked once set
 		{
-			m_reg[reg] = temp;
+			m_reg[reg] = value;
 
 			u8 mode = !BIT(m_reg[0], 6);
 			u8 outer = m_reg[0] & (0x0e | mode);
@@ -168,6 +181,21 @@ u8 nes_maxi15_device::read_h(offs_t offset)
 			set_nt_mirroring(BIT(m_reg[0], 7) ? PPU_MIRROR_HORZ : PPU_MIRROR_VERT);
 		}
 	}
+}
+
+u8 nes_maxi15_device::read_h(offs_t offset)
+{
+	LOG("Maxi 15 read_h, offset: %04x\n", offset);
+
+	u8 temp = hi_access_rom(offset);
+	latch(offset, temp);
 
 	return temp;
+}
+
+void nes_maxi15_device::write_h(offs_t offset, u8 data)
+{
+	LOG("Maxi 15 write_h, offset: %04x, data: %02x\n", offset, data);
+
+	latch(offset, data & hi_access_rom(offset));
 }

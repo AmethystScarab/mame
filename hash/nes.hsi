@@ -654,7 +654,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="74bea652" sha1="ebcfae8ee711098b97ed6e1cf428af0fca8e2bbe" name="3-in-1 Supergun (Unl)">
-		<extrainfo>3 1 2 4</extrainfo>
+		<extrainfo>3 0 2 4</extrainfo>
 
 	</hash>
 	<hash crc32="dabcdc2f" sha1="26f42b9db5a285d8574f2228c0f859b8140c6e7b" name="3-in-1 [p1]">
@@ -1546,7 +1546,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="e616ff0a" sha1="b7c8e914ccce4b8bbd07b651d5ed0ec14752d189" name="Advanced Dungeons &amp; Dragons - Dragons of Flame (J)">
-		<extrainfo>1 0 8 16</extrainfo>
+		<extrainfo>1 2 8 16</extrainfo>
 
 	</hash>
 	<hash crc32="1e472e7a" sha1="c9056c8e07229240d626dd7a81b20fa2d0795847" name="Advanced Dungeons &amp; Dragons - Heroes of the Lance (J)">
@@ -3217,7 +3217,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="9273f18e" sha1="642a492a15bfdc8e7670140b15caeab271ee80c1" name="America Daitouryou Senkyo (J)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>1 0 8 16</extrainfo>
+		<extrainfo>1 2 8 16</extrainfo>
 
 	</hash>
 	<hash crc32="40e7e747" sha1="e8e1f3327ecfd81ecbea96d5a58af8cf6f0b481a" name="America Oudan Ultra Quiz - Shijou Saidai no Tatakai (J)">
@@ -5379,11 +5379,11 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="86acb36b" sha1="c77100ca6eabb0f0d10a516be2a7c4c50e2d3943" name="Banana (J) [hM03][p1][a1]">
-		<extrainfo>3 0 2 2</extrainfo>
+		<extrainfo>3 1 2 2</extrainfo>
 
 	</hash>
 	<hash crc32="de134f07" sha1="4ef2c4dad0897f326e2991d351903a98483bc3c0" name="Banana (J) [hM03][p1]">
-		<extrainfo>3 0 2 2</extrainfo>
+		<extrainfo>3 1 2 2</extrainfo>
 
 	</hash>
 	<hash crc32="e1dc9b54" sha1="84ea60c1fa43af37b2a20c1fefcb2d5182eaf3e8" name="Banana (J) [hM03]">
@@ -5771,7 +5771,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="bf7f54b4" sha1="2c0dadb3e0bbd9accfe681366a0ea8298eced161" name="Baseball Fighter (J)">
-		<extrainfo>4 0 16 16</extrainfo>
+		<extrainfo>4 2 16 16</extrainfo>
 
 	</hash>
 	<hash crc32="1f6ea423" sha1="a2e9e58d5e12a87beaf14ee6e485d0bd95e9876e" name="Baseball Simulator 1.000 (U)">
@@ -6362,7 +6362,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="83ea7b04" sha1="e521aab5156ee802d9a3d064580249e2011158fe" name="Battle Baseball (J)">
-		<extrainfo>4 0 32 0</extrainfo>
+		<extrainfo>4 2 32 0</extrainfo>
 
 	</hash>
 	<hash crc32="bcd7e5ea" sha1="3d81a4b7f59575bc51f384ea8b2cea1eeee8561c" name="Battle Beasts by Grimlick (Donkey Kong 3 Hack)">
@@ -6839,12 +6839,12 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="6c93377c" sha1="ce2a5ef736adc5edf7417609b0446e10b6e61c1f" name="Bee 52 (Camerica)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>71 0 4 0</extrainfo>
+		<extrainfo>71 1 4 0</extrainfo>
 
 	</hash>
 	<hash crc32="6643c55b" sha1="ee6b34f1737ef97da66cd3cb5a92956aaf9fbe6b" name="Bee 52 (Camerica)">
 		<status>Overdumped Image</status>
-		<extrainfo>71 0 4 0</extrainfo>
+		<extrainfo>71 1 4 0</extrainfo>
 
 	</hash>
 	<hash crc32="80a2efbe" sha1="cd7e55bbc119571ab2b43935b91808f5cdd3c38e" name="Beer-aga (Galaga Hack)">
@@ -7118,21 +7118,21 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="ccdcbfc6" sha1="00dfb78ac0e10f46bede9850636e2f3c6a305858" name="Big Nose Freaks Out (Camerica) (Aladdin)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>71 0 16 0</extrainfo>
+		<extrainfo>71 1 16 0</extrainfo>
 
 	</hash>
 	<hash crc32="5c02d3df" sha1="31557ab842d4a2623cf60bb827e9ed01e906209e" name="Big Nose Freaks Out (Camerica) (Aladdin)">
 		<status>Overdumped Image</status>
-		<extrainfo>71 0 16 0</extrainfo>
+		<extrainfo>71 1 16 0</extrainfo>
 
 	</hash>
 	<hash crc32="85b58336" sha1="ae4830cd4498d7e417e50701103421fc9fc6a86f" name="Big Nose Freaks Out (Camerica) [a1]">
 		<status>Overdumped Image</status>
-		<extrainfo>71 0 16 0</extrainfo>
+		<extrainfo>71 1 16 0</extrainfo>
 
 	</hash>
 	<hash crc32="5b2b72cb" sha1="93ad05eb932a11523aee76eb39681a199be166bd" name="Big Nose Freaks Out (Camerica) [a1]">
-		<extrainfo>71 0 16 0</extrainfo>
+		<extrainfo>71 1 16 0</extrainfo>
 
 	</hash>
 	<hash crc32="f5a6cb6d" sha1="c31f7c6d4fc67825edb2c9b9bdc5e58991a5fd68" name="Big Nose Mario (SMB1 Hack)">
@@ -7141,21 +7141,21 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="bd154c3e" sha1="f31824d16504b44948de2ce53fd10c0cfad3d41c" name="Big Nose the Caveman (Camerica)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>71 0 16 0</extrainfo>
+		<extrainfo>71 1 16 0</extrainfo>
 
 	</hash>
 	<hash crc32="90d3210a" sha1="0fc981d5be42406dfba57bb581bf6fd7448fb995" name="Big Nose the Caveman (Camerica)">
 		<status>Known Bad Image</status>
-		<extrainfo>71 0 16 0</extrainfo>
+		<extrainfo>71 1 16 0</extrainfo>
 
 	</hash>
 	<hash crc32="87e9f61f" sha1="280e150ff8274ee182d297ad44b5bd27b95438b9" name="Big Nose the Caveman (Camerica)">
 		<status>Overdumped Image</status>
-		<extrainfo>71 0 16 0</extrainfo>
+		<extrainfo>71 1 16 0</extrainfo>
 
 	</hash>
 	<hash crc32="eb498d70" sha1="5f319cb368f83d5ea63c532fa5c800aad6d643a4" name="Big Nose the Caveman (Camerica) [T+Pol_www.romhackzone.glt.pl]">
-		<extrainfo>71 0 16 0</extrainfo>
+		<extrainfo>71 1 16 0</extrainfo>
 
 	</hash>
 	<hash crc32="b29e4cf5" sha1="a72ad90cfa95ea61441cace92f1e6780382d8eba" name="Bigball (Arkanoid Hack)">
@@ -7680,7 +7680,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="99a62e47" sha1="7a7a71a08b19d3357ac59187eb108887831752b4" name="Black Bass 2, The (J)">
-		<extrainfo>2 0 8 0</extrainfo>
+		<extrainfo>2 1 8 0</extrainfo>
 
 	</hash>
 	<hash crc32="1d0f4d6b" sha1="9c3bcd2bf8224b158b6ff2e47b67cda66cb4ac39" name="Black Bass USA, The (U)">
@@ -7714,7 +7714,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="b04ba659" sha1="127c038c25aec70ca1822c92af6e45169ba3310b" name="Black Bass, The (J)">
-		<extrainfo>2 0 8 0</extrainfo>
+		<extrainfo>2 1 8 0</extrainfo>
 
 	</hash>
 	<hash crc32="4840fbcd" sha1="062217ad0200e75f083ac5c152be54082aea0c20" name="Black Mage Mario (SMB1 Hack)">
@@ -9537,7 +9537,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="8d77e5e6" sha1="d2332e93093c5acd2af8e3f1380459db09776329" name="Business Wars (J)">
-		<extrainfo>4 2 16 0</extrainfo>
+		<extrainfo>4 0 16 0</extrainfo>
 
 	</hash>
 	<hash crc32="ccc03440" sha1="d4702a831a398107d8f87bc93bd56c4d8ca78f2a" name="Buzz and Waldog (Prototype)">
@@ -11286,7 +11286,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="9992f445" sha1="f325b1369cc39b47729ee5b0aa61b11eeb60b94d" name="Championship Bowling (J)">
-		<extrainfo>3 1 2 4</extrainfo>
+		<extrainfo>3 0 2 4</extrainfo>
 
 	</hash>
 	<hash crc32="eac38105" sha1="252c80259dae00076c667f1bad9b54c2d32079b3" name="Championship Bowling (U)">
@@ -11486,7 +11486,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="0c47946d" sha1="4ba89ef5e844cbe869b185f5806c9856b9ee7573" name="Chibi Maruko-Chan - Uki Uki Shopping (J)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>19 0 8 16</extrainfo>
+		<extrainfo>19 1 8 16</extrainfo>
 
 	</hash>
 	<hash crc32="a508bc75" sha1="3a12e23b2c60b489a24d4084271ab48854934e58" name="Chibi Maruko-Chan - Uki Uki Shopping (J) [hM04]">
@@ -12189,11 +12189,11 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="f64cb545" sha1="01c683a1e83220a9b976a541aaa9b4b5b8febcfd" name="Chuugoku Senseijutsu (J)">
-		<extrainfo>2 0 8 0</extrainfo>
+		<extrainfo>2 1 8 0</extrainfo>
 
 	</hash>
 	<hash crc32="037006f7" sha1="c0babb7aa3d15f3fc66e017cd923c34eeda22c33" name="Chuugoku Taitei (Sachen)">
-		<extrainfo>116 8 16 16</extrainfo>
+		<extrainfo>116 10 16 16</extrainfo>
 
 	</hash>
 	<hash crc32="36ee572c" sha1="8e9d32796c316635f271c73d94d675750770541d" name="Chuuka Taisen (J)">
@@ -13177,7 +13177,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="a6648353" sha1="e526665ae3551990b1bf4ae52fafdb622b87c714" name="Conflict (J)">
-		<extrainfo>1 2 8 16</extrainfo>
+		<extrainfo>1 0 8 16</extrainfo>
 
 	</hash>
 	<hash crc32="32cf4307" sha1="754b1f27c3fcada8fac6871366146e0767a4ae37" name="Conflict (U)">
@@ -13698,7 +13698,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="70f31d2c" sha1="9e6ae492746ef9d142de17ff45a4722ce6e21425" name="Cosmic Spacehead (Camerica) (M4)">
-		<extrainfo>71 0 16 0</extrainfo>
+		<extrainfo>71 1 16 0</extrainfo>
 
 	</hash>
 	<hash crc32="9f2712df" sha1="f479c80513575f6ab71af1b7a12c221af7006b0c" name="Cosmic Wars (J)">
@@ -13898,7 +13898,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="c68363f6" sha1="003b7f1315f5ee0dc60c5f9d989ec8bab0811ed4" name="Crazy Climber (J)">
-		<extrainfo>180 1 8 0</extrainfo>
+		<extrainfo>180 0 8 0</extrainfo>
 
 	</hash>
 	<hash crc32="3fb1d48a" sha1="48daef81743a46679bb7a036c2169be8e35232a3" name="Crazy Coons in Cloud Land (SMB1 Hack)">
@@ -14299,7 +14299,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="67dfcf8e" sha1="d6c44378cca532091d85783fecf7a7a38dd491a7" name="Dai-2-Ji - Super Robot Taisen (Ch) [a1]">
-		<extrainfo>194 0 16 32</extrainfo>
+		<extrainfo>194 2 16 32</extrainfo>
 
 	</hash>
 	<hash crc32="ef5d403b" sha1="739a6e02558efd1608bb683aced2f02bb668e2af" name="Dai-2-Ji - Super Robot Taisen (Ch) [a2]">
@@ -14503,7 +14503,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="2537b3e6" sha1="e634f17660ee95a5cb968c9aa7a93034ae55ac89" name="Dance Xtreme - Prima (Unl)">
-		<extrainfo>34 1 16 0</extrainfo>
+		<extrainfo>34 0 16 0</extrainfo>
 
 	</hash>
 	<hash crc32="bd018f0f" sha1="68abe1e49c9e9ccea978a48232432c252e5912c0" name="Dancing Blocks (Sachen)">
@@ -14550,7 +14550,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="3eff62e4" sha1="73720228da40937db5ab037f8898450658312ec1" name="Dark Lord (J)">
-		<extrainfo>4 0 16 16</extrainfo>
+		<extrainfo>4 2 16 16</extrainfo>
 
 	</hash>
 	<hash crc32="4c352d7c" sha1="67ba0f099618b865e5e5003ca651393ae5a61c62" name="Dark Monk (SMB1 Hack)">
@@ -14606,7 +14606,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="0878a7ee" sha1="ace42a9ea6154ca814a87ee32e8bd9570410f0d4" name="Darkseed (Unl)">
-		<extrainfo>164 0 32 0</extrainfo>
+		<extrainfo>164 2 32 0</extrainfo>
 
 	</hash>
 	<hash crc32="66f6a39e" sha1="4be8094af62fb61ca492d8b1df800fddb8f92f0c" name="Darkwing Duck (E)">
@@ -15525,7 +15525,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="d1e50064" sha1="bd442a386741ee63c0dcbbd46b3f53fb60a6d45d" name="Dezaemon (J)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>1 0 8 0</extrainfo>
+		<extrainfo>1 2 8 0</extrainfo>
 
 	</hash>
 	<hash crc32="b0b08249" sha1="e340ddfa291cfd3e6873a3f4ad14a2c97bb6197b" name="Dezaemon (J) [T+Eng1.1_AGTP]">
@@ -15597,7 +15597,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="dfeb7e98" sha1="16ac71461fe3d5c902a6be0dd3efcc048dd3cf4a" name="Dian Shi Ma Li (Ch)">
-		<extrainfo>3 0 2 4</extrainfo>
+		<extrainfo>3 1 2 4</extrainfo>
 
 	</hash>
 	<hash crc32="3fd9bae7" sha1="0ed7816353f38ce08b3a0d017e0048e57f528f63" name="Dick &amp; Milk (Nuts &amp; Milk Hack)">
@@ -16485,7 +16485,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="50a1b3fe" sha1="13b0a34b255c7c2c97098b057a7958f95aa02818" name="Donkey Kong Jr. + Jr. Lesson (J)">
-		<extrainfo>0 1 1 1</extrainfo>
+		<extrainfo>0 0 1 1</extrainfo>
 
 	</hash>
 	<hash crc32="0504b007" sha1="a5030e82d7c38f2d51016d947cb29e6ff788367c" name="Donkey Kong Jr. Math (U)">
@@ -17296,7 +17296,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="dc45a886" sha1="e42b77a11280eb0c99d654cd08b8933fa8ddb999" name="Downtown Special - Kunio-kun no Jidaigeki Dayo Zenin Shuugou! (J)">
-		<extrainfo>4 0 8 16</extrainfo>
+		<extrainfo>4 2 8 16</extrainfo>
 
 	</hash>
 	<hash crc32="ef4db05e" sha1="dffcc794fe448406b6977d066e2aeafa7b5cb940" name="Dr Web (R)">
@@ -18363,7 +18363,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="9785c538" sha1="5932fb49dea8f09b6bb4ec0a1691485b9e62910e" name="Dragon Scroll - Yomigaerishi Maryuu (J) [hFFE][a1]">
-		<extrainfo>6 4 16 0</extrainfo>
+		<extrainfo>6 5 16 0</extrainfo>
 
 	</hash>
 	<hash crc32="c92aa406" sha1="dc98c14d0c5db4204d715ccc0fcb1103db52dd22" name="Dragon Scroll - Yomigaerishi Maryuu (J) [hFFE]">
@@ -19335,7 +19335,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="b786ab95" sha1="faecf3c6c169f8839bf3726c4e996d6298bee2e8" name="Dynamite Bowl (J)">
-		<extrainfo>3 1 2 4</extrainfo>
+		<extrainfo>3 0 2 4</extrainfo>
 
 	</hash>
 	<hash crc32="bde93999" sha1="08202b80a3178d827d1a09238066e531345cdb12" name="Dynowarz - The Destruction of Spondylus (U)">
@@ -20366,7 +20366,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="2470402b" sha1="2b1417c95fd68607401b27f145761a5c332fa600" name="Famicom Igo Nyuumon (J)">
-		<extrainfo>1 0 8 4</extrainfo>
+		<extrainfo>1 2 8 4</extrainfo>
 
 	</hash>
 	<hash crc32="d343c66a" sha1="31f5c7e3e4219134cd67e15e7c7b1b2ce4a4a2ec" name="Famicom Jump - Eiyuu Retsuden (J)">
@@ -20380,7 +20380,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="3f15d20d" sha1="1d7417d31e19b590afceb6a8a6e7b9cab9f9b475" name="Famicom Jump II - Saikyou no 7 Nin (J)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>153 130 32 0</extrainfo>
+		<extrainfo>153 131 32 0</extrainfo>
 
 	</hash>
 	<hash crc32="f76aa523" sha1="7348a4530054205925f3182aa5f12dd4d8a19410" name="Famicom Jump II - Saikyou no 7 Nin (J)">
@@ -20430,7 +20430,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="149c0ec3" sha1="782ac8e9c9073d4acc058164e6f5bcb6639b91e3" name="Famicom Shougi - Ryuuousen (J)">
-		<extrainfo>1 2 8 16</extrainfo>
+		<extrainfo>1 0 8 16</extrainfo>
 
 	</hash>
 	<hash crc32="58507bc9" sha1="947e5f3d386d2f4631facec26ce9a25fdffc4889" name="Famicom Top Management (J)">
@@ -20485,7 +20485,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="d0a9f4e1" sha1="008aad423dcdecca9fc6b3ba8362556750e10af5" name="Famicom Yakyuu Han (J)">
-		<extrainfo>1 0 8 16</extrainfo>
+		<extrainfo>1 2 8 16</extrainfo>
 
 	</hash>
 	<hash crc32="b9b7090a" sha1="9e29f4f3c49290210de2c7479adc6d61a212378d" name="Famicom Yarou Vol.1 7-in-1 (Unl)">
@@ -20527,7 +20527,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="0bb5b3a0" sha1="293866007dadf623f9775dcf26aff5f7cd64729a" name="Family Block (J)">
-		<extrainfo>66 1 8 4</extrainfo>
+		<extrainfo>66 0 8 4</extrainfo>
 
 	</hash>
 	<hash crc32="5b4c6146" sha1="8904a8bf6f667ed977f2121ac887c7fe0cb969f0" name="Family Boxing (J)">
@@ -20547,7 +20547,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="c247cc80" sha1="1c476c795cfc17e987c22ffd6f09baf1396ed2c9" name="Family Circuit '91 (J)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>19 2 32 16</extrainfo>
+		<extrainfo>19 3 32 16</extrainfo>
 
 	</hash>
 	<hash crc32="bbe2d09d" sha1="d6e9f3722cfa26cbc582649f197d780809f575ca" name="Family Circuit '91 (J)">
@@ -20592,7 +20592,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="87d7caf0" sha1="6a87e0e0a880692c42e78813ad969d6c6cdacb83" name="Family Computer - Othello (J)">
 		<status>Known Bad Image</status>
-		<extrainfo>3 1 2 1</extrainfo>
+		<extrainfo>3 0 2 1</extrainfo>
 
 	</hash>
 	<hash crc32="5069e103" sha1="baacf28606c91458cf9cd28152d6bfa0d03584c1" name="Family Computer - Othello (J)">
@@ -20722,7 +20722,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="6cca1c1f" sha1="bbe55e0446641404867ee1a800ca8ee33d09c682" name="Family Trainer - Daiundoukai (J)">
-		<extrainfo>3 0 2 4</extrainfo>
+		<extrainfo>3 1 2 4</extrainfo>
 
 	</hash>
 	<hash crc32="69ffb014" sha1="15eebde0c749244999aa26b1a5b92e5589b2dc1f" name="Family Trainer - Fuuun!! Takeshi Jou 2 (J)">
@@ -20744,11 +20744,11 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="bba58be5" sha1="a268031a553f9c61d5d4e023a4feac555b50a870" name="Family Trainer - Manhattan Police (J)">
-		<extrainfo>70 0 8 16</extrainfo>
+		<extrainfo>70 1 8 16</extrainfo>
 
 	</hash>
 	<hash crc32="370ceb65" sha1="43abfa9259b10d3b6ee84d39b6f24af7a71c85c4" name="Family Trainer - Meiro Daisakusen (J)">
-		<extrainfo>70 0 8 16</extrainfo>
+		<extrainfo>70 1 8 16</extrainfo>
 
 	</hash>
 	<hash crc32="e4a6e151" sha1="d72724b55be377d6d6663ff29a641593d07cf9cc" name="Family Trainer - Rairai Kyonsees (J) (Prototype)">
@@ -20770,7 +20770,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="8a12a7d9" sha1="05b791369a42e4999847374d3fe304d5678ad75c" name="Family Trainer - Totsugeki! Fuuun Takeshi-jou (J)">
-		<extrainfo>3 0 2 4</extrainfo>
+		<extrainfo>3 1 2 4</extrainfo>
 
 	</hash>
 	<hash crc32="2bb12708" sha1="75a4e45f0ef7c33208eb352ad55ce4c3a4ef7400" name="Famista '89 - Kaimaku Ban!! (J)">
@@ -20810,7 +20810,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="808606f0" sha1="df2acbd6f6f89aeff03881dd3f9fe5041de05468" name="Famista '91 (J)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>19 0 8 16</extrainfo>
+		<extrainfo>19 1 8 16</extrainfo>
 
 	</hash>
 	<hash crc32="ca8efc8a" sha1="a8df98ac250191a0c6bda97dce996ea18f9a078d" name="Famista '91 (J) [hM04]">
@@ -20824,7 +20824,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="6ec51de5" sha1="8f8b117f837c0d8c84efd678fb29346404e70bf6" name="Famista '92 (J)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>19 0 8 16</extrainfo>
+		<extrainfo>19 1 8 16</extrainfo>
 
 	</hash>
 	<hash crc32="4192d82c" sha1="f3cc67c2709380242dcc29bf47120e0985dfb947" name="Famista '92 (J) [hM04]">
@@ -20834,7 +20834,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="adffd64f" sha1="d8e653e5ddb20843b4220a4ebb8c9eaf7a72ea00" name="Famista '93 (J)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>19 0 8 16</extrainfo>
+		<extrainfo>19 1 8 16</extrainfo>
 
 	</hash>
 	<hash crc32="f9115386" sha1="940bd73517ec1dcfeeba197b93b99da86895f835" name="Famista '93 (J) [hM04]">
@@ -20863,7 +20863,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="429103c9" sha1="0b5dd380a4656fde916e5a5d99dac64a7d9b71fb" name="Famista '94 (J)">
-		<extrainfo>19 0 8 16</extrainfo>
+		<extrainfo>19 1 8 16</extrainfo>
 
 	</hash>
 	<hash crc32="e02858df" sha1="531af975f86a95cccc19eee959caee8f2f5fb349" name="Famista '99 (Famista '89 Hack)">
@@ -20880,36 +20880,36 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="f732c8fd" sha1="102bd0c46c5718c979eb1ac387dade6f6eb70ee4" name="Fantastic Adventures of Dizzy, The (Camerica) (Aladdin)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>71 0 16 0</extrainfo>
+		<extrainfo>71 1 16 0</extrainfo>
 
 	</hash>
 	<hash crc32="2f96d152" sha1="c9ed420116549fe381929c32e364592d51d2a952" name="Fantastic Adventures of Dizzy, The (Camerica) (Aladdin)">
 		<status>Known Bad Image</status>
-		<extrainfo>71 0 16 0</extrainfo>
+		<extrainfo>71 1 16 0</extrainfo>
 
 	</hash>
 	<hash crc32="1ab2c772" sha1="6b40ffe47d319b181cfa85c0a5b6c22cc9157911" name="Fantastic Adventures of Dizzy, The (Camerica) (Aladdin)">
 		<status>Known Bad Image</status>
-		<extrainfo>71 0 16 0</extrainfo>
+		<extrainfo>71 1 16 0</extrainfo>
 
 	</hash>
 	<hash crc32="38fbcc85" sha1="90196dbfc5337b56106b33891c5fa4b2267f3732" name="Fantastic Adventures of Dizzy, The (Camerica)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>71 0 16 0</extrainfo>
+		<extrainfo>71 1 16 0</extrainfo>
 
 	</hash>
 	<hash crc32="723e2348" sha1="639802b78564807974941dc7597830a71d470c22" name="Fantastic Adventures of Dizzy, The (Camerica)">
 		<status>Known Bad Image</status>
-		<extrainfo>71 0 16 0</extrainfo>
+		<extrainfo>71 1 16 0</extrainfo>
 
 	</hash>
 	<hash crc32="1b8ad001" sha1="d09eb45d4876ac237b3cabca2f525f45973fe05f" name="Fantastic Adventures of Dizzy, The (Camerica)">
 		<status>Overdumped Image</status>
-		<extrainfo>71 0 16 0</extrainfo>
+		<extrainfo>71 1 16 0</extrainfo>
 
 	</hash>
 	<hash crc32="a7e32b78" sha1="bbe0b5a1b861e43a42aaa89b53163aaefdb73ad4" name="Fantastic Adventures of Dizzy, The (Camerica) [T+Pol]">
-		<extrainfo>71 0 16 0</extrainfo>
+		<extrainfo>71 1 16 0</extrainfo>
 
 	</hash>
 	<hash crc32="66c1c556" sha1="6908d948034884afcbec793950e0d70baafd3314" name="Fantasy Fighter (SMB1 Hack)">
@@ -21390,7 +21390,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="637134e8" sha1="334dcb823b480957057c2b4c72686be26823c12a" name="Fighting Hero (Unl)">
-		<extrainfo>193 0 8 32</extrainfo>
+		<extrainfo>193 1 8 32</extrainfo>
 
 	</hash>
 	<hash crc32="fd55dd33" sha1="d6200aa0c8262b4acddd057c0348fd69e418fb48" name="Fighting Hero III (Unl)">
@@ -22438,7 +22438,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="56a0d271" sha1="d09ef8127c64cbe817b45df33c4d43e7b441e381" name="Final Fantasy V (Unl)">
-		<extrainfo>164 0 32 0</extrainfo>
+		<extrainfo>164 2 32 0</extrainfo>
 
 	</hash>
 	<hash crc32="143b4d30" sha1="236020d728b2a796c787d5a37c6345eace833d7c" name="Final Fantasy VII (NJ063) (Ch)">
@@ -22908,7 +22908,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="1773f76d" sha1="6dbee225f87271f033bfa165e3560267249a3d11" name="Flipull - An Exciting Cube Game (J)">
-		<extrainfo>3 1 2 4</extrainfo>
+		<extrainfo>3 0 2 4</extrainfo>
 
 	</hash>
 	<hash crc32="245ac713" sha1="9fbd73d0bf1cc2c40aa0730573958bcb3b8e695a" name="Flower Mario (SMB1 Hack)">
@@ -23614,7 +23614,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="3f2450ea" sha1="144fb9e5987fe252b8948ddaaa58988df6b7517f" name="Galactic Crusader (Sachen)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>146 0 2 4</extrainfo>
+		<extrainfo>146 1 2 4</extrainfo>
 
 	</hash>
 	<hash crc32="777385a8" sha1="df024711cd92e98e1c4ec6b05811aa7f695686ad" name="Galactic Crusader (Sachen) [U]">
@@ -23820,7 +23820,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="2e2acae9" sha1="31e7a573cb6409774901ebbe8f09b056d34d0225" name="Gambler Jiko Chuushin Ha - Mahjong Game (J)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>1 2 16 0</extrainfo>
+		<extrainfo>1 0 16 0</extrainfo>
 
 	</hash>
 	<hash crc32="053c4699" sha1="a21e2d47646cc9217cfbf63e3095d620ada9dc2f" name="Gambler Jiko Chuushin Ha - Mahjong Game (J) [p1][hM02]">
@@ -23833,7 +23833,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="85f12d37" sha1="8ef9616555199946c3224125337016fc5cf13e95" name="Gambler Jiko Chuushin Ha 2 (J)">
-		<extrainfo>1 0 16 0</extrainfo>
+		<extrainfo>1 2 16 0</extrainfo>
 
 	</hash>
 	<hash crc32="2e4ccf46" sha1="3a8834cf57af003c8de9f1baf2230252980b45d7" name="Game Genie (Unl) (V1.5A)">
@@ -24696,7 +24696,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="8d5b77c0" sha1="d8621c9aa030e60453d74e2ec1cee1b45dd1b855" name="Ginga Eiyuu Densetsu (J)">
-		<extrainfo>1 2 8 16</extrainfo>
+		<extrainfo>1 0 8 16</extrainfo>
 
 	</hash>
 	<hash crc32="8a368744" sha1="55c7b3672c12cd57e7ccdd30d7a31675c65c7a9d" name="Ginga no Sannin (J)">
@@ -25521,7 +25521,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="1829616a" sha1="2b5889759b3c5afcf00f58f15879507945b33d57" name="Gorby no Pipeline Daisakusen (J)">
-		<extrainfo>3 0 2 4</extrainfo>
+		<extrainfo>3 1 2 4</extrainfo>
 
 	</hash>
 	<hash crc32="f8c00215" sha1="09ec0c472817b03e9647f0306d08affd9b9984b3" name="Gorilla Man, The (J)">
@@ -26985,7 +26985,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="81b7f1a8" sha1="dbc81f0bfc06e116c4ac2c05566b96769ab2f055" name="Heisei Tensai Bakabon (J)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>19 0 8 16</extrainfo>
+		<extrainfo>19 1 8 16</extrainfo>
 
 	</hash>
 	<hash crc32="a20c4bab" sha1="d54540482763a68ba1838a2b88fd8860f600a5b4" name="Heisei Tensai Bakabon (J)">
@@ -27655,7 +27655,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="0446282f" sha1="11fbe907d0d2ee7a85405a3ce72ab195b2ca663e" name="Highway Star (J) [hM02][p1]">
-		<extrainfo>2 0 8 0</extrainfo>
+		<extrainfo>2 1 8 0</extrainfo>
 
 	</hash>
 	<hash crc32="24a0aa1a" sha1="fb6f1525813699cb72f1a4b999ee3d2d713498a2" name="Highway Star (J) [hM02]">
@@ -28185,7 +28185,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="3057b904" sha1="fb1b06f9510bf0bfd6fdc431b71c82ade4f34bd8" name="Home Run Nighter - Pennant League!! (J)">
-		<extrainfo>1 0 8 16</extrainfo>
+		<extrainfo>1 2 8 16</extrainfo>
 
 	</hash>
 	<hash crc32="ffd9db04" sha1="3f6d6fc56ebb64984497916647a9ac41bcf8db0e" name="Hon Shougi - Naitou 9 Dan Shougi Hiden (J)">
@@ -28236,7 +28236,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="a4e935df" sha1="eb57555ee85606ff4974b37fbb5bcc6747bd2fee" name="Honoo no Doukyuuji - Dodge Danpei 2 (J)">
-		<extrainfo>69 0 16 32</extrainfo>
+		<extrainfo>69 2 16 32</extrainfo>
 
 	</hash>
 	<hash crc32="bf888b75" sha1="eae5205928d3fa2afea0374b457d2bb91e414d99" name="Hook (E) [!p]">
@@ -29257,7 +29257,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="d8e33d5f" sha1="96ba63c379d8f237a48ffd06e9fbcde8c2c84f67" name="Ice Hockey (J) (FDS Conversion)">
-		<extrainfo>0 1 2 1</extrainfo>
+		<extrainfo>0 0 2 1</extrainfo>
 
 	</hash>
 	<hash crc32="ae64ca77" sha1="40262a15ee764f676e752c90626a2f61da370a1a" name="Ice Hockey (U)">
@@ -29399,7 +29399,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="9b208ab1" sha1="5b26c00ad2cd2db81783ab039b2142e7b0a784d8" name="Igo - Kyuu Roban Taikyoku (J)">
-		<extrainfo>1 0 2 4</extrainfo>
+		<extrainfo>1 2 2 2</extrainfo>
 
 	</hash>
 	<hash crc32="455ca7de" sha1="e9755edf12f465903eefcda2672469af84e8b884" name="Igo Meikan (J)">
@@ -29458,7 +29458,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="89550500" sha1="b23c30b3a50f775391b2b2a6176f66da9d8be75b" name="Igo Shinan (J)">
-		<extrainfo>0 0 2 1</extrainfo>
+		<extrainfo>0 1 2 1</extrainfo>
 
 	</hash>
 	<hash crc32="1a57ec08" sha1="d22ed137de56e01076b2de2923374197a3515fcc" name="Ikari (J) [o1]">
@@ -30660,7 +30660,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="0973f714" sha1="304f98ae79cbc933ef23ad419c5e518af1006669" name="Jangou (J)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>1 0 16 0</extrainfo>
+		<extrainfo>1 2 16 0</extrainfo>
 
 	</hash>
 	<hash crc32="588348a0" sha1="d01c2621853d233aa9ccf67ce7a3f138958ac593" name="Jangou (J)">
@@ -30938,7 +30938,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="22d6d5bd" sha1="123045d5e8cf038c2fd396bd266eef96daff9bcd" name="Jikuu Yuuden - Debias (J)">
-		<extrainfo>4 0 8 8</extrainfo>
+		<extrainfo>4 1 8 8</extrainfo>
 
 	</hash>
 	<hash crc32="7156cb4d" sha1="03a111ac0fa78e566814d6f9296454bfc34e7b3c" name="Jim Henson's Muppet Adventure - Chaos at the Carnival (U)">
@@ -31126,7 +31126,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="a56208a0" sha1="62a7b899f2ca01bdbd0c6a0024c34c6f9afb6228" name="Jongbou (J)">
-		<extrainfo>2 1 8 0</extrainfo>
+		<extrainfo>2 0 8 0</extrainfo>
 
 	</hash>
 	<hash crc32="303d4371" sha1="95aa585f630282e7a21b070732f9aa0d3171e150" name="Jordan Vs Bird - One On One (U)">
@@ -31322,7 +31322,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="cd883cdc" sha1="5cd83bfe609a4006b60af364482d721c47ee34e9" name="Joypad Test Cartridge (U)">
-		<extrainfo>0 1 1 1</extrainfo>
+		<extrainfo>0 0 1 1</extrainfo>
 
 	</hash>
 	<hash crc32="7d7656a7" sha1="b9c2fffeb764031630b77886b299883059c5b9b7" name="Joystick Demo (PD)">
@@ -31352,7 +31352,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="8dcd9486" sha1="fab900149946d2c61b7afa477e372293e3b3ce70" name="Jumbo Ozaki no Hole in One Professional (J)">
-		<extrainfo>1 0 8 4</extrainfo>
+		<extrainfo>1 2 8 4</extrainfo>
 
 	</hash>
 	<hash crc32="73898aa2" sha1="c375ffbb5fd867624cada421f97dbb20513d0c97" name="Jumpin' Kid - Jack to Mame no Ki Monogatari (J)">
@@ -31644,7 +31644,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="7172f3d4" sha1="6f3bda5fae9b6ed4ea4572307da8c0ce13ecec47" name="Kabushiki Doujou (J)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>1 0 16 0</extrainfo>
+		<extrainfo>1 2 16 0</extrainfo>
 
 	</hash>
 	<hash crc32="1c12f7a0" sha1="a9af4a45e21149c9f22d3b62468be2d0e02c0fd0" name="Kaettekita! Gunjin Shougi - Nanya Sore! (J)">
@@ -33434,7 +33434,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="83cb743f" sha1="f6959620dd3fcd7e2591f63bea97c54b0df4e954" name="Koushien (J)">
-		<extrainfo>1 0 8 16</extrainfo>
+		<extrainfo>1 2 8 16</extrainfo>
 
 	</hash>
 	<hash crc32="637fe65c" sha1="c1f4cfefeded884071a5bbfb8943c8d488de4117" name="Krazy Kreatures (AVE)">
@@ -33529,7 +33529,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="a4dcdf28" sha1="0ccdbe9a46edf08384bac113af9866d4ee89b925" name="Kujaku Ou 2 (J)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>1 0 8 16</extrainfo>
+		<extrainfo>1 2 8 16</extrainfo>
 
 	</hash>
 	<hash crc32="464a67ab" sha1="de7c148907f5e2de0946fa2022688be1ad5999a3" name="Kung Fu (E)">
@@ -34609,7 +34609,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="82f204ae" sha1="6fe7375f426a8f90514808ddec87baf15f151f35" name="Liang Shan Ying Xiong (NJ023) (Ch)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>163 0 128 0</extrainfo>
+		<extrainfo>163 3 128 0</extrainfo>
 
 	</hash>
 	<hash crc32="c4bc85a2" sha1="351edb1fdf4bce3bfc56d1eecccfdc6a21bb14f4" name="Life Force (U)">
@@ -34680,22 +34680,22 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="9e379698" sha1="52621d0e0782cd94b588b50860a6de3da94f2e63" name="Linus Spacehead's Cosmic Crusade (Camerica) (Aladdin) (M4)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>71 0 16 0</extrainfo>
+		<extrainfo>71 1 16 0</extrainfo>
 
 	</hash>
 	<hash crc32="62757046" sha1="59d90a34f306f2abf707dc6eb58cbca606a5a192" name="Linus Spacehead's Cosmic Crusade (Camerica) (Aladdin) (M4)">
 		<status>Known Bad Image</status>
-		<extrainfo>71 0 16 0</extrainfo>
+		<extrainfo>71 1 16 0</extrainfo>
 
 	</hash>
 	<hash crc32="cecbe5f6" sha1="8ba9eb99b278d07028875a7c10aa5e052645b6f4" name="Linus Spacehead's Cosmic Crusade (Camerica) (Aladdin) (M4)">
 		<status>Overdumped Image</status>
-		<extrainfo>71 0 32 0</extrainfo>
+		<extrainfo>71 1 32 0</extrainfo>
 
 	</hash>
 	<hash crc32="c6ffbc66" sha1="aa3a185361b02f1fd8f2f2341fca85df90400dbd" name="Linus Spacehead's Cosmic Crusade (Camerica) (Aladdin) (M4)">
 		<status>Overdumped Image</status>
-		<extrainfo>71 0 16 0</extrainfo>
+		<extrainfo>71 1 16 0</extrainfo>
 
 	</hash>
 	<hash crc32="513eb779" sha1="e25dd3ea07926db514766bdc1e3895700cca4ad8" name="Lion King III, The - Simon and Pumba (Unl)">
@@ -35125,7 +35125,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="77efb5d9" sha1="6d082c627d6503d6701f5d79a5f15be3e86f2dbd" name="Long Zhu Ying Xiong (Ch)">
-		<extrainfo>4 0 16 0</extrainfo>
+		<extrainfo>4 2 16 0</extrainfo>
 
 	</hash>
 	<hash crc32="c12e6e2a" sha1="d45382e08ca78d37e106144731624ebc88e9237a" name="Loony Pool (Lunar Ball Hack)">
@@ -35465,7 +35465,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="9d21fe96" sha1="6d23562a4606e7f4fe5f1a620b7ff0a79c20ab41" name="Lupin Sansei - Pandora no Isan (J)">
-		<extrainfo>4 0 8 8</extrainfo>
+		<extrainfo>4 1 8 8</extrainfo>
 
 	</hash>
 	<hash crc32="de66b28c" sha1="48bb81865c11fbeef4edf2a4fdc53880f9b898ff" name="M Mario (SMB1 Hack)">
@@ -35756,7 +35756,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="c3aacd94" sha1="0ebad09bc9b47a4164d2f7c5b04517b3ed3b5c66" name="Magic Carpet 1001 (Unl)">
-		<extrainfo>3 0 2 4</extrainfo>
+		<extrainfo>3 1 2 4</extrainfo>
 
 	</hash>
 	<hash crc32="cab40a6c" sha1="b7a6d5782d0266a7e2f1c1c1c159a41fb122bd08" name="Magic Cubes (Sachen)">
@@ -36081,7 +36081,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="98ccc9ab" sha1="0aef90cd34800d03e7e49a8d14833c92510cabdf" name="Maharaja (J)">
-		<extrainfo>68 0 8 16</extrainfo>
+		<extrainfo>68 2 8 16</extrainfo>
 
 	</hash>
 	<hash crc32="b8dad5d2" sha1="18df013db350787d0f3d83ade33ea92b097bd54b" name="Mahjan Samit Kabukicho Hen (Sachen-Hacker)">
@@ -36170,7 +36170,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="85bc0777" sha1="9dccb2f1338a0a7afaed2d682bf35285980e6fa6" name="Mahjong Club - Nagatachou (J)">
-		<extrainfo>4 0 32 0</extrainfo>
+		<extrainfo>4 2 32 0</extrainfo>
 
 	</hash>
 	<hash crc32="099b8caa" sha1="a7a0a94b705e5b19e600b587805e5c66d013ae6f" name="Mahjong RPG Dora Dora Dora (J)">
@@ -37620,7 +37620,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="61061352" sha1="026360e0deb05c1a3b04f987cbd5a4051b004175" name="Master Shooter (CN-26) (Unl)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>112 0 2 4</extrainfo>
+		<extrainfo>112 1 2 4</extrainfo>
 
 	</hash>
 	<hash crc32="6c9d917f" sha1="b64aeeb8a1a8d82602c0a1ea4555e3746f98bcb8" name="Masuzoe Youichi - Asa Made Famicom (J)">
@@ -37671,7 +37671,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="abaa6f78" sha1="644b0b587b1da22989efc5e4fc1b62222a9cce05" name="Matsumoto Tooru no Kabushiki Hisshou Gaku (J)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>1 0 16 0</extrainfo>
+		<extrainfo>1 2 16 0</extrainfo>
 
 	</hash>
 	<hash crc32="ca5b38d4" sha1="50318d4102cdf34b60ef45607ec979cfbe4422b3" name="Matsumoto Tooru no Kabushiki Hisshou Gaku (J) [p1]">
@@ -39058,7 +39058,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="0554394f" sha1="c637142dcac082c2273525a327895594de26f95d" name="Metal Fighter (Joy Van)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>79 0 2 4</extrainfo>
+		<extrainfo>79 1 2 4</extrainfo>
 
 	</hash>
 	<hash crc32="7739672e" sha1="caac1e829133851648ba7c7cd6eaa7d26a464999" name="Metal Fighter (Sachen)">
@@ -39265,7 +39265,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="b4735fac" sha1="4ac3e9136706ab009ee2f68c7d009422d73ee8e8" name="Metal Slader Glory (J)">
-		<extrainfo>5 2 32 64</extrainfo>
+		<extrainfo>5 0 32 64</extrainfo>
 
 	</hash>
 	<hash crc32="bcacbbf4" sha1="a51518866864020c3b22f2e700db07e26eed76c7" name="Metal Storm (U)">
@@ -39561,7 +39561,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="3691c120" sha1="869bacf32c403e92d0feaad853f97a9e6d386bf3" name="Mezase Top Pro - Green ni Kakeru Yume (J)">
-		<extrainfo>18 0 16 16</extrainfo>
+		<extrainfo>18 2 16 16</extrainfo>
 
 	</hash>
 	<hash crc32="f0725025" sha1="a1b24e6d5c7ae54926438fd91ff498178e33bf82" name="Mi Hun Che (Ch)">
@@ -39689,27 +39689,27 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="24ba12dd" sha1="c7fd43041fc139dc8440c95c28a0115dc79e2691" name="Micro Machines (Camerica) (Aladdin)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>71 0 16 0</extrainfo>
+		<extrainfo>71 1 16 0</extrainfo>
 
 	</hash>
 	<hash crc32="3c33ecc2" sha1="868064d3080e2de61abc4e2a6f79b7a8e2b4f6d1" name="Micro Machines (Camerica) (Aladdin)">
 		<status>Known Bad Image</status>
-		<extrainfo>71 0 16 0</extrainfo>
+		<extrainfo>71 1 16 0</extrainfo>
 
 	</hash>
 	<hash crc32="9235b57b" sha1="84908dc67c29be8600184fc5525b9227c8aff830" name="Micro Machines (Camerica)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>71 0 16 0</extrainfo>
+		<extrainfo>71 1 16 0</extrainfo>
 
 	</hash>
 	<hash crc32="622dca9a" sha1="6e744e7416f708b5b3574694c42094e0c5239504" name="Micro Machines (Camerica) [o1]">
 		<status>Known Bad Image</status>
-		<extrainfo>71 0 16 0</extrainfo>
+		<extrainfo>71 1 16 0</extrainfo>
 
 	</hash>
 	<hash crc32="6b523bd7" sha1="8a670df6cf4bc9f99f2fb9932633a0164891122f" name="Micro Machines (Camerica)">
 		<status>Known Bad Image</status>
-		<extrainfo>71 0 16 0</extrainfo>
+		<extrainfo>71 1 16 0</extrainfo>
 
 	</hash>
 	<hash crc32="dd429e37" sha1="66790dc3ff9b7dcca8dd3734d9046e7c64522b76" name="Midget Mario V1.2 (SMB1 Hack)">
@@ -39722,12 +39722,12 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="e62e3382" sha1="b74802f946d99a83e8e223b6f987e6482a8ec41d" name="MiG 29 - Soviet Fighter (Camerica)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>71 0 8 0</extrainfo>
+		<extrainfo>71 1 8 0</extrainfo>
 
 	</hash>
 	<hash crc32="51f906bf" sha1="cdafe7623302cbd08002e26fa15c1b57b7ecdbee" name="MiG 29 - Soviet Fighter (Camerica)">
 		<status>Overdumped Image</status>
-		<extrainfo>71 0 8 0</extrainfo>
+		<extrainfo>71 1 8 0</extrainfo>
 
 	</hash>
 	<hash crc32="6be314e0" sha1="a8c92b1a2935108d565b5f22801cf2ac58144099" name="Might and Magic (J)">
@@ -40134,7 +40134,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="77512388" sha1="2246f8fcad97c5a370fcc57db37437478b2b4da7" name="Millipede (J)">
-		<extrainfo>0 1 1 1</extrainfo>
+		<extrainfo>0 0 1 1</extrainfo>
 
 	</hash>
 	<hash crc32="ae52dece" sha1="e95319304a88d63f832782f4cec70518568e0672" name="Millipede (U)">
@@ -40267,7 +40267,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="555042b3" sha1="23e2f2ea74532766eabb7df574d01c4540de6617" name="Minna no Taabou no Nakayoshi Daisakusen (J)">
-		<extrainfo>3 0 2 4</extrainfo>
+		<extrainfo>3 1 2 4</extrainfo>
 
 	</hash>
 	<hash crc32="b3974d6c" sha1="f3d84dcc9fdb48e3f638e4f3205384721c10f710" name="Miracle Piano Teaching System, The (E)">
@@ -40554,7 +40554,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="f312d1de" sha1="35c157a921156e47fd3f6573d150f54108d0edfc" name="MMC3 (Revision A) Differences Test by Shay Green (17 Oct 2005) (PD)">
-		<extrainfo>4 0 1 0</extrainfo>
+		<extrainfo>4 64 1 0</extrainfo>
 
 	</hash>
 	<hash crc32="6f30b876" sha1="0e971e2ccad1dee51a0c305ed38fafd2e6ca3b41" name="MMC3 (Revision B) Differences Test by Shay Green (17 Oct 2005) (PD)">
@@ -40931,7 +40931,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="cfd4a281" sha1="a516f40dcbb75d2200469a1d2939d7497dbd879d" name="Money Game, The (J)">
-		<extrainfo>1 0 8 4</extrainfo>
+		<extrainfo>1 2 8 4</extrainfo>
 
 	</hash>
 	<hash crc32="57e904f1" sha1="8e09b7b65e6ca7fc47fff62658242acd5a9d2bcd" name="Monica V0.9 by Macbee (Chuuka Taisen Hack)">
@@ -41224,7 +41224,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="9e356267" sha1="9666209b62fcf572ea695baa2b8979ad06e69cfd" name="Morita Kazuo no Shougi (J)">
-		<extrainfo>1 0 8 1</extrainfo>
+		<extrainfo>1 2 8 1</extrainfo>
 
 	</hash>
 	<hash crc32="faad108a" sha1="a50e374a492bb4ef7ceeb17275c538b87e6858df" name="Morskoy Boy (R)">
@@ -41930,7 +41930,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="0aa1d73d" sha1="7e1702d690eac996d9e8af29357ca7a5a76f5c6c" name="NBA Jam 2 (Unl)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>4 0 8 32</extrainfo>
+		<extrainfo>4 2 8 32</extrainfo>
 
 	</hash>
 	<hash crc32="8c73a47b" sha1="4b739296d0e766e660740eca6f3f05ecceb9b167" name="Ne Zha Chuan Qi (NJ036) (Ch)">
@@ -42308,7 +42308,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="77d59400" sha1="f9cef229e6ced8b355b7235916bf0b38b65e8a72" name="NES PowerPad Test Cart (U)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>0 1 1 1</extrainfo>
+		<extrainfo>0 0 1 1</extrainfo>
 
 	</hash>
 	<hash crc32="9ee39b89" sha1="ce8b387e9504f120e2a803970d0879579ba96675" name="NES Quine Demo (PD)">
@@ -42321,7 +42321,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="3747cd0b" sha1="7a1998273ea98bdb7b9216b55491d3c2b0223f7c" name="NES Test Cart (Official Nintendo) (U)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>0 1 2 1</extrainfo>
+		<extrainfo>0 0 2 1</extrainfo>
 
 	</hash>
 	<hash crc32="5d0cfb5c" sha1="62e592fa78fc449f9fa94a0a4cdf93b3cccbd511" name="NES Test Program by Memblers (PD)">
@@ -42670,7 +42670,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="fa2a8a8b" sha1="81e361d6cb0b74dc6abca976b23626577a115b30" name="Nichibutsu Mahjong 3 - Mahjong G Men (J)">
-		<extrainfo>4 0 8 16</extrainfo>
+		<extrainfo>4 2 8 16</extrainfo>
 
 	</hash>
 	<hash crc32="1677d21d" sha1="d6629f40ee344ee0657f8c48132f480c1faae424" name="Nigel Mansell's World Championship Challenge (E) (M5)">
@@ -43856,7 +43856,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="2f4fbbb3" sha1="b52d7f4515665c523333993658becd48be1325df" name="NTF2 Test Cart (PD)">
-		<extrainfo>0 1 2 1</extrainfo>
+		<extrainfo>0 0 2 1</extrainfo>
 
 	</hash>
 	<hash crc32="6dda8440" sha1="a1d4b0cc4211ee2f9afb11192072724f64ddb0d6" name="Nude Barbie (Beta 1) (Barbie Hack)">
@@ -46267,7 +46267,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="9c4589e3" sha1="c10c526f26273c4a1e180b968665910b74c78b86" name="Othello (HES)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>0 1 1 1</extrainfo>
+		<extrainfo>0 0 1 1</extrainfo>
 
 	</hash>
 	<hash crc32="1d62f13f" sha1="000fc8e835ae78f0a41552912787d993bf9eae7e" name="Othello (HES)">
@@ -46281,7 +46281,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="743963a4" sha1="7d7e94c6f1d42477175f2172b772f6b766536f32" name="Othello (J) (FDS Conversion)">
-		<extrainfo>0 1 2 1</extrainfo>
+		<extrainfo>0 0 2 1</extrainfo>
 
 	</hash>
 	<hash crc32="699fa085" sha1="27ca5ba9e920c21a6906f57e266a253c39ffadb6" name="Othello (U)">
@@ -47204,7 +47204,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="6096f84e" sha1="60fc5fa5b5accaf3aefeba73fc8bffd3c4dae558" name="Pegasus 5-in-1 (Golden Five)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>104 0 80 0</extrainfo>
+		<extrainfo>104 1 80 0</extrainfo>
 
 	</hash>
 	<hash crc32="9b78dff5" sha1="bad382331c30b22a908da4bff2759c25113cc26a" name="Pegasus 5-in-1 (Golden Five)">
@@ -47237,7 +47237,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="dae467a8" sha1="2fe5c29ef0afb6b0f578a68867c888e0e23b6884" name="Penguin-kun Wars (J) [p1]">
-		<extrainfo>0 1 2 1</extrainfo>
+		<extrainfo>0 0 2 1</extrainfo>
 
 	</hash>
 	<hash crc32="b41d96fb" sha1="8bc9ff906a26be6ad7bcdf2f1f2fafebc24f5379" name="Penguin-kun Wars (J) [T+Eng1.012_Penguin]">
@@ -47253,7 +47253,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="02d7976b" sha1="a0def24a28af4de20ca4059d5e8ed27d1b5f6b6a" name="Penguin-kun Wars (J)">
-		<extrainfo>0 1 2 1</extrainfo>
+		<extrainfo>0 0 2 1</extrainfo>
 
 	</hash>
 	<hash crc32="404e1fc4" sha1="6cdce5014353bb42835a000be71e3b73c41611a9" name="Penguin-kun Wars by Rinkaku (Hack)">
@@ -47545,7 +47545,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="e8000bf7" sha1="7f238a869d5cc12859c0b06587f94b16dfed346c" name="Pinball (GC)">
-		<extrainfo>0 0 1 1</extrainfo>
+		<extrainfo>0 1 1 1</extrainfo>
 
 	</hash>
 	<hash crc32="de01497a" sha1="3c5687101382a8deae7d70b6062c0484bd0ad420" name="Pinball (J-AC)">
@@ -47678,7 +47678,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="58152b42" sha1="1e49bda9cef18f6f5c2da34910487713d364aa68" name="Pipe 5 (Sachen)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>142 0 4 2</extrainfo>
+		<extrainfo>142 1 4 2</extrainfo>
 
 	</hash>
 	<hash crc32="bce77871" sha1="7ae08f6c3358b434d2782d646482fa37bc3fbe21" name="Pipe Dream (U)">
@@ -47991,11 +47991,11 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="19c1ed51" sha1="0e78391d3036d71c8241db0206e7747f4e3892dc" name="Poker III (Sachen)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>243 1 4 8</extrainfo>
+		<extrainfo>243 0 4 8</extrainfo>
 
 	</hash>
 	<hash crc32="f56d6d46" sha1="11419605c942fc9dcb4f93a329c13e3bd5d62403" name="Poker III (Sachen) [a1]">
-		<extrainfo>243 1 4 8</extrainfo>
+		<extrainfo>243 0 4 8</extrainfo>
 
 	</hash>
 	<hash crc32="5298cecd" sha1="3da342ed1991116f60f13e5f4001fdecad09daf7" name="Poker III 5 in 1 (Sachen) [U][a1]">
@@ -48004,7 +48004,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="be17e27b" sha1="b89d7fdedd0ad1a8530ae9eccf6b71c15d40725c" name="Poker III 5-in-1 (Sachen)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>150 0 4 8</extrainfo>
+		<extrainfo>150 1 4 8</extrainfo>
 
 	</hash>
 	<hash crc32="d63b82f9" sha1="c96c1fbfaa4061b18a12b0af074a795e4637c76c" name="Poker III 5-in-1 (Sachen) [U]">
@@ -48242,7 +48242,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="27738241" sha1="455c9e9975c8db58de87d3396d062efa6f57422a" name="Popeye no Eigo Asobi (J)">
-		<extrainfo>0 1 1 1</extrainfo>
+		<extrainfo>0 0 1 1</extrainfo>
 
 	</hash>
 	<hash crc32="c2525c98" sha1="57c3a912edb138005f3ad05e95da750bcc78eeae" name="Popoyan Super Mario Bros by Mikachu (SMB1 Hack)">
@@ -48258,7 +48258,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="32e02cb8" sha1="7b269bca835dcbc41b3f828aa5183d3c16158b80" name="Port Test Cartridge (U)">
-		<extrainfo>0 1 2 0</extrainfo>
+		<extrainfo>0 0 2 0</extrainfo>
 
 	</hash>
 	<hash crc32="7c596e45" sha1="5be6ee745225269ffd69d0f194c40343cddde442" name="Portopia Renzoku Satsujin Jiken (J)">
@@ -48440,7 +48440,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="2af8332a" sha1="e6ec5a626cac4dedfefdb5406dcacbf960d7b7b5" name="Pravila Dorozhnogo Dvizheniya (R)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>0 1 2 0</extrainfo>
+		<extrainfo>0 0 2 0</extrainfo>
 
 	</hash>
 	<hash crc32="978e19fc" sha1="6ab379ce2c96555a7f44e6ff7f3b0d4b2bfc6162" name="Predator (E)">
@@ -48617,7 +48617,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="4d7d896c" sha1="498ec045bce56d7ac0672c6589542a93c492de82" name="Pro Action Replay (E) (No Cart Present) (V1.2 RevB)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>0 1 2 1</extrainfo>
+		<extrainfo>0 0 2 1</extrainfo>
 
 	</hash>
 	<hash crc32="178dba78" sha1="a65b6bc48e05c4cdbd221b811a17fbf174b45632" name="Pro Action Replay (E) (REVA)">
@@ -48627,7 +48627,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="0c5f3973" sha1="f5aa5aa404c30dbf79a05193e2931fff61fa02a5" name="Pro Action Replay (E) (V1.2 RevB)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>0 0 2 1</extrainfo>
+		<extrainfo>0 1 2 1</extrainfo>
 
 	</hash>
 	<hash crc32="41f9e0aa" sha1="82be2d76a4ee8c391d673977a27180c4283e55b1" name="Pro Sport Hockey (U)">
@@ -49091,12 +49091,12 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="2969a5c1" sha1="bced3c0d179920324c0a387f259447cada4448ec" name="Pyramid (AVE) (PRG0)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>79 0 1 1</extrainfo>
+		<extrainfo>79 1 1 1</extrainfo>
 
 	</hash>
 	<hash crc32="2472c3eb" sha1="95e86c77bb25dd23152d34fd0bb562a09535be43" name="Pyramid (AVE) (PRG1)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>79 0 1 1</extrainfo>
+		<extrainfo>79 1 1 1</extrainfo>
 
 	</hash>
 	<hash crc32="6053e792" sha1="ad4ef5097acd6008ff2ba2b94ade67b145e65b05" name="Pyramid (AVE) (PRG1) [hFFE]">
@@ -49111,7 +49111,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="8e41fe6f" sha1="653e9f5361da28434f5581e64d61181145a797b4" name="Pyramid (AVE) (PRG1)">
 		<status>Overdumped Image</status>
-		<extrainfo>79 0 1 2</extrainfo>
+		<extrainfo>79 1 1 2</extrainfo>
 
 	</hash>
 	<hash crc32="25519e6e" sha1="ceba88c5d485c31d303d399522bb211bc99c9fb1" name="Pyramid (Sachen-Hacker)">
@@ -49182,7 +49182,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="4752bd5e" sha1="9a7465cffabefc507a12f5cf07866aa7b6b067ea" name="Qi Guo Da Zhan (NJ029) (Ch)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>163 1 64 0</extrainfo>
+		<extrainfo>163 3 64 0</extrainfo>
 
 	</hash>
 	<hash crc32="8fb5608c" sha1="47d2963e43830e4178843ddb1ab4d3c6cbb346af" name="Qi Wang - Chinese Chess (Ch) [p1]">
@@ -49341,7 +49341,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="e1526228" sha1="eb576dcde0bfa51f039d153804b8614d53b8f0c9" name="Quest of Ki, The (J)">
-		<extrainfo>4 0 8 8</extrainfo>
+		<extrainfo>4 1 8 8</extrainfo>
 
 	</hash>
 	<hash crc32="a6e39d53" sha1="d4b8fb206384dc6a972f17fb0781c3008d2e80e9" name="Quest of Zelda V0.15 (Zelda Hack)">
@@ -52396,7 +52396,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="07d92c31" sha1="68d5e40403ff09fae745fdf419f9244c9bca507a" name="RPG Jinsei Game (J)">
-		<extrainfo>118 0 16 16</extrainfo>
+		<extrainfo>118 2 16 16</extrainfo>
 
 	</hash>
 	<hash crc32="01901d84" sha1="350f235925d8e2ffc7daf5476933867f4e042de8" name="Rumble and Frenzy (Mario Bros Hack)">
@@ -53220,7 +53220,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="8e62d229" sha1="e15b9fafd48fc61a2a0921fc85fa017697308417" name="Sansuu 1 Nen - Keisan Game (J)">
-		<extrainfo>185 128 2 1</extrainfo>
+		<extrainfo>185 129 2 1</extrainfo>
 
 	</hash>
 	<hash crc32="892cbbc2" sha1="0c4e40e7bdd45c51bfbfefa7cb75e375b78833fb" name="Sansuu 2 Nen - Keisan Game (J)">
@@ -53359,7 +53359,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="3b1a7eef" sha1="8c79c09a31470072eb0ed70e58d147b7b2cd0960" name="Satsujin Club (J)">
-		<extrainfo>4 2 8 16</extrainfo>
+		<extrainfo>4 0 8 16</extrainfo>
 
 	</hash>
 	<hash crc32="903ad15f" sha1="3f2071bec5b2dc1df335026ae1d6dd96c33c87c0" name="Saw Scale Demo (PD)">
@@ -53814,7 +53814,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="c22bc87b" sha1="6d528e12f8ec36c747c0e18311b812d83972dbb2" name="Seiryaku Simulation - Inbou no Wakusei - Shancara (J)">
-		<extrainfo>4 0 8 16</extrainfo>
+		<extrainfo>4 2 8 16</extrainfo>
 
 	</hash>
 	<hash crc32="5b0b26be" sha1="a85752e289dae2d4780833643b5fd850cbf655bc" name="Sekiryuuou (J) [hFFE][p1]">
@@ -54181,7 +54181,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="bdc124e5" sha1="e777176abf8d118ebab9b7a64ac69ff9f93dcc8a" name="Shaffle Fight (J)">
-		<extrainfo>4 0 16 0</extrainfo>
+		<extrainfo>4 2 16 0</extrainfo>
 
 	</hash>
 	<hash crc32="f24d4f03" sha1="c981e1f48f1f220f5430f63b574420530d82a5d4" name="Shang Gu Shen Jian (Ch)">
@@ -54215,7 +54215,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="38bfc03c" sha1="815a09cd230f05dcade137b5510cb4f51ab9f28f" name="Shanghai 2 (J)">
-		<extrainfo>2 1 8 0</extrainfo>
+		<extrainfo>2 0 8 0</extrainfo>
 
 	</hash>
 	<hash crc32="a2eab4c6" sha1="b5d969b85e827917b74e922fc9c90f69150b0ba5" name="Shanghai Tycoon (Unl)">
@@ -54269,7 +54269,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="1cf48ef1" sha1="ce7436159e3bb96b196f6c45d5f32da5abd01796" name="Sheng Hen Pao (AKA Twin Loud Cannon) (Ch)">
-		<extrainfo>3 0 2 4</extrainfo>
+		<extrainfo>3 1 2 4</extrainfo>
 
 	</hash>
 	<hash crc32="dddc56b8" sha1="6ca388dd7d31edcc88726ab45413d6c3e4bcf039" name="Sheng Huo Lie Zhuan (Ch)">
@@ -54618,7 +54618,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="917d9262" sha1="9af46c87a2fd46c5c46dc91e902cf7ff4337a220" name="Shufflepuck Cafe (J)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>2 0 8 0</extrainfo>
+		<extrainfo>2 1 8 0</extrainfo>
 
 	</hash>
 	<hash crc32="94c3f5fb" sha1="d62f9c2564bdfb015f3a7b371b93c94ed8ab15fb" name="Shufflepuck Cafe (J) [T+Eng1.0_MadHacker]">
@@ -54641,7 +54641,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="8dedea07" sha1="0c6ba8cc8bfd6cb767d12349c845280124d5612b" name="Shui Guo Li (Ch) [a1]">
-		<extrainfo>3 0 2 4</extrainfo>
+		<extrainfo>3 1 2 4</extrainfo>
 
 	</hash>
 	<hash crc32="472929db" sha1="7589e40e503612aa0a3713fb2182d9a95a0efbb4" name="Shui Guo Li (Ch)">
@@ -54650,7 +54650,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="4e7a6181" sha1="bcb273c1d62b2eff3836a3717b8ceaabec66dc8c" name="Shui Guo Li (Ch)">
-		<extrainfo>3 0 2 4</extrainfo>
+		<extrainfo>3 1 2 4</extrainfo>
 
 	</hash>
 	<hash crc32="524af6e8" sha1="4fe38b7ddb605b1e6cbb8d42a7b9f53cec175a33" name="Shui Hu Shen Shou (NJ019) (Ch)">
@@ -56023,7 +56023,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="9aea1383" sha1="6267ec75d2e7e50926f34a5bbf5021ed373a27ea" name="Soccer (J) (FDS Conversion)">
-		<extrainfo>0 1 2 1</extrainfo>
+		<extrainfo>0 0 2 1</extrainfo>
 
 	</hash>
 	<hash crc32="657f7875" sha1="a54e246f1c4e7336ed71aed2656288d943c6e36c" name="Soccer (JU)">
@@ -56639,7 +56639,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="318e5502" sha1="1dd2261be16add4ec4c3118aee1f0cfe3c3f0db9" name="Sonic 3D Blast 6 (Unl)">
-		<extrainfo>187 0 16 32</extrainfo>
+		<extrainfo>121 0 16 32</extrainfo>
 
 	</hash>
 	<hash crc32="9b803838" sha1="1df31040a2630a7a2254879f82ae96b0b5362b3e" name="Sonic Bros (SMB1 Hack) [a1]">
@@ -56736,7 +56736,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="684afccd" sha1="8f5199f68b3b1cd7d5d2d65e747ecb57e1e1c5aa" name="Space Hunter (J)">
-		<extrainfo>3 0 2 4</extrainfo>
+		<extrainfo>3 1 2 4</extrainfo>
 
 	</hash>
 	<hash crc32="d9c093b1" sha1="f663d004bea0fe0518fb8b2e3a9070e1ef1d39f4" name="Space Invaders (J)">
@@ -56768,7 +56768,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="ad9c63e2" sha1="a906b9e67f0ffcfabb36c9b7140bc2cba9e1f5a3" name="Space Shadow (J)">
-		<extrainfo>70 0 4 16</extrainfo>
+		<extrainfo>70 1 4 16</extrainfo>
 
 	</hash>
 	<hash crc32="2220e14a" sha1="ee36b29bdb4bd81043dc2b7bd273665f8ced6da9" name="Space Shuttle Project (U)">
@@ -57063,7 +57063,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="46fd7843" sha1="e535c353c90c0866b8afc681b938d3717d9ee049" name="Splatter House - Wanpaku Graffiti (J)">
-		<extrainfo>19 0 8 16</extrainfo>
+		<extrainfo>19 1 8 16</extrainfo>
 
 	</hash>
 	<hash crc32="0abdd5ca" sha1="8b62b3fc95957f52d146e7bc3c90ab33c4005aec" name="Spot (J)">
@@ -58270,7 +58270,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="ddcfb058" sha1="73468642e5e0f3d3aee47949945c39c1f02cfe78" name="Street Fighter Zero 2 '97 (Unl)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>187 0 16 64</extrainfo>
+		<extrainfo>121 0 16 64</extrainfo>
 
 	</hash>
 	<hash crc32="51844a5c" sha1="6473cb5279237bb860cc20bad80ebe2f60465977" name="Street Fighter Zero 2 '97 (Unl)">
@@ -58383,12 +58383,12 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="3a990ee0" sha1="e9c997cb9d2829385f2822551ee03a2e794e97a3" name="Stunt Kids (Camerica)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>71 0 8 0</extrainfo>
+		<extrainfo>71 1 8 0</extrainfo>
 
 	</hash>
 	<hash crc32="86c2e77d" sha1="c17fdd6cba3a5702e2728b61c953b31c7dd3d4f8" name="Stunt Kids (Camerica)">
 		<status>Overdumped Image</status>
-		<extrainfo>71 0 8 0</extrainfo>
+		<extrainfo>71 1 8 0</extrainfo>
 
 	</hash>
 	<hash crc32="72feb09b" sha1="56468ac0f1aeb3aac4457049a026e9e78d63f3f7" name="Subcon 2000 (Final) (SMB2 Hack)">
@@ -58417,7 +58417,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="6733607a" sha1="d1db84222573f0b1da0a0ed52c1792622e1d8700" name="Subor V3.0 (R)">
-		<extrainfo>15 0 32 0</extrainfo>
+		<extrainfo>15 1 32 0</extrainfo>
 
 	</hash>
 	<hash crc32="41ef9ac4" sha1="3b71320b8bbe46b44cb95735a1bed948db4e436a" name="Subor V4.0 (Ch)">
@@ -58772,7 +58772,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="bcf5fb25" sha1="7a8c5c1ab49aed7a560d9728e8e2fa6bf0add77c" name="Super Arabian (J) [p3]">
-		<extrainfo>0 1 1 1</extrainfo>
+		<extrainfo>0 0 1 1</extrainfo>
 
 	</hash>
 	<hash crc32="9c8348f3" sha1="cc181e0848377b85e5dee87a63a0405f8b29ca50" name="Super Arabian (J) [T+Por]">
@@ -58780,7 +58780,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="908505ee" sha1="d3f03cef09f84284af3fa6dd95a7057e9b7ea33d" name="Super Arabian (J)">
-		<extrainfo>0 1 1 1</extrainfo>
+		<extrainfo>0 0 1 1</extrainfo>
 
 	</hash>
 	<hash crc32="70c5c41e" sha1="3428bd674903235f8ecc7405a3fab8259af2df04" name="Super ASCII Brothers (Final) (SMB1 Hack)">
@@ -59213,7 +59213,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="f17486df" sha1="52fd2fea0bea02c0b530b2afe167724f6449c3c8" name="Super Chinese 3 (J)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>1 2 8 16</extrainfo>
+		<extrainfo>1 0 8 16</extrainfo>
 
 	</hash>
 	<hash crc32="e948d135" sha1="c0c2c9ae08a8a0e4fbafb79d6306609ae51e6359" name="Super Chinese 3 (J)">
@@ -59586,7 +59586,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="8434b263" sha1="d9068273001ec473a085e7295b4bd99344094941" name="Super Dyna'mix Badminton (J)">
 		<status>Overdumped Image</status>
-		<extrainfo>0 1 2 1</extrainfo>
+		<extrainfo>0 1 2 2</extrainfo>
 
 	</hash>
 	<hash crc32="08e11357" sha1="bee749b86214cec21e1cebbe916b039890ac997d" name="Super Dyna'mix Badminton (J)">
@@ -59685,7 +59685,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="8199ea40" sha1="59a8f38d8ddcabf70437c369b1a7d54866bc4ac9" name="Super Gun 20-in-1 [p1]">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>214 0 4 4</extrainfo>
+		<extrainfo>214 1 4 4</extrainfo>
 
 	</hash>
 	<hash crc32="3b868d09" sha1="c3b9d7fc781e632ba241578a0a5a82c22e18062d" name="Super Hario Bros V4.46 (SMB2 Hack) [a1]">
@@ -60975,7 +60975,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="b035db95" sha1="e40fddc25aa93588f17fd9b01579fd9c84a8c19f" name="Super Mario Bros. (J) (FDS Conversion)">
-		<extrainfo>0 1 2 1</extrainfo>
+		<extrainfo>0 0 2 1</extrainfo>
 
 	</hash>
 	<hash crc32="f21af99c" sha1="5aa663e64aa32602c8ae82c0bbd4ea279ef1a346" name="Super Mario Bros. (PC10)">
@@ -61428,11 +61428,11 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="29068fb5" sha1="eb9939b0a369f48b64037529389969446ec5c51f" name="Super Mario Bros. 2 (J) (FDS Conversion)">
-		<extrainfo>3 3 2 1</extrainfo>
+		<extrainfo>3 2 2 1</extrainfo>
 
 	</hash>
 	<hash crc32="281326ed" sha1="dc8ddb78cbb575623b701954df951f05e81388ea" name="Super Mario Bros. 2 (J) (Kaiser) [p1]">
-		<extrainfo>142 0 8 0</extrainfo>
+		<extrainfo>142 1 8 0</extrainfo>
 
 	</hash>
 	<hash crc32="4f9bf9bc" sha1="60916e985d317b4f15d56ed328bfa43720b18ed4" name="Super Mario Bros. 2 (J) (LF36) [p1]">
@@ -61444,7 +61444,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="52387646" sha1="d8b0d44821403cded1318e4c279ddb17ae8b01f3" name="Super Mario Bros. 2 (Prototype)">
-		<extrainfo>1 2 8 0</extrainfo>
+		<extrainfo>1 0 8 0</extrainfo>
 
 	</hash>
 	<hash crc32="57ac67af" sha1="43ac7c7aaf1846ead7b544302bb9131e4964fd32" name="Super Mario Bros. 2 (U) (PRG0)">
@@ -62433,15 +62433,15 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="3e81dd67" sha1="e0bbe3502aa0a0a77088225d3bb7449a544b653f" name="Super Robin Hood [p1]">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>71 0 4 0</extrainfo>
+		<extrainfo>71 1 4 0</extrainfo>
 
 	</hash>
 	<hash crc32="d793eb0a" sha1="966eca4bbc819fd761ecd641a5fb3f615d5601ce" name="Super Robin Hood [p1][t1]">
-		<extrainfo>71 0 4 0</extrainfo>
+		<extrainfo>71 1 4 0</extrainfo>
 
 	</hash>
 	<hash crc32="3c97f7e4" sha1="1db9d1cb578f4cd01892bc6b0f65b7cd8235aab6" name="Super Robin Hood [p1][t2]">
-		<extrainfo>71 0 4 0</extrainfo>
+		<extrainfo>71 1 4 0</extrainfo>
 
 	</hash>
 	<hash crc32="9f5138cb" sha1="cb22ad7975fe4be7fe576ea6f8f1467415bd2421" name="Super Rugby (J)">
@@ -62506,7 +62506,7 @@ license:CC0-1.0
 	<hash crc32="1f1326d4" sha1="ce1b236ed0eac133a3de5411aef57228220885ef" name="Super Sonic 5 (Unl)">
 		<status>GoodNES Verified Image</status>
 		<year>1997</year>
-		<extrainfo>4 0 16 32</extrainfo>
+		<extrainfo>121 0 16 32</extrainfo>
 
 	</hash>
 	<hash crc32="f50bfdfe" sha1="af725f26a418bb64a606e57718f7f42e98f1798b" name="Super Sonic 5 (Unl) [f1]">
@@ -63317,7 +63317,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="48f0419b" sha1="a934245bbee4c13fc150edf98c931584f1176837" name="Taiwan Mahjong 16 (Sachen) [p1]">
-		<extrainfo>3 1 2 4</extrainfo>
+		<extrainfo>3 0 2 4</extrainfo>
 
 	</hash>
 	<hash crc32="96674676" sha1="309f40c857ff8c19a57ac6aa4e115b36549e181f" name="Taiwan Mahjong 16 (Sachen) [U]">
@@ -63740,7 +63740,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="e63d9193" sha1="9d22023f55e608687776b53e27e016bb5f81caa6" name="Tanigawa Kouji no Shougi Shinan 3 (J)">
-		<extrainfo>1 0 8 0</extrainfo>
+		<extrainfo>1 2 8 0</extrainfo>
 
 	</hash>
 	<hash crc32="3836eeac" sha1="47b019360f011b0fdde9203e5ea1eb023d5c3dc8" name="Tanigawa Kouji no Shougi Shinan II (J)">
@@ -63790,7 +63790,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="2061772a" sha1="3a8d19e15566ca78c390854ca97f5527e54da879" name="Tantei Jinguuji Saburou - Toki no Sugiyuku Mama ni (J)">
-		<extrainfo>2 0 8 0</extrainfo>
+		<extrainfo>2 1 8 0</extrainfo>
 
 	</hash>
 	<hash crc32="268e39d0" sha1="784d6534d57aa7236e6194f0cb72decfaf788dcb" name="Tantei Jinguuji Saburou - Yokohamakou Renzoku Satsujin Jiken (J)">
@@ -63829,7 +63829,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="dad34ee6" sha1="b6904bec7af8e4e526073dd1752d60494e7e21e1" name="Tao (J)">
-		<extrainfo>1 2 8 16</extrainfo>
+		<extrainfo>1 0 8 16</extrainfo>
 
 	</hash>
 	<hash crc32="60037099" sha1="1c83843a00293053f1f09cedfd19ab65990b236f" name="Tao of 007, The by Quietust (PD) [a1]">
@@ -67239,7 +67239,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="0115eaf0" sha1="2f12de06f8f37101eab791a3b7f51dfd475e0af6" name="Tetris (J) (REV0)">
 		<status>Known Bad Image</status>
-		<extrainfo>3 1 2 4</extrainfo>
+		<extrainfo>3 1 2 2</extrainfo>
 
 	</hash>
 	<hash crc32="ee2f0cf2" sha1="ed3a3debe12f21987807b24f69bcb0de7d4d814f" name="Tetris (J) (REV0)">
@@ -68547,7 +68547,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="2447e03b" sha1="2185f8f3d0fd282c034dc397ae3301de76139eb8" name="Top Striker (J)">
-		<extrainfo>19 0 8 16</extrainfo>
+		<extrainfo>19 1 8 16</extrainfo>
 
 	</hash>
 	<hash crc32="ed6344a6" sha1="5e5588a2880fd1fc06bd868a60747c45dbc71c31" name="Topsy Turtle (SMB1 Hack) [a1]">
@@ -68755,7 +68755,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="ab4083bb" sha1="1903f3c614e54c0aa4ede740909d7b3c791fa514" name="Toy Story (Unl)">
-		<extrainfo>4 0 8 16</extrainfo>
+		<extrainfo>219 0 8 16</extrainfo>
 
 	</hash>
 	<hash crc32="3b3705a6" sha1="99b05c3b90bfaaea2aac649bb1d83878a7bd9e4f" name="Track &amp; Field (PC10)">
@@ -69103,12 +69103,12 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="972d08c5" sha1="c8221914b4f67d01023befd3c0f8b438e40a9199" name="Tsuppari Wars (J)">
-		<extrainfo>1 0 8 16</extrainfo>
+		<extrainfo>1 2 8 16</extrainfo>
 
 	</hash>
 	<hash crc32="5a18f611" sha1="77241a57cb0b40d9ecac451f86198abbacbc717c" name="Tsuri Kichi Sanpei - Blue Marlin Hen (J)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>2 0 8 0</extrainfo>
+		<extrainfo>2 1 8 0</extrainfo>
 
 	</hash>
 	<hash crc32="c993258f" sha1="a6549d22f934206e81b51d75bf771e65e545432e" name="Tsuri Kichi Sanpei - Blue Marlin Hen (J) [p1]">
@@ -69332,7 +69332,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="ee7e61de" sha1="bbd06b0b70c22f4196d27888c3f0313f610bf9de" name="U-Force Test Cartridge (U)">
-		<extrainfo>0 1 2 1</extrainfo>
+		<extrainfo>0 0 2 1</extrainfo>
 
 	</hash>
 	<hash crc32="56f05853" sha1="dde1a3900e54047afdb65c5e48b0480639e98f7e" name="U-four-ia - The Saga (E) (Prototype)">
@@ -69602,7 +69602,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="eced5899" sha1="71884320d2965f74c7b380dc023d88ead93ad746" name="Ultimate Mortal Kombat 4 (Unl)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>4 0 8 32</extrainfo>
+		<extrainfo>121 0 8 32</extrainfo>
 
 	</hash>
 	<hash crc32="09ff878c" sha1="7f87d120c9e12ad9df984d999a0e7c02b9cc4275" name="Ultimate Muscle - Team Aho vs Generation X (Kinnikuman - Muscle Tag Match Hack)">
@@ -70028,11 +70028,11 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="bcf71726" sha1="94b521f5498098026826f6f9fd7dafbf4f337064" name="Urusei Yatsura - Lum no Wedding Bell (J) [a1][T+Fre]">
-		<extrainfo>101 1 2 4</extrainfo>
+		<extrainfo>87 1 2 4</extrainfo>
 
 	</hash>
 	<hash crc32="8442b86c" sha1="98fb5c152850dc5d8ec298d66420ee6e356d5af7" name="Urusei Yatsura - Lum no Wedding Bell (J) [a1]">
-		<extrainfo>101 1 2 4</extrainfo>
+		<extrainfo>87 1 2 4</extrainfo>
 
 	</hash>
 	<hash crc32="c2b6202e" sha1="a5cf6afd59f8800f68ba14d69c4288152f8d183d" name="Urusei Yatsura - Lum no Wedding Bell (J) [hM03]">
@@ -70112,7 +70112,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="a58a8da1" sha1="1ad0d85866c887fa924c890e3e1adbc0a9f5f0b2" name="Ushio to Tora - Shinen no Daiyou (J)">
-		<extrainfo>4 0 8 32</extrainfo>
+		<extrainfo>4 2 8 32</extrainfo>
 
 	</hash>
 	<hash crc32="20c5d187" sha1="dc1f84680b755d429d7e2779caba1d2986582f30" name="Utsurun Desu (J)">
@@ -70420,7 +70420,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="cfed8d78" sha1="a683214116eb3ce42a25cd0fe53710badf040c82" name="Volleyball (J) (FDS Conversion)">
-		<extrainfo>0 1 2 1</extrainfo>
+		<extrainfo>0 0 2 1</extrainfo>
 
 	</hash>
 	<hash crc32="a70c088b" sha1="92b570c3cf9a6f708febc268e2b61ca255c6a5ff" name="Volleyball (PC10)">
@@ -70486,7 +70486,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="c7edbc2e" sha1="e4414c160c7e91136c62d99154336035e5636eeb" name="Volshebnaya Palitra (R)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>13 0 2 0</extrainfo>
+		<extrainfo>13 1 2 0</extrainfo>
 
 	</hash>
 	<hash crc32="26ea03e8" sha1="17b7957ee7686475d037709a9aa9e524dc0b5e03" name="VRAM Access &amp; Internal Read Buffer Operation Test by Shay Green (15 Sep 2005) (PD)">
@@ -70633,7 +70633,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="1dc0f740" sha1="97e7e61eecb73cb1ea0c15ae51e65ea56301a685" name="Wagyan Land 2 (J)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>19 0 16 16</extrainfo>
+		<extrainfo>19 1 16 16</extrainfo>
 
 	</hash>
 	<hash crc32="f8b27c0c" sha1="638386bee0084576bbd3577a26529ab55f6196ea" name="Wagyan Land 2 (J)">
@@ -70651,7 +70651,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="d323b806" sha1="3d554f55411ab2ddd1a87e7583e643970db784f3" name="Wagyan Land 3 (J)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>19 0 16 32</extrainfo>
+		<extrainfo>19 1 16 32</extrainfo>
 
 	</hash>
 	<hash crc32="bc0ea438" sha1="162f5c462dcdc04f4b1fbe4dafcf72a91b99f441" name="Wagyan Land 3 (J)">
@@ -70938,7 +70938,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="dc621dd1" sha1="489d246754897678dfc1ea7b96c03006f559e276" name="Warehouse No. 18 (R)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>0 1 1 1</extrainfo>
+		<extrainfo>0 0 1 1</extrainfo>
 
 	</hash>
 	<hash crc32="2e1b043f" sha1="549bfb2c5c603c51386ff06d736019181f05e7be" name="Wario Bros (Don Doko Don Hack)">
@@ -71645,7 +71645,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="553ad67c" sha1="57dc11b1ef8f1874725fe10814f8355459b05d60" name="Winning Goal 5 (Unl)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>4 0 8 16</extrainfo>
+		<extrainfo>4 2 8 16</extrainfo>
 
 	</hash>
 	<hash crc32="52880295" sha1="14c46252ad24ee5c219a37e906751fea3fc0497f" name="Winter Games (U) (PRG0)">
@@ -71665,7 +71665,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="d898a900" sha1="ea068d20512105d1d5da480a2544cede58baa630" name="Wisdom Boy (Ch)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>3 0 2 4</extrainfo>
+		<extrainfo>3 1 2 4</extrainfo>
 
 	</hash>
 	<hash crc32="b1b16b8a" sha1="bb40175966f18efad8d82bebea3d4d8444a133e6" name="Wit's (J)">
@@ -72677,7 +72677,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="028374f2" sha1="e233507d20777ecd6fa9c8d1d6a2017a12f62466" name="Yamamura Misa Suspense - Kyouto Zaiteku Satsujin Jiken (J)">
-		<extrainfo>4 0 8 16</extrainfo>
+		<extrainfo>4 2 8 16</extrainfo>
 
 	</hash>
 	<hash crc32="3f111334" sha1="dadd73eb11a87590ba4b8af90e0a45e05848ce80" name="Yang Jia Jiang - Yang's Troops (Ch)">
@@ -72700,7 +72700,7 @@ license:CC0-1.0
 	</hash>
 	<hash crc32="8baa5ff2" sha1="7fb74587be559b531c28f06cbe5fdd692711822c" name="Yie Ar Kung-Fu (J) (V1.2)">
 		<status>GoodNES Verified Image</status>
-		<extrainfo>0 0 1 1</extrainfo>
+		<extrainfo>0 1 1 1</extrainfo>
 
 	</hash>
 	<hash crc32="bca40b8d" sha1="66f9b86b347570eae9a317d0084be645bd48a127" name="Yie Ar Kung-Fu (J) (V1.2)">
@@ -73059,8 +73059,8 @@ license:CC0-1.0
 		<extrainfo>66 1 8 4</extrainfo>
 
 	</hash>
-	<hash crc32="6bc65d7e" sha1="82dcc6650b17cd6cefc837753986c7e150a5714a" name="Youkai Kurabu (J)">
-		<extrainfo>66 1 8 4</extrainfo>
+	<hash crc32="6bc65d7e" sha1="82dcc6650b17cd6cefc837753986c7e150a5714a" name="Youkai Club (J)">
+		<extrainfo>140 1 8 4</extrainfo>
 
 	</hash>
 	<hash crc32="a9115bc1" sha1="f459a9ad6f841169e0210436ceb06b1395169eab" name="Young Chivalry (Ch)">
@@ -73225,7 +73225,7 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="37b62d04" sha1="5d6997b11ed701f2085288af4d1b6e8e99f35736" name="Ys III - Wanderers From Ys (J)">
-		<extrainfo>118 0 16 16</extrainfo>
+		<extrainfo>118 2 16 16</extrainfo>
 
 	</hash>
 	<hash crc32="6242c14a" sha1="434c4ad7d3f8f7b25b6b6d8a2981f79e043d222f" name="Yu Zhou Zhan Jiang - Space General (Ch) [a1]">
@@ -73737,11 +73737,11 @@ license:CC0-1.0
 
 	</hash>
 	<hash crc32="e3158e17" sha1="1852930ee75b8b961d9383250a5f3353197986cc" name="Zhong Guo Xiang Qi (Chinese Chess) (Ch) [p1]">
-		<extrainfo>0 0 2 1</extrainfo>
+		<extrainfo>0 1 2 1</extrainfo>
 
 	</hash>
 	<hash crc32="7fb747e3" sha1="7b0e77000f677f182691d6fa116f431db4763dd0" name="Zhong Guo Xiang Qi (Chinese Chess) (Ch) [p2]">
-		<extrainfo>0 0 2 1</extrainfo>
+		<extrainfo>0 1 2 1</extrainfo>
 
 	</hash>
 	<hash crc32="c1d3082b" sha1="fe2e71636dc92a92c2ba7f7abd501505b933346a" name="Zhong Guo Xiang Qi (Chinese Chess) (Ch)">
@@ -73945,5 +73945,13 @@ license:CC0-1.0
 	<hash crc32="1347d6c9" sha1="0afd8cef5474d86abf632cedae8aca2f14197ea3" name="Zunou Senkan Galg (J) [p1]">
 		<extrainfo>0 0 2 1</extrainfo>
 
+	</hash>
+	<!-- blargg mmc3_test 6-MMC6.nes - MMC6 (HKROM) -->
+	<hash crc32="a512bdf6" sha1="f794fda12d34e611d58e652319ed583ae61b81e0" name="MMC6 Test (blargg mmc3_test, 6-MMC6)">
+		<extrainfo>4 17 2 1</extrainfo>
+	</hash>
+	<!-- blargg 6-mmc3_alt.nes - old-style MMC3 IRQ -->
+	<hash crc32="633afe6f" sha1="2f29f3dc724027fad926bc9d4470a481884e42a5" name="MMC3 Alternate Behaviour Test (blargg mmc3_test_2, 6-MMC3_alt)">
+		<extrainfo>4 65 2 1</extrainfo>
 	</hash>
 </hashfile>

@@ -5,6 +5,8 @@
 
  NES/Famicom cartridge emulation for Nintendo xxROM PCBs
 
+ iNES mappers: 0, 2, 3, 7, 13, 34, 66, 94, 180, 185, 218
+
 
  Here we emulate the following PCBs
 
@@ -16,11 +18,11 @@
  * Nintendo GxROM/MxROM [mapper 66]
  * Nintendo UxROM [mapper 2] + Crazy Climbers variant [mapper 180]
  * Nintendo UN1ROM [mapper 94]
+ * NoCash NOCHR [mapper 218]
 
  Known issues on specific mappers:
 
  * 000 F1 Race requires more precise PPU timing. It currently has plenty of 1-line glitches.
- * 003 Firehouse Rescue has flashing graphics (same PPU issue as Back to the Future 2 & 3?)
  * 007 Marble Madness has small graphics corruptions
  * 034 Titanic 1912 (pirate BxROM) has missing gfx (same PPU issue of many Waixing titles almost for sure)
 
@@ -266,12 +268,17 @@ uint8_t nes_nrom368_device::read_h(offs_t offset)
 
  writes to 0x8000-0xffff change PRG banks + sets mirroring
 
+ The register is xxxM xPPP: M selects the one-screen mirroring page and the
+ low three bits select the 32K PRG bank (bit 3 is also used for oversize ROMs).
+
  AMROM has bus conflict
  AOROM has generally bus conflict too, but some later pcbs
  added some discrete component to disable ROM and avoid
  conflicts. No AOROM games is known to glitch due to lack of
  bus conflict, so it seems safe to emulate AOROM
- without bus conflict.
+ without bus conflict. The wiki lists Double Dare and Wheel of Fortune as
+ the games which break if bus conflicts are emulated, and ANROM boards have
+ a 74HC02 which avoids them entirely.
 
  iNES: mapper 7
 
@@ -295,6 +302,13 @@ void nes_axrom_device::write_h(offs_t offset, uint8_t data)
  BxROM board emulation
 
  writes to 0x8000-0xffff change PRG banks
+
+ The real BNROM register is xxxx xxPP (a 74HC161 latch). We use all 8 bits,
+ as the wiki recommends, to allow oversize ROMs. The board is always subject
+ to bus conflict. The NINA-001 board, which shares this mapper number but has
+ no bus conflicts, is emulated by its own device (NES 2.0 submapper 1 or the
+ crc_hack database entry), while NES 2.0 submapper 2 selects BNROM and turns
+ bus conflicts on.
 
  iNES: mapper 34
 
@@ -327,6 +341,11 @@ void nes_bxrom_device::write_h(offs_t offset, uint8_t data)
 
  iNES: mappers 3 & 185 (the latter for games using Pins as
  protection)
+
+ Real boards have bus conflicts. For iNES images they are enabled only by
+ NES 2.0 submapper 2 (submapper 1 and the default have none), see nes_ines.hxx.
+ For mapper 185, NES 2.0 submappers 4-7 select the latch value (0-3) which
+ enables CHR-ROM; without a submapper the crc_hack database entry is used.
 
  Notice that BANDAI_PT554 board (Aerobics Studio) uses very
  similar hardware but with an additional sound chip which
@@ -376,7 +395,9 @@ uint8_t nes_cnrom_device::chr_r(offs_t offset)
 
  Games: Videomation
 
- writes to 0x8000-0xffff change CHR 4K lower banks
+ writes to 0x8000-0xffff (xxxx xxCC, subject to bus conflict) select the 4K CHR RAM
+ bank at PPU 0x1000-0x1fff. The 4K bank at 0x0000-0x0fff is fixed to the first page
+ and mirroring is hardwired vertical.
 
  iNES: mapper 13
 
@@ -401,6 +422,9 @@ void nes_cprom_device::write_h(offs_t offset, uint8_t data)
 
  writes to 0x8000-0xffff change PRG and CHR banks
 
+ The register is xxPP xxCC (bit 5 is unused on MHROM, which has only 64K PRG)
+ and the real boards are subject to bus conflict.
+
  iNES: mapper 66
 
  -------------------------------------------------*/
@@ -424,6 +448,9 @@ void nes_gxrom_device::write_h(offs_t offset, uint8_t data)
  Metal Gear
 
  writes to 0x8000-0xffff change PRG 16K lower banks
+
+ Real boards have bus conflicts. For iNES images they are enabled only by
+ NES 2.0 submapper 2 (submapper 1 and the default have none), see nes_ines.hxx.
 
  iNES: mapper 2
 
@@ -451,6 +478,9 @@ void nes_uxrom_device::write_h(offs_t offset, uint8_t data)
  while prg16_cdef is set by writes to 0x8000-0xffff. The game
  uses a custom controller.
 
+ This is the UNROM PCB with an AND gate in place of the OR gate, so it has
+ bus conflicts like UNROM does (enabled for iNES mapper 180 in nes_ines.hxx).
+
  iNES: mapper 180
 
  In MAME: Supported.
@@ -461,6 +491,9 @@ void nes_uxrom_cc_device::write_h(offs_t offset, uint8_t data)
 {
 	LOG("uxrom_cc write_h, offset: %04x, data: %02x\n", offset, data);
 
+	// this pcb is subject to bus conflict
+	data = account_bus_conflict(offset, data);
+
 	prg16_cdef(data);
 }
 
@@ -470,7 +503,8 @@ void nes_uxrom_cc_device::write_h(offs_t offset, uint8_t data)
 
  Games: Senjou no Okami
 
- writes to 0x8000-0xffff change PRG 16K lower banks
+ writes to 0x8000-0xffff (xxxP PPxx, subject to bus conflict) change the 16K PRG
+ bank at 0x8000-0xbfff, while 0xc000-0xffff is fixed to the last bank.
 
  iNES: mapper 94
 
@@ -485,7 +519,7 @@ void nes_un1rom_device::write_h(offs_t offset, uint8_t data)
 	// this pcb is subject to bus conflict
 	data = account_bus_conflict(offset, data);
 
-	prg16_89ab(data >> 2);
+	prg16_89ab((data >> 2) & 0x07);
 }
 
 /*-------------------------------------------------

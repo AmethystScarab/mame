@@ -5,6 +5,9 @@
 
  NES/Famicom cartridge emulation for Bootleg PCBs
 
+ iNES mappers: 35, 40, 42, 43, 50, 55, 103, 106, 108, 120, 125, 222, 304, 309, 326, 328, 330, 368,
+               415, 416, 417, 418, 522, 535, 539, 557
+
 
  Here we emulate the PCBs used in FDS2NES conversions which are common in the Taiwanese & HK markets
  Notice that many of these have unusual PRG sizes (32KB+8KB, 32KB+24KB) partially mapped in the WRAM
@@ -39,7 +42,6 @@
 //  constructor
 //-------------------------------------------------
 
-DEFINE_DEVICE_TYPE(NES_SC127,          nes_sc127_device,     "nes_sc127",     "NES Cart SC-127 PCB")
 DEFINE_DEVICE_TYPE(NES_MARIOBABY,      nes_mbaby_device,     "nes_mbaby",     "NES Cart Mario Baby Bootleg PCB")
 DEFINE_DEVICE_TYPE(NES_ASN,            nes_asn_device,       "nes_asn",       "NES Cart Ai Senshi Nicol Bootleg PCB")
 DEFINE_DEVICE_TYPE(NES_SMB3PIRATE,     nes_smb3p_device,     "nes_smb3p",     "NES Cart Super Mario Bros. 3 Pirate PCB")
@@ -72,10 +74,6 @@ DEFINE_DEVICE_TYPE(NES_RT01,           nes_rt01_device,      "nes_rt01",      "N
 DEFINE_DEVICE_TYPE(NES_YUNG08,         nes_yung08_device,    "nes_yung08",    "NES Cart Super Mario Bros. 2 YUNG-08 PCB")
 
 
-nes_sc127_device::nes_sc127_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: nes_nrom_device(mconfig, NES_SC127, tag, owner, clock), m_irq_count(0), m_irq_enable(0)
-{
-}
 
 nes_mbaby_device::nes_mbaby_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock)
 	: nes_nrom_device(mconfig, NES_MARIOBABY, tag, owner, clock), m_irq_count(0), m_irq_enable(0), m_latch(0), irq_timer(nullptr)
@@ -240,27 +238,9 @@ nes_yung08_device::nes_yung08_device(const machine_config &mconfig, const char *
 
 
 
-void nes_sc127_device::device_start()
-{
-	common_start();
-	save_item(NAME(m_irq_enable));
-	save_item(NAME(m_irq_count));
-}
-
-void nes_sc127_device::pcb_reset()
-{
-	prg32(0xff);
-	chr8(0, m_chr_source);
-
-	m_irq_enable = 0;
-	m_irq_count = 0;
-}
-
 void nes_mbaby_device::device_start()
 {
 	common_start();
-	irq_timer = timer_alloc(FUNC(nes_mbaby_device::irq_timer_tick), this);
-	irq_timer->adjust(attotime::zero, 0, clocks_to_attotime(1));
 
 	save_item(NAME(m_irq_enable));
 	save_item(NAME(m_irq_count));
@@ -293,8 +273,6 @@ void nes_asn_device::pcb_reset()
 void nes_smb3p_device::device_start()
 {
 	common_start();
-	irq_timer = timer_alloc(FUNC(nes_smb3p_device::irq_timer_tick), this);
-	irq_timer->adjust(attotime::zero, 0, clocks_to_attotime(1));
 
 	save_item(NAME(m_irq_enable));
 	save_item(NAME(m_irq_count));
@@ -316,8 +294,6 @@ void nes_smb3p_device::pcb_reset()
 void nes_batmanfs_device::device_start()
 {
 	common_start();
-	irq_timer = timer_alloc(FUNC(nes_batmanfs_device::irq_timer_tick), this);
-	irq_timer->adjust(attotime::zero, 0, clocks_to_attotime(1));
 
 	save_item(NAME(m_irq_enable));
 	save_item(NAME(m_irq_count));
@@ -356,8 +332,6 @@ void nes_btl_dn_device::pcb_reset()
 void nes_smb2j_device::device_start()
 {
 	common_start();
-	irq_timer = timer_alloc(FUNC(nes_smb2j_device::irq_timer_tick), this);
-	irq_timer->adjust(attotime::zero, 0, clocks_to_attotime(1));
 
 	save_item(NAME(m_irq_enable));
 	save_item(NAME(m_irq_count));
@@ -378,8 +352,6 @@ void nes_smb2j_device::pcb_reset()
 void nes_smb2ja_device::device_start()
 {
 	common_start();
-	irq_timer = timer_alloc(FUNC(nes_smb2ja_device::irq_timer_tick), this);
-	irq_timer->adjust(attotime::zero, 0, clocks_to_attotime(1));
 
 	save_item(NAME(m_irq_enable));
 	save_item(NAME(m_irq_count));
@@ -400,8 +372,6 @@ void nes_smb2ja_device::pcb_reset()
 void nes_smb2jb_device::device_start()
 {
 	common_start();
-	irq_timer = timer_alloc(FUNC(nes_smb2jb_device::irq_timer_tick), this);
-	irq_timer->adjust(attotime::zero, 0, clocks_to_attotime(1));
 
 	save_item(NAME(m_irq_enable));
 	save_item(NAME(m_irq_count));
@@ -445,8 +415,6 @@ void nes_0353_device::pcb_reset()
 void nes_09034a_device::device_start()
 {
 	common_start();
-	irq_timer = timer_alloc(FUNC(nes_09034a_device::irq_timer_tick), this);
-	irq_timer->adjust(attotime::zero, 0, clocks_to_attotime(1));
 
 	save_item(NAME(m_irq_enable));
 	save_item(NAME(m_irq_count));
@@ -466,8 +434,6 @@ void nes_09034a_device::pcb_reset()
 void nes_l001_device::device_start()
 {
 	common_start();
-	irq_timer = timer_alloc(FUNC(nes_l001_device::irq_timer_tick), this);
-	irq_timer->adjust(attotime::zero, 0, clocks_to_attotime(1));
 
 	save_item(NAME(m_irq_count));
 }
@@ -587,8 +553,6 @@ void nes_lh51_device::pcb_reset()
 void nes_lh53_device::device_start()
 {
 	common_start();
-	irq_timer = timer_alloc(FUNC(nes_lh53_device::irq_timer_tick), this);
-	irq_timer->adjust(attotime::zero, 0, clocks_to_attotime(1));
 
 	save_item(NAME(m_irq_enable));
 	save_item(NAME(m_irq_count));
@@ -645,8 +609,6 @@ void nes_rt01_device::pcb_reset()
 void nes_yung08_device::device_start()
 {
 	common_start();
-	irq_timer = timer_alloc(FUNC(nes_yung08_device::irq_timer_tick), this);
-	irq_timer->adjust(attotime::zero, 0, clocks_to_attotime(1));
 
 	save_item(NAME(m_irq_count));
 	save_item(NAME(m_irq_latch));
@@ -668,76 +630,6 @@ void nes_yung08_device::pcb_reset()
 /*-------------------------------------------------
  mapper specific handlers
  -------------------------------------------------*/
-
-/*-------------------------------------------------
-
- SC-127 Board
-
- Games: Wario World II (Kirby Hack)
-
- iNES: mapper 35
-
- In MAME: Supported.
-
- -------------------------------------------------*/
-
-void nes_sc127_device::hblank_irq(int scanline, bool vblank, bool blanked)
-{
-	if (scanline < ppu2c0x_device::BOTTOM_VISIBLE_SCANLINE && m_irq_enable)
-	{
-		m_irq_count--;
-
-		if (!blanked && (m_irq_count == 0))
-		{
-			LOG("irq fired, scanline: %d\n", scanline);
-			set_irq_line(ASSERT_LINE);
-			m_irq_enable = 0;
-		}
-	}
-}
-
-void nes_sc127_device::write_h(offs_t offset, uint8_t data)
-{
-	LOG("sc127 write_h, offset: %04x, data: %02x\n", offset, data);
-
-	switch (offset)
-	{
-		case 0x0000:
-			prg8_89(data);
-			break;
-		case 0x0001:
-			prg8_ab(data);
-			break;
-		case 0x0002:
-//          m_mmc_prg_bank[offset & 0x02] = data;
-			prg8_cd(data);
-			break;
-		case 0x1000:
-		case 0x1001:
-		case 0x1002:
-		case 0x1003:
-		case 0x1004:
-		case 0x1005:
-		case 0x1006:
-		case 0x1007:
-//          m_mmc_vrom_bank[offset & 0x07] = data;
-			chr1_x(offset & 0x07, data, CHRROM);
-			break;
-		case 0x4002:
-			m_irq_enable = 0;
-			set_irq_line(CLEAR_LINE);
-			break;
-		case 0x4003:
-			m_irq_enable = 1;
-			break;
-		case 0x4005:
-			m_irq_count = data;
-			break;
-		case 0x5001:
-			set_nt_mirroring(BIT(data, 0) ? PPU_MIRROR_HORZ : PPU_MIRROR_VERT);
-			break;
-	}
-}
 
 /*-------------------------------------------------
 

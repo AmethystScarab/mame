@@ -5,6 +5,8 @@
 
  NES/Famicom cartridge emulation for Nintendo MMC-3 & MMC-6 PCBs
 
+ iNES mappers: 4, 37, 47, 118, 119
+
 
  Here we emulate the following PCBs
 
@@ -142,7 +144,7 @@ void nes_txrom_device::mmc3_common_initialize( int prg_mask, int chr_mask, int i
 	m_prg_mask = prg_mask;
 	m_chr_mask = chr_mask;
 
-	m_alt_irq = irq_type;       // later MMC3 boards seem to use MMC6-type IRQ... more investigations are in progress at NESDev...
+	m_alt_irq = irq_type || (m_mmc3_irq_variant == 4);       // MMC6 and NEC MMC3 use the "old" IRQ behaviour
 	m_irq_enable = 0;
 	m_irq_count = m_irq_count_latch = 0;
 	m_irq_clear = 0;
@@ -174,7 +176,7 @@ void nes_hkrom_device::device_start()
 void nes_hkrom_device::pcb_reset()
 {
 	mmc3_common_initialize(0xff, 0xff, 1);
-	m_mmc6_reg = 0xf0;
+	m_mmc6_reg = 0x00;   // the PRG RAM starts disabled, which holds $A001 at $00
 	m_wram_enable = 0;
 }
 
@@ -204,8 +206,36 @@ void nes_zz_device::pcb_reset()
  -------------------------------------------------*/
 
 /* Here, IRQ counter decrements every scanline. */
+// NESdev MMC3: on each filtered A12 rise the counter is reloaded when it is 0 or a reload was requested, otherwise
+// decremented; when it is 0 afterwards and IRQs are enabled, the IRQ is asserted (the "new" Sharp behaviour, which
+// blargg's mmc3_test expects; the older behaviour, which only fires on a decrement to 0, is kept for m_alt_irq boards)
+void nes_txrom_device::ppu_a12_rise()
+{
+	const int prior_count = m_irq_count;
+	if ((m_irq_count == 0) || m_irq_clear)
+		m_irq_count = m_irq_count_latch;
+	else
+		m_irq_count--;
+
+	if (m_irq_enable && (m_irq_count == 0) && (prior_count || m_irq_clear || !m_alt_irq))
+		set_irq_line(ASSERT_LINE);
+	m_irq_clear = 0;
+}
+
+// NESdev MMC3: a rising edge of A12 only clocks the counter if A12 was low for three falling edges of M2, and M2 falls once
+// per CPU cycle.  The first fall only registers the low level, so the edge counts once A12 has stayed low across four of
+// them, which is more than three whole cycles: the 9 PPU clocks (exactly three cycles) between the dummy nametable fetches at
+// the end of a line and the first pattern fetch of the next one are rejected, so a background at $1000 clocks the counter
+// once per line, while a gap of 12 clocks (four cycles) is accepted.
+bool nes_txrom_device::a12_rise_accepted(const attotime &low_since, const attotime &when)
+{
+	return (when > low_since) && ((cpu_cycles_at(when) - cpu_cycles_at(low_since)) >= 4);
+}
+
 void nes_txrom_device::hblank_irq(int scanline, bool vblank, bool blanked)
 {
+	if (m_a12_driven)
+		return;
 	if (scanline < ppu2c0x_device::BOTTOM_VISIBLE_SCANLINE)
 	{
 		int prior_count = m_irq_count;
@@ -313,7 +343,10 @@ void nes_txrom_device::txrom_write(offs_t offset, uint8_t data)
 			break;
 
 		case 0x4001:
+			// NESdev MMC3: clears the counter now and requests a reload at the next clock (the old IRQ
+			// behaviour fires on that reload even if the counter was already 0)
 			m_irq_count = 0;
+			m_irq_clear = 1;
 			break;
 
 		case 0x6000:
@@ -418,8 +451,11 @@ void nes_hkrom_device::write_h(offs_t offset, uint8_t data)
 			mmc6_helper = m_latch ^ data;
 			m_latch = data;
 
-			if (!m_wram_enable && BIT(data, 5))  // if WRAM is disabled and has to be enabled, write
-				m_wram_enable = BIT(data, 5);    // (once WRAM has been enabled, it cannot be disabled without resetting the game)
+			// NESdev MMC6: bit 5 enables the internal PRG RAM; while it is clear the mapper continuously sets $A001 to $00,
+			// so the RAM area is open bus and $A001 writes are ignored
+			m_wram_enable = BIT(data, 5);
+			if (!m_wram_enable)
+				m_mmc6_reg = 0;
 
 			// Has PRG Mode changed?
 			if (BIT(mmc6_helper, 6))

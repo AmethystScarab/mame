@@ -1,9 +1,11 @@
 // license:BSD-3-Clause
-// copyright-holders:Fabio Priuli
+// copyright-holders:Fabio Priuli,Brian H. Gilbert
 /***********************************************************************************************************
 
 
  NES/Famicom cartridge emulation for Nintendo MMC-5 / ExROM
+
+ iNES mappers: 5
 
 
  Here we emulate the Nintendo MMC-5 / ExROM PCBs [mapper 5]
@@ -92,6 +94,11 @@ void nes_exrom_device::device_start()
 	save_item(NAME(m_split_yst));
 	save_item(NAME(m_split_bank));
 	save_item(NAME(m_vcount));
+	save_item(NAME(m_last_ppu_addr));
+	save_item(NAME(m_nt_match));
+	save_item(NAME(m_ppu_idle));
+	save_item(NAME(m_scan_count));
+	save_item(NAME(m_need_in_frame));
 	save_item(NAME(m_exram));
 	save_item(NAME(m_ram_hi_banks));
 
@@ -249,17 +256,97 @@ void nes_exrom_device::hblank_irq(int scanline, bool vblank, bool blanked)
 {
 	m_vcount = scanline;
 
-	if (scanline == m_irq_count)
+	if (!m_ppu->dot_timing())
 	{
-		m_irq_status = 0xff;
-		update_irq();
+		// PPUs without dot timing: once-per-line approximation
+		if (scanline == m_irq_count)
+		{
+			m_irq_status = 0xff;
+			update_irq();
+		}
+
+		// "In Frame" flag
+		if (scanline == 0)
+			m_irq_status |= 0x40;
+		else if (scanline > ppu2c0x_device::BOTTOM_VISIBLE_SCANLINE)
+			m_irq_status &= ~0x40;
+		return;
 	}
 
-	// "In Frame" flag
-	if (scanline == 0)
+	// with a dot-timed PPU the scanline counter, IRQ and in-frame flag follow the hardware method in ppu_read_snoop()
+	// and m2_w(); the line number here only positions the vertical split
+}
+
+// The MMC5 counts a scanline on three consecutive identical PPU reads in $2000-$2FFF (the PPU's dummy nametable
+// fetches at dots 337/339 and the first fetch of the next line), acting on the read that follows; the in-frame
+// flag is raised at the next nametable fetch after the first detection of a frame
+void nes_exrom_device::ppu_read_snoop(u16 addr)
+{
+	if (!m_ppu->dot_timing())
+		return;
+
+	if (m_nt_match >= 2)
+	{
+		if (!BIT(m_irq_status, 6) && !m_need_in_frame)
+		{
+			m_need_in_frame = true;
+			m_scan_count = 0;
+		}
+		else
+		{
+			m_scan_count++;
+			if (m_scan_count == m_irq_count)
+			{
+				m_irq_status |= 0x80;
+				update_irq();
+			}
+		}
+	}
+	else if (addr >= 0x2000 && addr <= 0x2fff && addr == m_last_ppu_addr)
+		m_nt_match++;
+	if (addr != m_last_ppu_addr)
+		m_nt_match = 0;
+
+	if (m_need_in_frame && addr >= 0x2000 && addr <= 0x2fff && (addr & 0x3ff) < 0x3c0)
+	{
+		m_need_in_frame = false;
 		m_irq_status |= 0x40;
-	else if (scanline > ppu2c0x_device::BOTTOM_VISIBLE_SCANLINE)
+		// a compare value of 0 or 240-255 never fires, and clears a pending IRQ when the frame starts (NESdev forum)
+		if (m_irq_count == 0 || m_irq_count >= 240)
+		{
+			m_irq_status &= ~0x80;
+			update_irq();
+		}
+	}
+
+	m_ppu_idle = 3;
+	m_last_ppu_addr = addr;
+}
+
+// CPU bus: 3 M2 rises without a PPU read end the frame; reading the NMI vector ($FFFA/$FFFB) resets the scanline
+// detector (in-frame and pending IRQ cleared)
+void nes_exrom_device::m2_w(int state, offs_t address, bool write)
+{
+	if (!state || !m_ppu->dot_timing())
+		return;
+
+	// in MAME the CPU runs a few cycles ahead of the PPU, so counting CPU cycles between the PPU reads seen here would
+	// report the PPU idle mid-line; while the PPU is rendering it reads every other dot, so the idle count restarts
+	if (m_ppu->rendering_now())
+		m_ppu_idle = 3;
+	if (m_ppu_idle && --m_ppu_idle == 0)
+	{
 		m_irq_status &= ~0x40;
+		m_need_in_frame = false;
+	}
+	if (!write && (address == 0xfffa || address == 0xfffb))
+	{
+		m_irq_status &= ~0xc0;
+		m_need_in_frame = false;
+		m_last_ppu_addr = 0;
+		m_scan_count = 0;
+		update_irq();
+	}
 }
 
 
@@ -307,6 +394,7 @@ inline bool nes_exrom_device::in_split()
 
 uint8_t nes_exrom_device::nt_r(offs_t offset)
 {
+	ppu_read_snoop(0x2000 | (offset & 0xfff));
 	int const page = ((offset & 0xc00) >> 10);
 
 	switch (m_nt_src[page])
@@ -401,23 +489,34 @@ inline uint8_t nes_exrom_device::base_chr_r(int bank, uint32_t offset)
 		break;
 	}
 
-	return m_vrom[helper & (m_vrom_size - 1)];
+	return chr_mem_r(helper);
 }
 
 inline uint8_t nes_exrom_device::split_chr_r(uint32_t offset)
 {
 	uint32_t const helper = (m_split_bank * 0x1000) + (offset & 0x3f8) + (m_split_yst & 7);
-	return m_vrom[helper & (m_vrom_size - 1)];
+	return chr_mem_r(helper);
 }
 
 inline uint8_t nes_exrom_device::bg_ex1_chr_r(uint32_t offset)
 {
 	uint32_t const helper = (m_ex1_bank * 0x1000) + (offset & 0xfff);
-	return m_vrom[helper & (m_vrom_size - 1)];
+	return chr_mem_r(helper);
+}
+
+// CHR memory read: CHR-ROM, or the board's CHR-RAM when it has none (CHR-RAM MMC5 images have no CHR-ROM pointer to read)
+uint8_t nes_exrom_device::chr_mem_r(uint32_t addr)
+{
+	if (m_vrom_size)
+		return m_vrom[addr & (m_vrom_size - 1)];
+	if (get_vram_size())
+		return m_vram[addr & (get_vram_size() - 1)];
+	return get_open_bus();
 }
 
 uint8_t nes_exrom_device::chr_r(offs_t offset)
 {
+	ppu_read_snoop(offset & 0x1fff);
 	int const bank = offset >> 10;
 
 	// Extended Attribute Mode (Ex1) does affect BG drawing even for 8x16 sprites (JustBreed uses it extensively!)
@@ -725,5 +824,6 @@ void nes_exrom_device::device_add_mconfig(machine_config &config)
 
 	MMC5_SOUND(config, m_sound, XTAL(21'477'272)/12);
 	m_sound->irq().set(FUNC(nes_exrom_device::pcm_irq));
-	m_sound->add_route(ALL_OUTPUTS, "addon", 0.90);
+	// level measured with nes-audio-tests db_mmc5 against the hardware survey (+1.0 dB vs a full-volume APU square)
+	m_sound->add_route(ALL_OUTPUTS, "addon", 1.01);
 }

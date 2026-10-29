@@ -1,5 +1,5 @@
 // license:BSD-3-Clause
-// copyright-holders:Fabio Priuli
+// copyright-holders:Fabio Priuli,Brian H. Gilbert
 #ifndef MAME_BUS_NES_MMC3_CLONES_H
 #define MAME_BUS_NES_MMC3_CLONES_H
 
@@ -30,6 +30,9 @@ public:
 
 	virtual u8 read_m(offs_t offset) override;
 	virtual void write_m(offs_t offset, u8 data) override;
+	virtual void prg_cb(int start, int bank) override;
+	virtual void chr_cb(int start, int bank, int source) override;
+	virtual void cpu_write_latch(u8 data) override { m_bus_latch = data; }
 
 	virtual void pcb_reset() override;
 
@@ -37,10 +40,9 @@ protected:
 	// device-level overrides
 	virtual void device_start() override ATTR_COLD;
 
-	virtual void set_prg(int prg_base, int prg_mask) override;
-
 private:
-	u8 m_reg;
+	u8 m_reg[3];
+	u8 m_bus_latch;
 };
 
 
@@ -90,16 +92,20 @@ public:
 	// construction/destruction
 	nes_family4646_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock);
 
+	virtual u8 read_h(offs_t offset) override;
 	virtual void write_m(offs_t offset, u8 data) override;
 	virtual void prg_cb(int start, int bank) override;
+	virtual void chr_cb(int start, int bank, int source) override;
 
 	virtual void pcb_reset() override;
 
 protected:
 	// device-level overrides
+	virtual ioport_constructor device_input_ports() const override ATTR_COLD;
 	virtual void device_start() override ATTR_COLD;
 
 private:
+	optional_ioport m_config;
 	u8 m_reg[4];
 };
 
@@ -263,8 +269,15 @@ protected:
 	virtual void set_prg(int prg_base, int prg_mask) override;
 
 private:
-	u8 m_reg[5];
-	u8 m_low_reg;
+	void prot_sync();
+	void update_outer();
+
+	u8 m_ovr[3];        // PRG banks selected through the protection index: $E000, $C000, $A000
+	u8 m_outer;         // outer bank register ($5180 bit 7)
+	u8 m_prot_out;      // protection array value returned by reads of $5000-$5FFF
+	u8 m_prot_index;    // last value written to $8003
+	u8 m_prot_latch;    // last value written to $8001, with the lower six bits reversed
+	u8 m_prot_lock;     // set when the selected index does not apply further $8001 writes
 };
 
 
@@ -329,7 +342,8 @@ public:
 	nes_txc_tw_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
 	virtual void write_l(offs_t offset, uint8_t data) override;
-	virtual void write_m(offs_t offset, uint8_t data) override { write_l(offset & 0xff, data); }   // offset does not really count for this mapper }
+	virtual uint8_t read_m(offs_t offset) override { return get_open_bus(); }   // no WRAM: $6000-$7FFF is the PRG register
+	virtual void write_m(offs_t offset, uint8_t data) override;
 	virtual void prg_cb(int start, int bank) override;
 };
 
@@ -409,7 +423,10 @@ public:
 
 	virtual uint8_t read_l(offs_t offset) override;
 	virtual void write_l(offs_t offset, uint8_t data) override;
+	virtual void write_m(offs_t offset, uint8_t data) override;
+	virtual void write_h(offs_t offset, uint8_t data) override;
 	virtual void prg_cb(int start, int bank) override;
+	virtual void set_gouder_submapper(u8 val) override { m_submapper = val; }
 
 	virtual void pcb_reset() override;
 
@@ -418,7 +435,10 @@ protected:
 	virtual void device_start() override ATTR_COLD;
 
 private:
-	uint8_t m_reg[5];
+	void update_mirroring();
+
+	uint8_t m_reg[6];   // 0-3: protection registers, 4: protection table index, 5: PRG/mirroring register
+	u8 m_submapper;
 };
 
 
@@ -501,7 +521,10 @@ public:
 	// construction/destruction
 	nes_a9746_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
+	virtual void write_l(offs_t offset, u8 data) override;
 	virtual void write_h(offs_t offset, uint8_t data) override;
+	virtual void prg_cb(int start, int bank) override;
+	virtual void chr_cb(int start, int bank, int source) override;
 
 	virtual void pcb_reset() override;
 
@@ -511,7 +534,9 @@ protected:
 
 private:
 	void update_banks(uint8_t value);
-	uint8_t m_reg[3];
+	void update_outer();
+	uint8_t m_reg[4];   // 0: register selected by the last write to $8000/$8002, 1: unused, 2: CHR bank latch, 3: 128 KiB outer PRG/CHR bank
+	uint8_t m_ext;      // $8002 bit 5: 0 = MMC3 mode, 1 = extended mode
 };
 
 
@@ -523,8 +548,11 @@ public:
 	// construction/destruction
 	nes_a88s1_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock);
 
+	virtual u8 read_l(offs_t offset) override;
 	virtual void write_l(offs_t offset, u8 data) override;
 	virtual void prg_cb(int start, int bank) override;
+	virtual void chr_cb(int start, int bank, int source) override;
+	virtual void set_a88s1_submapper(u8 val) override { m_submapper = val; }
 
 	virtual void pcb_reset() override;
 
@@ -534,7 +562,9 @@ protected:
 
 private:
 	void update_banks();
-	u8 m_reg[2];
+
+	u8 m_reg[3];    // 0-1: outer registers, 2: DIP switch value (advances on every reset)
+	u8 m_submapper;
 };
 
 
@@ -1053,7 +1083,7 @@ protected:
 	// device-level overrides
 	virtual void device_start() override ATTR_COLD;
 
-	virtual void set_prg(int prg_base, int prg_mask) override;
+	virtual void prg_cb(int start, int bank) override;
 	virtual void set_chr(u8 chr, int chr_base, int chr_mask) override;
 
 private:
@@ -1152,25 +1182,60 @@ private:
 
 // ======================> nes_pjoy84_device
 
+// TEC9719 (mapper 126), ING003C/BS-300 family (mapper 422) and ING-022 (mapper 534) enhanced MMC3 ASICs
 class nes_pjoy84_device : public nes_txrom_device
 {
 public:
 	// construction/destruction
 	nes_pjoy84_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
+	virtual u8 read_m(offs_t offset) override;
+	virtual u8 read_h(offs_t offset) override;
 	virtual void write_m(offs_t offset, uint8_t data) override;
+	virtual void write_h(offs_t offset, u8 data) override;
 	virtual void prg_cb(int start, int bank) override;
 	virtual void chr_cb(int start, int bank, int source) override;
+	virtual void set_pjoy_submapper(u8 val) override { m_submapper = val; }
 
 	virtual void pcb_reset() override;
 
 protected:
+	// construction/destruction
+	nes_pjoy84_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock, u16 mapper);
+
 	// device-level overrides
 	virtual void device_start() override ATTR_COLD;
 
-private:
-	inline void set_base_mask();
-	uint8_t m_reg[4];
+	u8 get_mmc3_bank(int bank) const;
+	void update_prg();
+	void update_chr();
+	void update_mirroring();
+	void update_banks();
+
+	u8 m_reg[4];
+	u8 m_submapper;
+	u8 m_sl0;
+	const u16 m_mapper;
+};
+
+
+// ======================> nes_bs300_device
+
+class nes_bs300_device : public nes_pjoy84_device
+{
+public:
+	// construction/destruction
+	nes_bs300_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+};
+
+
+// ======================> nes_ing022_device
+
+class nes_ing022_device : public nes_pjoy84_device
+{
+public:
+	// construction/destruction
+	nes_ing022_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 };
 
 
@@ -1182,10 +1247,14 @@ public:
 	// construction/destruction
 	nes_smd133_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock);
 
+	virtual u8 read_m(offs_t offset) override;
 	virtual void write_l(offs_t offset, u8 data) override;
 	virtual void write_m(offs_t offset, u8 data) override;
+	virtual void chr_w(offs_t offset, u8 data) override;
+	virtual void write_h(offs_t offset, u8 data) override;
 	virtual void prg_cb(int start, int bank) override;
 	virtual void chr_cb(int start, int bank, int source) override;
+	virtual void set_smd133_submapper(u8 val) override;
 
 	virtual void pcb_reset() override;
 
@@ -1195,7 +1264,52 @@ protected:
 
 private:
 	void smd133_write(offs_t offset, u8 data);
-	u8 m_reg[6];
+	void update_banks();
+	void update_mirroring();
+
+	u8 m_reg[7];    // 0-5: outer registers, 6: latched register 1 value for the submapper 8/9 PRG upper bits
+	u8 m_submapper;
+};
+
+
+// ======================> nes_8025_device
+
+// 8025 enhanced MMC3 ASIC (NES 2.0 mapper 176 submappers 2-5: WAIXING-FS005, JX9003B, GameStar Smart Genius Deluxe, HST-162)
+class nes_8025_device : public nes_txrom_device
+{
+public:
+	// construction/destruction
+	nes_8025_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock);
+
+	virtual u8 read_l(offs_t offset) override;
+	virtual void write_l(offs_t offset, u8 data) override;
+	virtual u8 read_m(offs_t offset) override;
+	virtual void write_m(offs_t offset, u8 data) override;
+	virtual void write_h(offs_t offset, u8 data) override;
+	virtual void set_8025_submapper(u8 val) override { m_submapper = val; }
+
+	virtual void pcb_start(running_machine &machine, u8 *ciram_ptr, bool cart_mounted) override;
+	virtual void pcb_reset() override;
+
+protected:
+	// device-level overrides
+	virtual ioport_constructor device_input_ports() const override ATTR_COLD;
+	virtual void device_start() override ATTR_COLD;
+	virtual void set_prg(int prg_base, int prg_mask) override;
+	virtual void set_chr(u8 chr, int chr_base, int chr_mask) override;
+
+private:
+	bool ext_mode() const { return (m_submapper == 1 || m_submapper == 2) && BIT(m_ext, 1); }
+	bool ram_cfg() const { return m_submapper == 2 && BIT(m_wram_protect, 5); }
+	bool regs_enabled() const { return !ram_cfg() || BIT(m_wram_protect, 6); }
+	int mmc3_prg_bank(int page, bool ext) const;
+	int prg_bank(int page) const;
+	void update_mirroring();
+	void update_banks();
+
+	optional_ioport m_config;
+	u8 m_submapper;
+	u8 m_mode, m_prg_lsb, m_chr_lsb, m_ext, m_prg_msb, m_chr_msb, m_latch_data;
 };
 
 
@@ -1261,6 +1375,9 @@ DECLARE_DEVICE_TYPE(NES_BMC_830832C,   nes_bmc_830832c_device)
 DECLARE_DEVICE_TYPE(NES_BMC_YY841101C, nes_bmc_yy841101c_device)
 DECLARE_DEVICE_TYPE(NES_BMC_YY841155C, nes_bmc_yy841155c_device)
 DECLARE_DEVICE_TYPE(NES_PJOY84,        nes_pjoy84_device)
+DECLARE_DEVICE_TYPE(NES_BS300,         nes_bs300_device)
+DECLARE_DEVICE_TYPE(NES_ING022,        nes_ing022_device)
+DECLARE_DEVICE_TYPE(NES_8025,          nes_8025_device)
 DECLARE_DEVICE_TYPE(NES_SMD133,        nes_smd133_device)
 
 #endif // MAME_BUS_NES_MMC3_CLONES_H

@@ -82,7 +82,7 @@ enum
 	// Tengen
 	TENGEN_800032, TENGEN_800037,
 	// TXC
-	TXC_22110, TXC_22211, TXC_COMMANDOS, TXC_DUMARACING,
+	TXC_22110, TXC_22211, TXC_MXMDHTWO, TXC_DUMARACING,
 	TXC_MJBLOCK, TXC_STRIKEW, TXC_TW,
 	// Multigame Carts
 	BMC_64IN1NR, BMC_190IN1, BMC_A65AS, BMC_A88S1, BMC_F15, BMC_F600, BMC_L6IN1,
@@ -101,7 +101,7 @@ enum
 	BMC_830425C, BMC_830506C, BMC_830928C, BMC_850437C, BMC_891227, BMC_970630C,
 	BMC_N32_4IN1, BMC_NC20MB, BMC_NT639, BMC_NTD_03, BMC_SRPG_5IN1,
 	BMC_EL860947C, BMC_EL861121C, BMC_FAM250, BMC_FK23C, BMC_FK23CA,
-	BMC_JY012005, BMC_JY820845C, BMC_PJOY84,
+	BMC_JY012005, BMC_JY820845C, BMC_PJOY84, BMC_BS300, BMC_ING022, BMC_8025,
 	BMC_S009, BMC_TH22913, BMC_TH2348, BMC_11160, BMC_G146,
 	BMC_2751, BMC_8157, BMC_00202650,
 	BMC_411120C, BMC_810305C, BMC_820720C, BMC_830118C,
@@ -111,7 +111,7 @@ enum
 	BMC_TF2740, BMC_TJ03, BMC_RESETSXROM, BMC_RESETTXROM, BMC_TECHLINE9IN1,
 	// Unlicensed
 	UNL_8237, UNL_8237A, UNL_CC21, UNL_AX40G, UNL_AX5705, UNL_KN42,
-	UNL_KOF97, UNL_N625092, UNL_SC127, UNL_SMB2J, UNL_T230, UNL_MMALEE,
+	UNL_KOF97, UNL_N625092, UNL_SMB2J, UNL_T230, UNL_MMALEE,
 	UNL_JY830623C, UNL_XIAOZY, UNL_KOF96, UNL_FS6,
 	UNL_SF3, UNL_RACERMATE, UNL_EDU2K,
 	UNL_STUDYNGAME, UNL_603_5052, UNL_H2288, UNL_158B, UNL_2708,
@@ -135,10 +135,10 @@ enum
 	// Misc: these are needed to convert mappers to boards, I will sort them later
 	OPENCORP_DAOU306, HES_BOARD, SVISION16_BOARD, RUMBLESTATION_BOARD, JYCOMPANY_A, JYCOMPANY_B, JYCOMPANY_C,
 	MAGICSERIES_MD, KASING_BOARD, FUTUREMEDIA_BOARD, FUKUTAKE_BOARD, SOMARI_SL12, SOMARI_HUANG2,
-	HENGG_SRICH, HENGG_XHZS, HENGG_SHJY3, SUBOR_TYPE0, SUBOR_TYPE1, SUBOR_TYPE2,
+	HENGG_SRICH, HENGG_XHZS, HENGG_SHJY3, SUBOR_TYPE0, SUBOR_TYPE1, SUBOR_TYPE2, SUBOR_KARAOKE,
 	CNE_DECATHLON, CNE_FSB, CNE_SHLZ, COCOMA_BOARD, CONY_BOARD, CONY1K_BOARD, SMD133_BOARD, YOKO_BOARD,
 	RCM_GS2015, RCM_GS2004, RCM_GS2013, RCM_TF9IN1, RCM_3DBLOCK,
-	WAIXING_TYPE_A, WAIXING_TYPE_A1, WAIXING_TYPE_B, WAIXING_TYPE_C, WAIXING_TYPE_D,
+	WAIXING_TYPE_A, WAIXING_TYPE_B, WAIXING_TYPE_C, WAIXING_TYPE_D,
 	WAIXING_TYPE_E, WAIXING_TYPE_F, WAIXING_TYPE_F1, WAIXING_TYPE_G, WAIXING_TYPE_H, WAIXING_TYPE_H1,
 	WAIXING_TYPE_I, WAIXING_TYPE_J, WAIXING_FS304,
 	WAIXING_SGZLZ, WAIXING_SGZ, WAIXING_WXZS, WAIXING_SECURITY, WAIXING_SH2,
@@ -168,6 +168,7 @@ enum
 #define EXRAM 2
 #define MMC5FILL 3
 #define CART_NTRAM 4
+#define VRAM_NT 5    // nametable in the cartridge's CHR-RAM (UNROM 512 four-screen)
 
 
 #define PPU_MIRROR_VERT     1
@@ -223,14 +224,64 @@ public:
 
 	void set_ce(int mask, int state) {  m_ce_mask = mask; m_ce_state = state; }
 	void set_mmc1_type(mmc1_type val) {  m_mmc1_type = val; }
+	void set_mmc1_fixed_prg(bool val) { m_mmc1_fixed_prg = val; }   // NES 2.0 mapper 1 submapper 5 (SEROM/SHROM/SH1ROM)
+	// CPU cycle count, for mappers that react to writes on consecutive CPU cycles (MMC1)
+	u64 cpu_total_cycles() const { return m_maincpu->total_cycles(); }
 	void set_vrc_lines(int PRG_A, int PRG_B, int CHR) { m_vrc_ls_prg_a = PRG_A; m_vrc_ls_prg_b = PRG_B; m_vrc_ls_chr = CHR; }
 	void set_n163_vol(int vol) { m_n163_vol = vol; }
 	void set_outer_prg_size(unsigned val) { m_outer_prg_size = val; }
 	void set_outer_chr_size(unsigned val) { m_outer_chr_size = val; }
 	void set_smd133_addr(int val) {  m_smd133_addr = val; }
+
+	// NES 2.0 submapper selectors for boards that implement several incompatible variants (see nes_ines.hxx)
+	virtual void set_pjoy_submapper(u8 val) { }     // mappers 126, 422, 534
+	virtual void set_unrom512_flashable(bool val) { }   // mapper 30: battery flag = self-flashable board
+	virtual void set_unrom512_submapper(u8 val) { }     // mapper 30: NES 2.0 submapper
+	virtual void set_bandai_submapper(u8 val) { }   // mapper 16 submapper 5 / mapper 159: LZ93D50 registers at $8000 only
+	virtual void set_smd133_submapper(u8 val) { }   // mapper 268
+	virtual void set_gouder_submapper(u8 val) { }   // mapper 208
+	virtual void set_a88s1_submapper(u8 val) { }    // mapper 411
+	virtual void set_8025_submapper(u8 val) { }     // mapper 176 (submappers 0-5)
+	virtual void set_waixing_b_submapper(u8 val) { } // mapper 191 (submappers 0-1)
+
+	// data bus snoop: boards that watch every CPU write (BMW8544, mapper 292) receive the written data here
+	virtual void cpu_write_latch(u8 data) { }
 	void set_x1_005_alt(bool val) { m_x1_005_alt_mirroring = val; }
 	void set_bus_conflict(bool val) { m_bus_conflict = val; }
-	uint8_t get_open_bus() { return m_open_bus; }
+	// MMC3-style scanline counters: when the PPU reports filtered rising edges of A12, they count those instead of
+	// the hblank callback
+	virtual bool wants_a12() { return false; }
+	virtual void ppu_a12_rise() { }
+	// A board that filters A12 itself (MMC3: A12 has to stay low across three falling edges of M2) returns true from
+	// wants_a12_filter().  The PPU then asks a12_rise_accepted() about every raw rising edge of A12, giving the time A12
+	// went low and the time it rose, and only reports the edges the board accepts; any other board gets the PPU's own
+	// filter (A12 low for 10 PPU clocks).  cpu_cycles_at() counts the CPU cycles, i.e. the M2 periods, started by a time.
+	virtual bool wants_a12_filter() { return false; }
+	virtual bool a12_rise_accepted(const attotime &low_since, const attotime &when) { return true; }
+	u64 cpu_cycles_at(const attotime &when) const { return m_maincpu->attotime_to_cycles(when); }
+	// unfiltered PPU A12 level (MMC1 4K CHR mode); called whenever it changes, as of the PPU's last catch-up
+	virtual bool wants_a12_level() { return false; }
+	virtual void ppu_a12_level(int state) { }
+	// PPU address bus whenever A13/A12 change, $2006 writes included (Oeka Kids)
+	virtual bool wants_ppu_addr_bus() { return false; }
+	virtual void ppu_addr_bus(u16 addr) { }
+	// External M2 pin at the cartridge connector: a board that returns true from wants_m2() gets m2_w(1) at every M2 rise,
+	// before the CPU's access of that cycle, and m2_w(0) at every M2 fall after it (each at its true emulated time; DMA
+	// cycles included).  address and write are the address and R/W on the bus, driven before M2 rises and held until
+	// it falls.  The access itself is made at the M2 rise.
+	virtual bool wants_m2() { return false; }
+	virtual void m2_w(int state, offs_t address, bool write) { }
+	void set_a12_driven(bool driven) { m_a12_driven = driven; }
+	bool m_a12_driven = false;
+	// MMC3 IRQ variant from the NES 2.0 submapper: 0 = Sharp MMC3, 3 = Acclaim MC-ACC (clocked on the A12 fall), 4 = NEC MMC3 (old IRQ)
+	void set_mmc3_irq_variant(int variant) { m_mmc3_irq_variant = variant; }
+	int m_mmc3_irq_variant = 0;
+	// T9552 (Waixing mapper 249): $5000 value whose bank order the ROM image uses, 0 = iNES mapper 249, 2 = mapper 4 submapper 5
+	void set_t9552_file_order(u8 val) { m_t9552_file_order = val; }
+	u8 m_t9552_file_order = 0;
+
+	// with a 2A03 the CPU tracks the real data bus; otherwise fall back to the high-byte approximation
+	uint8_t get_open_bus();
 	void set_open_bus(uint8_t val) { m_open_bus = val; }
 
 	uint8_t *get_prg_base() { return m_prg; }
@@ -248,9 +299,13 @@ public:
 	uint32_t get_vram_size() const { return m_vram.size(); }
 	uint32_t get_battery_size() const { return m_battery.size(); }
 	uint32_t get_mapper_sram_size() const { return m_mapper_sram_size; }
+	void set_mapper_sram_size(uint32_t size) { m_mapper_sram_size = size; }   // loaders: 0 when the board has no battery
 	uint32_t get_misc_rom_size() const { return m_misc_rom_size; }
 
 	virtual void ppu_latch(offs_t offset) {}
+	// PPU pattern reads, reported after the read with the exact address (MMC2/MMC4 latches)
+	virtual bool wants_read_latch() { return false; }
+	virtual void ppu_read_latch(offs_t offset) {}
 	virtual void hblank_irq(int scanline, bool vblank, bool blanked) {}
 	virtual void scanline_irq(int scanline, bool vblank, bool blanked) {}
 
@@ -294,6 +349,7 @@ protected:
 	int m_ce_mask;
 	int m_ce_state;
 	mmc1_type m_mmc1_type;
+	bool m_mmc1_fixed_prg = false;
 	int m_vrc_ls_prg_a;
 	int m_vrc_ls_prg_b;
 	int m_vrc_ls_chr;

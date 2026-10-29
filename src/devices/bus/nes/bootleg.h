@@ -6,28 +6,6 @@
 #include "nxrom.h"
 
 
-// ======================> nes_sc127_device
-
-class nes_sc127_device : public nes_nrom_device
-{
-public:
-	// construction/destruction
-	nes_sc127_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
-	virtual void write_h(offs_t offset, uint8_t data) override;
-
-	virtual void hblank_irq(int scanline, bool vblank, bool blanked) override;
-	virtual void pcb_reset() override;
-
-protected:
-	// device-level overrides
-	virtual void device_start() override ATTR_COLD;
-
-private:
-	uint16_t m_irq_count;
-	int m_irq_enable;
-};
-
-
 // ======================> nes_mbaby_device
 
 class nes_mbaby_device : public nes_nrom_device
@@ -46,6 +24,9 @@ protected:
 	virtual void device_start() override ATTR_COLD;
 
 	TIMER_CALLBACK_MEMBER(irq_timer_tick);
+	// M2 at the cartridge connector: the IRQ counter is clocked once per CPU cycle, at the M2 rise (before that cycle's access)
+	virtual bool wants_m2() override { return true; }
+	virtual void m2_w(int state, offs_t address, bool write) override { if (state) irq_timer_tick(0); }
 
 private:
 	u16 m_irq_count;
@@ -96,6 +77,9 @@ protected:
 	virtual void device_start() override ATTR_COLD;
 
 	TIMER_CALLBACK_MEMBER(irq_timer_tick);
+	// M2 at the cartridge connector: the IRQ counter is clocked once per CPU cycle, at the M2 rise (before that cycle's access)
+	virtual bool wants_m2() override { return true; }
+	virtual void m2_w(int state, offs_t address, bool write) override { if (state) irq_timer_tick(0); }
 
 private:
 	u16 m_irq_count;
@@ -160,6 +144,9 @@ protected:
 	virtual void device_start() override ATTR_COLD;
 
 	TIMER_CALLBACK_MEMBER(irq_timer_tick);
+	// M2 at the cartridge connector: the IRQ counter is clocked once per CPU cycle, at the M2 rise (before that cycle's access)
+	virtual bool wants_m2() override { return true; }
+	virtual void m2_w(int state, offs_t address, bool write) override { if (state) irq_timer_tick(0); }
 
 private:
 	void update_irq(u8 data);
@@ -189,6 +176,9 @@ protected:
 	virtual void device_start() override ATTR_COLD;
 
 	TIMER_CALLBACK_MEMBER(irq_timer_tick);
+	// M2 at the cartridge connector: the IRQ counter is clocked once per CPU cycle, at the M2 rise (before that cycle's access)
+	virtual bool wants_m2() override { return true; }
+	virtual void m2_w(int state, offs_t address, bool write) override { if (state) irq_timer_tick(0); }
 
 private:
 	u16 m_irq_count;
@@ -219,6 +209,9 @@ protected:
 	virtual void device_start() override ATTR_COLD;
 
 	TIMER_CALLBACK_MEMBER(irq_timer_tick);
+	// M2 at the cartridge connector: the IRQ counter is clocked once per CPU cycle, at the M2 rise (before that cycle's access)
+	virtual bool wants_m2() override { return true; }
+	virtual void m2_w(int state, offs_t address, bool write) override { if (state) irq_timer_tick(0); }
 
 	u16 m_irq_count;
 	int m_irq_enable;
@@ -287,6 +280,9 @@ protected:
 	virtual void device_start() override ATTR_COLD;
 
 	TIMER_CALLBACK_MEMBER(irq_timer_tick);
+	// M2 at the cartridge connector: the IRQ counter is clocked once per CPU cycle, at the M2 rise (before that cycle's access)
+	virtual bool wants_m2() override { return true; }
+	virtual void m2_w(int state, offs_t address, bool write) override { if (state) irq_timer_tick(0); }
 
 private:
 	u16 m_irq_count;
@@ -314,6 +310,9 @@ protected:
 	virtual void device_start() override ATTR_COLD;
 
 	TIMER_CALLBACK_MEMBER(irq_timer_tick);
+	// M2 at the cartridge connector: the IRQ counter is clocked once per CPU cycle, at the M2 rise (before that cycle's access)
+	virtual bool wants_m2() override { return true; }
+	virtual void m2_w(int state, offs_t address, bool write) override { if (state) irq_timer_tick(0); }
 
 private:
 	u16 m_irq_count;
@@ -339,6 +338,9 @@ protected:
 	virtual void device_start() override ATTR_COLD;
 
 	TIMER_CALLBACK_MEMBER(irq_timer_tick);
+	// M2 at the cartridge connector: the IRQ counter is clocked once per CPU cycle, at the M2 rise (before that cycle's access)
+	virtual bool wants_m2() override { return true; }
+	virtual void m2_w(int state, offs_t address, bool write) override { if (state) irq_timer_tick(0); }
 
 private:
 	u16 m_irq_count;
@@ -585,6 +587,9 @@ protected:
 	virtual void device_start() override ATTR_COLD;
 
 	TIMER_CALLBACK_MEMBER(irq_timer_tick);
+	// M2 at the cartridge connector: the IRQ counter is clocked once per CPU cycle, at the M2 rise (before that cycle's access)
+	virtual bool wants_m2() override { return true; }
+	virtual void m2_w(int state, offs_t address, bool write) override { if (state) irq_timer_tick(0); }
 
 private:
 	uint16_t m_irq_count;
@@ -690,6 +695,9 @@ protected:
 	virtual void device_start() override ATTR_COLD;
 
 	TIMER_CALLBACK_MEMBER(irq_timer_tick);
+	// M2 at the cartridge connector: the IRQ counter is clocked once per CPU cycle, at the M2 rise (before that cycle's access)
+	virtual bool wants_m2() override { return true; }
+	virtual void m2_w(int state, offs_t address, bool write) override { if (state) irq_timer_tick(0); }
 
 private:
 	void write_45(offs_t offset, u8 data);
@@ -702,7 +710,6 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(NES_SC127,          nes_sc127_device)
 DECLARE_DEVICE_TYPE(NES_MARIOBABY,      nes_mbaby_device)
 DECLARE_DEVICE_TYPE(NES_ASN,            nes_asn_device)
 DECLARE_DEVICE_TYPE(NES_SMB3PIRATE,     nes_smb3p_device)

@@ -1,9 +1,14 @@
 // license:BSD-3-Clause
-// copyright-holders:Fabio Priuli
+// copyright-holders:Fabio Priuli,Brian H. Gilbert
 /***********************************************************************************************************
 
 
  NES/Famicom cartridge emulation for MMC-3 clone PCBs
+
+ iNES mappers: 44, 45, 49, 52, 114, 115, 121, 123, 126, 134, 182, 187, 189, 196, 197, 205, 208, 215,
+               219, 238, 250, 254, 258, 259, 262, 263, 268, 287, 291, 292, 294, 313, 322, 325, 333,
+               334, 339, 345, 348, 351, 353, 356, 361, 364, 366, 370, 372, 376, 377, 392, 393, 401,
+               410, 411, 422, 512, 513, 516, 534
 
 
  Here we emulate several pirate PCBs based on MMC-3 boards
@@ -91,9 +96,32 @@ DEFINE_DEVICE_TYPE(NES_BMC_830118C,   nes_bmc_830118c_device,   "nes_bmc_830118c
 DEFINE_DEVICE_TYPE(NES_BMC_830832C,   nes_bmc_830832c_device,   "nes_bmc_830832c",   "NES Cart BMC 830832C PCB")
 DEFINE_DEVICE_TYPE(NES_BMC_YY841101C, nes_bmc_yy841101c_device, "nes_bmc_yy841101c", "NES Cart BMC YY841101C PCB")
 DEFINE_DEVICE_TYPE(NES_BMC_YY841155C, nes_bmc_yy841155c_device, "nes_bmc_yy841155c", "NES Cart BMC YY841155C PCB")
-DEFINE_DEVICE_TYPE(NES_PJOY84,        nes_pjoy84_device,        "nes_pjoy84",        "NES Cart Powerjoy 84 PCB")
+DEFINE_DEVICE_TYPE(NES_PJOY84,        nes_pjoy84_device,        "nes_pjoy84",        "NES Cart TEC9719 / PowerJoy 84 PCB")
+DEFINE_DEVICE_TYPE(NES_BS300,         nes_bs300_device,         "nes_bs300",         "NES Cart BS-300 Family PCB")
+DEFINE_DEVICE_TYPE(NES_ING022,        nes_ing022_device,        "nes_ing022",        "NES Cart ING-022 PCB")
+DEFINE_DEVICE_TYPE(NES_8025,          nes_8025_device,          "nes_8025",          "NES Cart 8025 Enhanced MMC3 PCB")
 DEFINE_DEVICE_TYPE(NES_SMD133,        nes_smd133_device,        "nes_smd133",        "NES Cart SMD133 PCB")
 
+
+INPUT_PORTS_START( bmc_8025 )
+	PORT_START("CONFIG")
+	PORT_CONFNAME( 0x07, 0x00, "8025 Register Address (Solder Pad)" )
+	PORT_CONFSETTING(    0x00, "$5013" )
+	PORT_CONFSETTING(    0x01, "$5023" )
+	PORT_CONFSETTING(    0x02, "$5043" )
+	PORT_CONFSETTING(    0x03, "$5083" )
+	PORT_CONFSETTING(    0x04, "$5103" )
+	PORT_CONFSETTING(    0x05, "$5203" )
+	PORT_CONFSETTING(    0x06, "$5403" )
+	PORT_CONFSETTING(    0x07, "$5803" )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( family4646 )
+	PORT_START("CONFIG")
+	PORT_CONFNAME( 0x01, 0x00, "T4A54A solder pad" )
+	PORT_CONFSETTING(    0x00, "Low" )
+	PORT_CONFSETTING(    0x01, "High" )
+INPUT_PORTS_END
 
 INPUT_PORTS_START( sachen_shero )
 	PORT_START("JUMPER")
@@ -154,6 +182,16 @@ ioport_constructor nes_bmc_kc885_device::device_input_ports() const
 	return INPUT_PORTS_NAME( bmc_kc885 );
 }
 
+ioport_constructor nes_family4646_device::device_input_ports() const
+{
+	return INPUT_PORTS_NAME( family4646 );
+}
+
+ioport_constructor nes_8025_device::device_input_ports() const
+{
+	return INPUT_PORTS_NAME( bmc_8025 );
+}
+
 
 
 //**************************************************************************
@@ -166,7 +204,7 @@ nes_nitra_device::nes_nitra_device(const machine_config &mconfig, const char *ta
 }
 
 nes_bmw8544_device::nes_bmw8544_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock)
-	: nes_txrom_device(mconfig, NES_BMW8544, tag, owner, clock), m_reg(0)
+	: nes_txrom_device(mconfig, NES_BMW8544, tag, owner, clock), m_reg{0, 0, 0}, m_bus_latch(0)
 {
 }
 
@@ -186,7 +224,7 @@ nes_malisb_device::nes_malisb_device(const machine_config &mconfig, const char *
 }
 
 nes_family4646_device::nes_family4646_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock)
-	: nes_txrom_device(mconfig, NES_FAMILY4646, tag, owner, clock)
+	: nes_txrom_device(mconfig, NES_FAMILY4646, tag, owner, clock), m_config(*this, "CONFIG")
 {
 }
 
@@ -241,7 +279,13 @@ nes_sgboog_device::nes_sgboog_device(const machine_config &mconfig, const char *
 }
 
 nes_kay_device::nes_kay_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock)
-	: nes_txrom_device(mconfig, NES_KAY, tag, owner, clock), m_low_reg(0)
+	: nes_txrom_device(mconfig, NES_KAY, tag, owner, clock)
+	, m_ovr{0, 0, 0}
+	, m_outer(0x80)
+	, m_prot_out(0)
+	, m_prot_index(0)
+	, m_prot_latch(0)
+	, m_prot_lock(0)
 {
 }
 
@@ -281,7 +325,7 @@ nes_cocoma_device::nes_cocoma_device(const machine_config &mconfig, const char *
 }
 
 nes_gouder_device::nes_gouder_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: nes_txrom_device(mconfig, NES_GOUDER, tag, owner, clock)
+	: nes_txrom_device(mconfig, NES_GOUDER, tag, owner, clock), m_submapper(0)
 {
 }
 
@@ -304,11 +348,13 @@ nes_sachen_zgdh_device::nes_sachen_zgdh_device(const machine_config &mconfig, co
 
 nes_a9746_device::nes_a9746_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
 	: nes_txrom_device(mconfig, NES_A9746, tag, owner, clock)
+	, m_reg{0, 0, 0, 3}
+	, m_ext(0)
 {
 }
 
 nes_a88s1_device::nes_a88s1_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock)
-	: nes_txrom_device(mconfig, NES_A88S1, tag, owner, clock)
+	: nes_txrom_device(mconfig, NES_A88S1, tag, owner, clock), m_submapper(0)
 {
 }
 
@@ -487,12 +533,27 @@ nes_bmc_yy841155c_device::nes_bmc_yy841155c_device(const machine_config &mconfig
 }
 
 nes_pjoy84_device::nes_pjoy84_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: nes_txrom_device(mconfig, NES_PJOY84, tag, owner, clock)
+	: nes_pjoy84_device(mconfig, NES_PJOY84, tag, owner, clock, 126)
+{
+}
+
+nes_pjoy84_device::nes_pjoy84_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock, u16 mapper)
+	: nes_txrom_device(mconfig, type, tag, owner, clock), m_submapper(0), m_sl0(0xff), m_mapper(mapper)
+{
+}
+
+nes_bs300_device::nes_bs300_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
+	: nes_pjoy84_device(mconfig, NES_BS300, tag, owner, clock, 422)
+{
+}
+
+nes_ing022_device::nes_ing022_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
+	: nes_pjoy84_device(mconfig, NES_ING022, tag, owner, clock, 534)
 {
 }
 
 nes_smd133_device::nes_smd133_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock)
-	: nes_txrom_device(mconfig, NES_SMD133, tag, owner, clock)
+	: nes_txrom_device(mconfig, NES_SMD133, tag, owner, clock), m_submapper(0)
 {
 }
 
@@ -503,11 +564,13 @@ void nes_bmw8544_device::device_start()
 {
 	mmc3_start();
 	save_item(NAME(m_reg));
+	save_item(NAME(m_bus_latch));
 }
 
 void nes_bmw8544_device::pcb_reset()
 {
-	m_reg = 0;
+	std::fill(std::begin(m_reg), std::end(m_reg), 0x00);
+	m_bus_latch = 0;
 	mmc3_common_initialize(0x0f, 0xff, 0);
 }
 
@@ -580,15 +643,72 @@ void nes_kasing_device::pcb_reset()
 void nes_kay_device::device_start()
 {
 	mmc3_start();
-	save_item(NAME(m_low_reg));
-	save_item(NAME(m_reg));
+	save_item(NAME(m_ovr));
+	save_item(NAME(m_outer));
+	save_item(NAME(m_prot_out));
+	save_item(NAME(m_prot_index));
+	save_item(NAME(m_prot_latch));
+	save_item(NAME(m_prot_lock));
 }
 
 void nes_kay_device::pcb_reset()
 {
-	std::fill(std::begin(m_reg), std::end(m_reg), 0x00);
-	m_low_reg = 0;
+	std::fill(std::begin(m_ovr), std::end(m_ovr), 0x00);
+	m_outer = 0x80;     // the outer bank register powers on set
+	m_prot_out = 0;
+	m_prot_index = 0;
+	m_prot_latch = 0;
+	m_prot_lock = 0;
 	mmc3_common_initialize(0x1f, 0xff, 0);
+	m_mmc_prg_bank[0] = 0x00;   // MMC3 registers R6/R7 power on as $00/$01
+	m_mmc_prg_bank[1] = 0x01;
+	update_outer();
+}
+
+void nes_kay_device::update_outer()
+{
+	m_prg_base = (m_outer & 0x80) >> 2;
+	m_chr_base = (m_prg_size == m_vrom_size) ? ((m_outer & 0x80) << 1) : 0;     // only the A9713 (PRG and CHR the same size)
+	set_prg(m_prg_base, m_prg_mask);
+	set_chr(m_chr_source, m_chr_base, m_chr_mask);
+}
+
+void nes_kay_device::prot_sync()
+{
+	// the protection index decides which banks the latched value goes to
+	switch (m_prot_index & 0x3f)
+	{
+		case 0x20:
+		case 0x29:
+		case 0x2b:
+		case 0x3c:
+		case 0x3f:
+			m_prot_lock = 1;
+			m_ovr[0] = m_prot_latch;
+			break;
+		case 0x26:
+			m_prot_lock = 0;
+			m_ovr[0] = m_prot_latch;
+			break;
+		case 0x2c:
+			m_prot_lock = 1;
+			if (m_prot_latch)
+				m_ovr[0] = m_prot_latch;
+			break;
+		case 0x28:
+			m_prot_lock = 0;
+			m_ovr[1] = m_prot_latch;
+			break;
+		case 0x2a:
+			m_prot_lock = 0;
+			m_ovr[2] = m_prot_latch;
+			break;
+		case 0x2f:      // keep the banks previously selected
+			break;
+		default:        // invalid index: restore normal MMC3 PRG banking
+			m_prot_index = 0;
+			break;
+	}
 }
 
 
@@ -637,12 +757,23 @@ void nes_gouder_device::device_start()
 {
 	mmc3_start();
 	save_item(NAME(m_reg));
+	save_item(NAME(m_submapper));
 }
 
 void nes_gouder_device::pcb_reset()
 {
 	std::fill(std::begin(m_reg), std::end(m_reg), 0x00);
+	m_reg[5] = 0x11;    // power-on value of the PRG/mirroring register
 	mmc3_common_initialize(0xff, 0xff, 0);
+	m_mmc_prg_bank[0] = 0x00;   // MMC3 registers R6/R7 power on as $00/$01 (submapper 1 maps R6 >> 2 as its only PRG bank)
+	m_mmc_prg_bank[1] = 0x01;
+	if (m_submapper)
+		set_prg(m_prg_base, m_prg_mask);
+	else
+	{
+		prg32(bitswap<2>(m_reg[5], 4, 0));
+		update_mirroring();
+	}
 }
 
 void nes_sa9602b_device::device_start()
@@ -689,6 +820,7 @@ void nes_a9746_device::device_start()
 {
 	mmc3_start();
 	save_item(NAME(m_reg));
+	save_item(NAME(m_ext));
 }
 
 void nes_a9746_device::pcb_reset()
@@ -696,21 +828,29 @@ void nes_a9746_device::pcb_reset()
 	m_reg[0] = 0;
 	m_reg[1] = 0;
 	m_reg[2] = 0;
-	mmc3_common_initialize(0x7f, 0xff, 0);
+	m_reg[3] = 3;   // the outer bank register must be $03 for the menu to appear
+	m_ext = 0;
+	mmc3_common_initialize(0x0f, 0x7f, 0);
+	m_mmc_prg_bank[0] = 0x00;   // MMC3 registers R6/R7 power on as $00/$01 (this board never writes them, so $8000-$BFFF would stay on the last banks)
+	m_mmc_prg_bank[1] = 0x01;
+	update_outer();
 }
 
 void nes_a88s1_device::device_start()
 {
 	mmc3_start();
 	save_item(NAME(m_reg));
+	save_item(NAME(m_submapper));
 
-	// power-on values for registers; they don't seem to change with soft reset
-	m_reg[0] = 0x80;
-	m_reg[1] = 0x82;
+	// power-on values for registers; they don't change with soft reset, only the DIP value advances
+	m_reg[0] = 0x00;
+	m_reg[1] = 0x03;
+	m_reg[2] = 0xff;
 }
 
 void nes_a88s1_device::pcb_reset()
 {
+	m_reg[2]++;
 	mmc3_common_initialize(0x1f, 0xff, 0);
 	update_banks();
 }
@@ -1017,25 +1157,40 @@ void nes_pjoy84_device::device_start()
 {
 	mmc3_start();
 	save_item(NAME(m_reg));
+	save_item(NAME(m_submapper));
+	save_item(NAME(m_sl0));
 }
 
 void nes_pjoy84_device::pcb_reset()
 {
+	m_sl0++;    // soft resets cycle through the SL0 (menu selection) input values
 	std::fill(std::begin(m_reg), std::end(m_reg), 0x00);
-	set_base_mask();
-	mmc3_common_initialize(m_prg_mask, m_chr_mask, 0);
+	mmc3_common_initialize(0x1f, 0xff, 0);
+	m_mmc_prg_bank[0] = 0x00;   // MMC3 registers R6/R7 power on as $00/$01
+	m_mmc_prg_bank[1] = 0x01;
+	update_banks();
 }
 
 void nes_smd133_device::device_start()
 {
 	mmc3_start();
 	save_item(NAME(m_reg));
+	save_item(NAME(m_submapper));
 }
 
 void nes_smd133_device::pcb_reset()
 {
 	std::fill(std::begin(m_reg), std::end(m_reg), 0x00);
-	mmc3_common_initialize(0x3f, 0xff, 0);
+	mmc3_common_initialize(0xff, 0xff, 0);
+	update_banks();
+}
+
+void nes_smd133_device::set_smd133_submapper(u8 val)
+{
+	// submapper bit 0 selects the solder pad: odd = registers at $5000-$5FFF, even = registers overlay WRAM at $6000-$6FFF
+	// TODO: FCEUmm decodes the even-submapper registers over the whole of $6000-$7FFF (index = A & 7)
+	m_submapper = val;
+	m_smd133_addr = BIT(val, 0) ? 0x5000 : 0x6000;
 }
 
 
@@ -1072,34 +1227,60 @@ void nes_nitra_device::write_h(offs_t offset, u8 data)
 
  Games: Dragon Fighter (Flying Star)
 
- MMC3 clone with poorly understood PRG/CHR banking.
+ MMC3 clone with an overridden $8000 PRG bank and custom CHR
+ banking (2K XOR bank at PPU $0000, 2K bank at $0800, 4K bank at
+ $1000) that is fed by two extra registers. Reading $6000-$6FFF
+ (even addresses, PRG-RAM enabled) copies the data of the last CPU
+ write to ANY address (including zero page) into one of those
+ registers, so the NES driver forwards every CPU write to
+ cpu_write_latch().
 
- NES 2.0: mapper 292
+ NES 2.0: mapper 292 (UNIF UNL-DRAGONFIGHTER)
 
- In MAME: Not supported.
+ In MAME: Supported.
 
  -------------------------------------------------*/
 
-void nes_bmw8544_device::set_prg(int prg_base, int prg_mask)
+void nes_bmw8544_device::prg_cb(int start, int bank)
 {
-	nes_txrom_device::set_prg(prg_base, prg_mask);
-	prg8_89(m_reg);
+	// the $8000 bank is replaced by the board's own register
+	prg8_x(start, start == 0 ? (m_reg[0] & 0x1f) : bank);
+}
+
+void nes_bmw8544_device::chr_cb(int start, int bank, int source)
+{
+	if (start == 0)
+		chr2_0((bank >> 1) ^ m_reg[1], source);
+	else if (start == 2)
+		chr2_2((bank >> 1) | ((m_reg[2] & 0x40) << 1), source);
+	else if (start == 4)
+		chr4_4(m_reg[2] & 0x3f, source);
 }
 
 u8 nes_bmw8544_device::read_m(offs_t offset)
 {
 	LOGMASKED(LOG_HIFREQ, "bmw8544 read_m, offset: %04x\n", offset);
 
-	// CHR banking may be done by reads in this address range
-
-	return nes_txrom_device::read_m(offset);
+	if (offset < 0x1000 && !BIT(offset, 0))
+	{
+		if ((m_reg[0] & 0xe0) == 0xc0)
+			m_reg[1] = m_bus_latch;
+		else
+			m_reg[2] = m_bus_latch;
+		set_chr(m_chr_source, m_chr_base, m_chr_mask);
+	}
+	return 0;
 }
 
 void nes_bmw8544_device::write_m(offs_t offset, u8 data)
 {
 	LOG("bmw8544 write_m, offset: %04x, data: %02x\n", offset, data);
-	m_reg = data;
-	prg8_89(data);
+
+	if (offset < 0x1000 && !BIT(offset, 0))
+	{
+		m_reg[0] = data;
+		set_prg(m_prg_base, m_prg_mask);
+	}
 }
 
 /*-------------------------------------------------
@@ -1189,15 +1370,27 @@ void nes_malisb_device::write_h(offs_t offset, u8 data)
 
  MMC3 clone with banking for multigame menu.
 
- iNES: mapper 134
+ iNES: mapper 134 (T4A54A / WX-KB4K / BS-5652)
 
- In MAME: Preliminary supported.
+ $6000: mode (CNROM CHR mode, PRG A19, CHR A19, solder pad
+ read mode, register lock), $6001: outer banks, $6002: CNROM
+ CHR bank, $6003: unknown (only $00 is ever written).
+ With $6000 bit 6 set, reads from $8000-$FFFF return the
+ solder pad setting in bit 0 (configurable below).
 
- TODO: There are unknown writes to the unused reg 3,
- though it seems only 0x00 is written. Next, some
- carts have solder pad setting readable at 0x8000.
- Lastly, YH-4103 doesn't soft reset cleanly like
- the other carts, but does this happen on hardware?
+ $6001 bit 2 / bit 6 select 128 KiB outer PRG / CHR banks, in
+ which PRG A17 / CHR A17 come from $6001 bit 0 / bit 4; otherwise
+ they come from the MMC3. In NROM mode ($6001 bit 7) the MMC3
+ sees A13 = A14 = 0, so register 6 (or the fixed bank when PRG A14
+ is inverted) applies to the whole range, with A13 from the CPU and
+ A14 from the CPU (NROM-256) or the MMC3 ($6001 bit 3, NROM-128).
+ In CNROM mode ($6000 bit 3) MMC3 CHR writes do not change the
+ 8 KiB bank taken from $6002.
+
+ In MAME: Supported.
+
+ TODO: YH-4103 doesn't soft reset cleanly like the other
+ carts, but does this happen on hardware?
 
  -------------------------------------------------*/
 
@@ -1205,16 +1398,31 @@ void nes_family4646_device::prg_cb(int start, int bank)
 {
 	if (!BIT(m_reg[1], 7))    // MMC3 mode
 		nes_txrom_device::prg_cb(start, bank);
-	else if (start == 0)      // NROM mode, only uses MMC3's $8000 bank
+	else if (start == 0)      // NROM mode, only uses MMC3's $8000 bank; PRG A13 and A14 come from the CPU (or A14 from the MMC3)
 	{
 		if (BIT(m_reg[1], 3))
 		{
-			prg16_89ab(bank & ~0x01);
-			prg16_cdef(bank & ~0x01);
+			prg16_89ab(bank >> 1);
+			prg16_cdef(bank >> 1);
 		}
 		else
-			prg32(bank & ~0x03);
+			prg32(bank >> 2);
 	}
+}
+
+void nes_family4646_device::chr_cb(int start, int bank, int source)
+{
+	if (BIT(m_reg[0], 3))     // CNROM mode: the 8 KiB bank comes from $6002, the MMC3 CHR registers are not used
+		bank = m_chr_base | ((m_reg[2] & (m_chr_mask >> 3)) << 3) | start;
+	chr1_x(start, bank, source);
+}
+
+u8 nes_family4646_device::read_h(offs_t offset)
+{
+	// $6000 bit 6: CPU $8000-$FFFF reads the solder pad setting instead of PRG-ROM
+	if (BIT(m_reg[0], 6))
+		return (get_open_bus() & 0xfe) | BIT(m_config.read_safe(0), 0);
+	return hi_access_rom(offset);
 }
 
 void nes_family4646_device::write_m(offs_t offset, u8 data)
@@ -1229,16 +1437,15 @@ void nes_family4646_device::write_m(offs_t offset, u8 data)
 	else
 		return;
 
-	m_prg_base = (m_reg[1] & 0x03) << 4;
+	// outer PRG: A19 = $6000.4, A18 = $6001.1, A17 = $6001.0 only in 128 KiB mode (otherwise A17 comes from the MMC3)
+	m_prg_base = ((m_reg[0] & 0x10) << 2) | ((m_reg[1] & 0x02) << 4) | (BIT(m_reg[1], 2) ? ((m_reg[1] & 0x01) << 4) : 0);
 	m_prg_mask = 0x1f >> BIT(m_reg[1], 2);
 	set_prg(m_prg_base, m_prg_mask);
 
-	m_chr_base = (m_reg[1] & 0x30) << 3;
+	// outer CHR: A19 = $6000.5, A18 = $6001.5, A17 = $6001.4 only in 128 KiB mode (otherwise A17 comes from the MMC3)
+	m_chr_base = ((m_reg[0] & 0x20) << 4) | ((m_reg[1] & 0x20) << 3) | (BIT(m_reg[1], 6) ? ((m_reg[1] & 0x10) << 3) : 0);
 	m_chr_mask = 0xff >> BIT(m_reg[1], 6);
-	if (BIT(m_reg[0], 3))    // CNROM-like mode
-		chr8(m_chr_base >> 3 | (m_reg[2] & (m_chr_mask >> 3)), m_chr_source);
-	else                     // MMC3 mode
-		set_chr(m_chr_source, m_chr_base, m_chr_mask);
+	set_chr(m_chr_source, m_chr_base, m_chr_mask);
 }
 
 /*-------------------------------------------------
@@ -1296,7 +1503,7 @@ uint8_t nes_pikay2k_device::read_m(offs_t offset)
  MMC3 clone with register and address scrambling and
  a few extra banking modes by writing 0x5000-0x5fff.
 
- iNES: mapper 215
+ NES 2.0: mapper 215, submapper 0 (UNL-8237) and submapper 1 (UNL-8237A)
 
  In MAME: Preliminary supported.
 
@@ -1540,14 +1747,26 @@ void nes_sglionk_device::write_h(offs_t offset, u8 data)
 
  MMC3 clone. This is basically KOF96 board + protection
 
+ Writes to $5000-$5FFF select one of four protection values that
+ reads of $5000-$5FFF return ($83, $83, $42, $00). $8003 selects a
+ protection index and also writes its value to the MMC3 bank select
+ register ($8000); $8001 latches the written value with its lower
+ six bits reversed, and depending on the index that value replaces
+ the $A000/$C000/$E000 banks (see prot_sync()). The A9713 (512 KiB
+ PRG and CHR) has an outer bank register at $5180 that powers on
+ set. On boards with more CHR than PRG (only Street Fighter Zero 2 '97)
+ CHR A18 is set for the pattern table that holds the MMC3's 2 KiB banks,
+ as in FCEUmm's 121.c.
+
  iNES: mapper 121
 
  In MAME: Supported.
 
- TODO: Most of the fighting games have graphical issues
- with backgrounds on some stages. Due to common timing
- issue with PPU/MMC3? Super Lion King 2's title screen
- is also inexplicably broken.
+ TODO: Super Lion King 2's title screen is reported as broken.
+ NESdev's page instead says CHR A18 follows PPU A12 (the right pattern
+ table always uses the second 256 KiB), which did not boot Street Fighter
+ Zero 2 '97 here; the two rules only agree while the MMC3 CHR invert bit
+ is set.
 
  -------------------------------------------------*/
 
@@ -1555,16 +1774,18 @@ void nes_kay_device::write_l(offs_t offset, u8 data)
 {
 	LOG("kay write_l, offset: %04x, data: %02x\n", offset, data);
 
+	static constexpr u8 prot_table[4] = {0x83, 0x83, 0x42, 0x00};
+
 	offset += 0x100;
 	if (offset >= 0x1000)
-		m_low_reg = data & 0x03;
-
-	if ((offset & 0x1180) == 0x1180)  // only written by Super 3-in-1
 	{
-		m_prg_base = (data & 0x80) >> 2;
-		set_prg(m_prg_base, m_prg_mask);
-		m_chr_base = m_prg_base << 3;
-		set_chr(m_chr_source, m_chr_base, m_chr_mask);
+		m_prot_out = prot_table[data & 0x03];
+
+		if ((offset & 0x1180) == 0x1180)    // A9713 outer bank register
+		{
+			m_outer = data;
+			update_outer();
+		}
 	}
 }
 
@@ -1572,18 +1793,19 @@ u8 nes_kay_device::read_l(offs_t offset)
 {
 	LOG("kay read_l, offset: %04x\n", offset);
 
-	static constexpr u8 prot_table[4] = {0x83, 0x83, 0x42, 0x00};
-
 	offset += 0x100;
 	if (offset >= 0x1000)
-		return prot_table[m_low_reg];
+		return m_prot_out;
 	else
 		return get_open_bus();
 }
 
 void nes_kay_device::chr_cb(int start, int bank, int source)
 {
-	bank |= (m_latch << 1) & (start << 6) & 0x100;
+	// boards with more CHR than PRG (the A9713 uses its outer bank register instead): CHR A18 is set for the pattern table
+	// that holds the MMC3's 2 KiB banks, i.e. the right one while the CHR invert bit is set and the left one while it is clear
+	if (m_prg_size != m_vrom_size && ((start >= 4) == BIT(m_latch, 7)))
+		bank |= 0x100;
 	chr1_x(start, bank, source);
 }
 
@@ -1591,11 +1813,11 @@ void nes_kay_device::set_prg(int prg_base, int prg_mask)
 {
 	nes_txrom_device::set_prg(prg_base, prg_mask);
 
-	if (BIT(m_reg[4], 5))
+	if (m_prot_index & 0x3f)
 	{
-		prg8_ab(prg_base | m_reg[0]);
-		prg8_cd(prg_base | m_reg[1]);
-		prg8_ef(prg_base | m_reg[2]);
+		prg8_ab(prg_base | m_ovr[2]);
+		prg8_cd(prg_base | m_ovr[1]);
+		prg8_ef(prg_base | m_ovr[0]);
 	}
 }
 
@@ -1603,29 +1825,35 @@ void nes_kay_device::write_h(offs_t offset, u8 data)
 {
 	LOG("kay write_h, offset: %04x, data: %02x\n", offset, data);
 
-	txrom_write(offset, data);
-
-	switch (offset & 0x6003)
+	if (offset >= 0x2000)       // $A000-$FFFF: plain MMC3 registers
 	{
-		case 0x0001:
-			m_reg[3] = bitswap<6>(data, 0, 1, 2, 3, 4, 5);
-			switch (m_reg[4])
-			{
-				case 0x26:
-				case 0x28:
-				case 0x2a:
-					m_reg[(0x2a - m_reg[4]) / 2] = m_reg[3];
-					set_prg(m_prg_base, m_prg_mask);
-					break;
-			}
+		txrom_write(offset, data);
+		return;
+	}
+
+	switch (offset & 0x0003)
+	{
+		case 0x0001:    // protection latch: lower six bits reversed; the MMC3 clone always receives the write as well
+			m_prot_latch = bitswap<6>(data, 0, 1, 2, 3, 4, 5);
+			if (!m_prot_lock)
+				prot_sync();
+			txrom_write(offset, data);
 			break;
-		case 0x0003:
-			m_reg[4] = data & 0x3f;
-			if (BIT(m_reg[4], 5) && m_reg[3])
-				m_reg[2] = m_reg[3];
-			set_prg(m_prg_base, m_prg_mask);
+
+		case 0x0003:    // protection index; the value is also written to the MMC3 bank select register ($8000)
+			m_prot_index = data;
+			prot_sync();
+			txrom_write(offset & ~0x0003, data);
+			break;
+
+		case 0x0002:    // 121.c ignores $8002 (NESdev's $E001 mask would make it a second $8000); no known game writes it
+			break;
+
+		default:        // $8000: MMC3 bank select
+			txrom_write(offset, data);
 			break;
 	}
+	set_prg(m_prg_base, m_prg_mask);
 }
 
 /*-------------------------------------------------
@@ -1717,9 +1945,18 @@ uint8_t nes_6035052_device::read_ex(offs_t offset)
 
 void nes_txc_tw_device::write_l(offs_t offset, uint8_t data)
 {
+	if (offset < 0x20)   // the register starts at $4120
+		return;
+	write_m(offset, data);
+}
+
+// NESdev INES Mapper 189: [AAAA BBBB] at $4120-$7FFF selects the 32 KiB PRG bank, the two nibbles effectively OR'd
+// (a 74175 provides 4 bits); the MMC3's own PRG registers are ignored and there is no WRAM
+void nes_txc_tw_device::write_m(offs_t offset, uint8_t data)
+{
 	LOG("txc_tw write_l, offset: %04x, data: %02x\n", offset, data);
 
-	prg32((data >> 4) | data);
+	prg32((data | (data >> 4)) & 0x0f);
 }
 
 // writes to 0x8000-0xffff are like MMC3 but no PRG bankswitch (because it is handled by low writes)
@@ -1892,9 +2129,12 @@ void nes_cocoma_device::write_h(offs_t offset, u8 data)
 
  MMC3 clone. It also requires reads from 0x5000-0x7fff.
 
- iNES: mapper 208
+ NES 2.0: mapper 208, submapper 0 (Gouder: $4800-$4FFF/$6800-$6FFF
+ select a 32 KiB PRG bank and the mirroring, $5000-$5FFF is the XOR
+ protection) and submapper 1 (Mortal Kombat JJ-01 without the Gouder
+ copyright: no extra registers, 32 KiB PRG bank is MMC3 register 6 / 4).
 
- In MAME: Preliminary Support.
+ In MAME: Supported.
 
  -------------------------------------------------*/
 
@@ -1922,12 +2162,16 @@ void nes_gouder_device::write_l(offs_t offset, u8 data)
 
 	LOG("gouder write_l, offset: %04x, data: %02x\n", offset, data);
 
+	if (m_submapper)    // submapper 1 has no registers here
+		return;
+
 	offset += 0x100;
 	switch (offset & 0x1800)
 	{
 		case 0x0800:
-			prg32(bitswap<2>(data, 4, 0));
-			set_nt_mirroring(BIT(data, 5) ? PPU_MIRROR_HORZ : PPU_MIRROR_VERT);
+			m_reg[5] = data;
+			prg32(bitswap<2>(m_reg[5], 4, 0));
+			update_mirroring();
 			break;
 		case 0x1000:
 			m_reg[4] = data;
@@ -1943,15 +2187,44 @@ u8 nes_gouder_device::read_l(offs_t offset)
 	LOG("gouder read_l, offset: %04x\n", offset);
 
 	offset += 0x100;
-	if (offset >= 0x1800)
+	if (!m_submapper && offset >= 0x1800)
 		return m_reg[offset & 0x03];
 
 	return get_open_bus();
 }
 
-// writes to 0x8000-0xffff are like MMC3 but no PRG bankswitch (because it is handled by low writes)
+void nes_gouder_device::update_mirroring()
+{
+	// submapper 0: the MMC3 mirroring register is ignored, bit 5 of the PRG register selects mirroring
+	set_nt_mirroring(BIT(m_reg[5], 5) ? PPU_MIRROR_HORZ : PPU_MIRROR_VERT);
+}
+
+void nes_gouder_device::write_m(offs_t offset, u8 data)
+{
+	LOG("gouder write_m, offset: %04x, data: %02x\n", offset, data);
+
+	// $6800-$6FFF mirrors the $4800-$4FFF PRG/mirroring register
+	if (!m_submapper && (offset & 0x1800) == 0x0800)
+	{
+		m_reg[5] = data;
+		prg32(bitswap<2>(m_reg[5], 4, 0));
+		update_mirroring();
+	}
+}
+
+void nes_gouder_device::write_h(offs_t offset, u8 data)
+{
+	txrom_write(offset, data);
+	if (!m_submapper)
+		update_mirroring();
+}
+
+// submapper 0: writes to 0x8000-0xffff are like MMC3 but no PRG bankswitch (it is handled by the PRG register)
+// submapper 1: one 32 KiB PRG bank at $8000 selected by MMC3 register 6 / 4
 void nes_gouder_device::prg_cb(int start, int bank)
 {
+	if (m_submapper && start == 0)
+		prg32(m_mmc_prg_bank[0] >> 2);
 }
 
 
@@ -2113,40 +2386,80 @@ void nes_sachen_zgdh_device::write_l(offs_t offset, u8 data)
 
  MMC3 clone
 
- iNES: mapper 219
+ NES 2.0: mapper 219 (Kasheng A9461)
 
- Preliminary emulation based on Cah4e3's code
+ MMC3 mode (banks masked to 128 KiB) and an extended mode with
+ reversed-bit PRG bank registers $23-$26 and CHR latch registers,
+ plus a two-bit 128 KiB outer PRG/CHR bank written at $5002/$5003
+ (power-on value $03, which makes the menu appear).
+
+ $8002 bit 5 selects the mode: with it clear $8000/$8001 are the
+ normal MMC3 bank select/data registers, with it set a write to
+ $8000 or $8002 selects one of the extended PRG ($23-$26) or CHR
+ ($08-$1F) registers that $8001 then writes. $A000-$FFFF are always
+ the regular MMC3 registers.
+
+ NOTE: FCEUX (a9746.c) and Nestopia (NstBoardUnlA9746) never pass
+ $8000/$8001 on to the MMC3 and drop $A000/$A001; the mode bit and
+ the MMC3 passthrough follow NESdev. If Toy Story or the 4-in-1
+ misbehave, remove the txrom_write() calls for $8000-$8002 below.
 
  -------------------------------------------------*/
 
+void nes_a9746_device::update_outer()
+{
+	m_prg_base = m_reg[3] << 4;
+	m_chr_base = m_reg[3] << 7;
+	set_prg(m_prg_base, m_prg_mask);
+	set_chr(m_chr_source, m_chr_base, m_chr_mask);
+}
+
+void nes_a9746_device::prg_cb(int start, int bank)
+{
+	// MMC3 mode banks are masked to 128 KiB, the outer register selects the 128 KiB block
+	prg8_x(start, m_prg_base | (bank & 0x0f));
+}
+
+void nes_a9746_device::chr_cb(int start, int bank, int source)
+{
+	chr1_x(start, m_chr_base | (bank & 0x7f), source);
+}
+
+void nes_a9746_device::write_l(offs_t offset, u8 data)
+{
+	LOG("unl_a9746 write_l, offset: %04x, data: %02x\n", offset, data);
+
+	offset += 0x100;
+	switch (offset & 0x1003)
+	{
+		case 0x1002:    // $5002: outer bank bit 0
+			m_reg[3] = (m_reg[3] & 0x02) | BIT(data, 0);
+			update_outer();
+			break;
+		case 0x1003:    // $5003: outer bank bit 1
+			m_reg[3] = (m_reg[3] & 0x01) | (BIT(data, 5) << 1);
+			update_outer();
+			break;
+	}
+}
+
 void nes_a9746_device::update_banks(uint8_t value)
 {
-	uint8_t bank = bitswap<8>(value & 0x3c,7,6,0,1,2,3,4,5);
+	// extended PRG registers: index $23-$26 ($2B-$2E too, bit 3 is not decoded) selects the 8 KiB bank at $E000/$C000/$A000/$8000;
+	// the bank number is made of bits 5-2 of the data, in reversed order
+	const u8 sel = m_reg[0];
+	const u8 prg_sel = sel;
+	if ((prg_sel & 0x30) == 0x20 && (prg_sel & 0x07) >= 3 && (prg_sel & 0x07) <= 6)
+		prg8_x(6 - (prg_sel & 0x07), m_prg_base | bitswap<4>(value, 2, 3, 4, 5));
 
-	switch (m_reg[0])
-	{
-		case 0x26: prg8_89(bank); break;
-		case 0x25: prg8_ab(bank); break;
-		case 0x24: prg8_cd(bank); break;
-		case 0x23: prg8_ef(bank); break;
-	}
-
-	switch (m_reg[1])
-	{
-		case 0x08: case 0x0a: case 0x0c: case 0x0e:
-		case 0x10: case 0x12: case 0x14: case 0x16:
-		case 0x18: case 0x1a: case 0x1c: case 0x1e:
-			m_reg[2] = value << 4;
-			break;
-		case 0x09: chr1_0(m_reg[2] | (value >> 1), m_chr_source); break;
-		case 0x0b: chr1_1(m_reg[2] | (value >> 1) | 1, m_chr_source);  break;
-		case 0x0d: chr1_2(m_reg[2] | (value >> 1), m_chr_source);  break;
-		case 0x0f: chr1_3(m_reg[2] | (value >> 1) | 1, m_chr_source);  break;
-		case 0x11: chr1_4(m_reg[2] | (value >> 1), m_chr_source); break;
-		case 0x15: chr1_5(m_reg[2] | (value >> 1), m_chr_source);  break;
-		case 0x19: chr1_6(m_reg[2] | (value >> 1), m_chr_source);  break;
-		case 0x1d: chr1_7(m_reg[2] | (value >> 1), m_chr_source);  break;
-	}
+	// extended CHR registers
+	const u8 chr_sel = sel;
+	if (!BIT(chr_sel, 0) && ((chr_sel & 0x38) == 0x08 || (chr_sel & 0x30) == 0x10))
+		m_reg[2] = (value & 0x07) << 4;                                                 // bank number latch: CHR A16-A14 of the next bank
+	else if ((chr_sel & 0x39) == 0x09)                                                  // 1 KiB banks at $0000-$0FFF, pairs share bank bit 0
+		chr1_x(BIT(chr_sel, 1, 2), m_chr_base | m_reg[2] | (value >> 1) | BIT(chr_sel, 1), m_chr_source);
+	else if ((chr_sel & 0x31) == 0x11)                                                  // 1 KiB banks at $1000-$1FFF
+		chr1_x(4 + BIT(chr_sel, 2, 2), m_chr_base | m_reg[2] | (value >> 1), m_chr_source);
 }
 
 void nes_a9746_device::write_h(offs_t offset, uint8_t data)
@@ -2155,26 +2468,30 @@ void nes_a9746_device::write_h(offs_t offset, uint8_t data)
 
 	switch (offset & 0x6003)
 	{
-		case 0x0000:
-			m_reg[1] = data;
-			m_reg[0] = 0;
-			break;
-		case 0x0001:
-			update_banks(data);
-			break;
-		case 0x0002:
+		case 0x0000:    // MMC3 bank select, or index of the extended register
 			m_reg[0] = data;
-			m_reg[1] = 0;
+			if (!m_ext)
+				txrom_write(offset, data);
+			break;
+
+		case 0x0001:    // MMC3 bank data, or data of the selected extended register
+			if (m_ext)
+				update_banks(data);
+			else
+				txrom_write(offset, data);
+			break;
+
+		case 0x0002:    // mode register: bit 5 selects extended mode, otherwise the same as the MMC3 bank select
+			m_ext = BIT(data, 5);
+			m_reg[0] = data;
+			if (!m_ext)
+				txrom_write(offset & ~0x0002, data);
 			break;
 
 		case 0x0003:
-		case 0x2000:
-		case 0x2001:
-		case 0x2002:
-		case 0x2003:
 			break;
 
-		default:
+		default:        // $A000-$FFFF are regular MMC3 registers
 			txrom_write(offset, data);
 			break;
 	}
@@ -2190,12 +2507,21 @@ void nes_a9746_device::write_h(offs_t offset, uint8_t data)
 
 /*-------------------------------------------------
 
- Board BMC-FK23C
+ Board BMC-FK23C / BMC-FK23CA
 
  MMC3 clone
 
+ 8025 enhanced MMC3 (FK-xxx/BS-xxx, NES 2.0 mapper 176 submapper 1).
+ NES 2.0 images are emulated by nes_8025_device, which follows the
+ NESdev register description; this older board is only used for UNIF
+ files and software list entries.
+
  In MAME: partially supported (still to sort initial banking
  for many games)
+
+ TODO: the extended MMC3 registers $8-$B are only partly
+ emulated, and the solder pad address decode ($5013-$5803)
+ is fixed.
 
  -------------------------------------------------*/
 
@@ -2368,6 +2694,10 @@ void nes_nt639_device::write_m(offs_t offset, u8 data)
  Board BMC-SUPER24IN1SC03
 
  Games: Super 24-in-1
+
+ NES 2.0 mapper 176 submapper 0 images (LP-8002KB, SFC-12B) are
+ emulated by nes_8025_device; this older board is only used for UNIF
+ files and software list entries.
 
  In MAME: Partially Supported
 
@@ -2812,11 +3142,15 @@ void nes_bmc_hik4_device::write_m(offs_t offset, u8 data)
 
  Games: 1997 Super 7 in 1, 6 in 1 (JY-201 to JY-206)
 
- MMC3 clone with banking for multigame menu.
+ MMC3 clone with banking for multigame menu. $5000-$5FFF holds
+ the outer registers; reading it returns a DIP value that advances
+ on every soft reset.
 
- NES 2.0: mapper 411
+ NES 2.0: mapper 411, submapper 0 (JY-201..204), submapper 1 (CHR
+ A18 taken from $5001 only) and submapper 2 (registers written at
+ any $5000-$5FFF address, 256 KiB PRG size bit moved to bit 0)
 
- In MAME: Preliminary supported.
+ In MAME: Supported.
 
  TODO: Investigate...
  - Hokuto no Ken has broken sound on each cart it's on.
@@ -2830,32 +3164,48 @@ void nes_bmc_hik4_device::write_m(offs_t offset, u8 data)
 
 void nes_a88s1_device::update_banks()
 {
-	u8 outer = bitswap<2>(m_reg[1], 6, 3);
-	u8 size_128k = !BIT(m_reg[1], 1);
-
-	if (BIT(m_reg[0], 6))    // NROM mode
-	{
-		u8 bank = outer << 3 | bitswap<3>(m_reg[0], 2, 3, 0);
-		u8 mode = BIT(m_reg[0], 1);
-		prg16_89ab(bank & ~mode);
-		prg16_cdef(bank | mode);
-	}
-	else                     // MMC3 mode
-	{
-		m_prg_base = (outer & (0xfe | size_128k)) << 4;
-		m_prg_mask = 0x1f >> size_128k;
-		set_prg(m_prg_base, m_prg_mask);
-	}
-
-	m_chr_base = (m_reg[0] & 0x10) << 4 | (BIT(m_reg[1], 2) & size_128k) << 7;
-	m_chr_mask = 0xff >> size_128k;
-	set_chr(m_chr_source, m_chr_base, m_chr_mask);
+	set_prg(0, 0xff);
+	set_chr(m_chr_source, 0, 0xff);
 }
 
 void nes_a88s1_device::prg_cb(int start, int bank)
 {
-	if (!BIT(m_reg[0], 6))
-		nes_txrom_device::prg_cb(start, bank);
+	const int prg_or = ((m_reg[1] << 1) & 0x10) | ((m_reg[1] >> 1) & 0x60);
+	const int prg_and = (m_submapper == 2 ? BIT(m_reg[1], 0) : BIT(m_reg[1], 1)) ? 0x1f : 0x0f;
+
+	if (BIT(m_reg[0], 6))   // NROM mode
+	{
+		const int nrom_bank = (m_reg[0] & 0x05) | ((m_reg[0] >> 2) & 0x02) | (prg_or >> 1);
+		if (BIT(m_reg[0], 1))
+			prg32(nrom_bank >> 1);
+		else
+		{
+			prg16_89ab(nrom_bank);
+			prg16_cdef(nrom_bank);
+		}
+	}
+	else                    // MMC3 mode
+		prg8_x(start, (bank & prg_and) | (prg_or & ~prg_and));
+}
+
+void nes_a88s1_device::chr_cb(int start, int bank, int source)
+{
+	const int chr_and = BIT(m_reg[1], 1) ? 0xff : 0x7f;
+	int chr_or = (m_reg[1] << 5) & 0x080;
+	if (m_submapper == 1)
+		chr_or |= (m_reg[1] << 2) & 0x100;
+	else
+		chr_or |= ((m_reg[0] << 4) & 0x100) | ((m_reg[1] << 2) & 0x200);
+
+	chr1_x(start, (bank & chr_and) | (chr_or & ~chr_and), source);
+}
+
+u8 nes_a88s1_device::read_l(offs_t offset)
+{
+	LOGMASKED(LOG_HIFREQ, "a88s1 read_l, offset: %04x\n", offset);
+
+	// $5000-$5FFF returns the DIP value
+	return (offset >= 0x0f00) ? m_reg[2] : get_open_bus();
 }
 
 void nes_a88s1_device::write_l(offs_t offset, u8 data)
@@ -2863,7 +3213,7 @@ void nes_a88s1_device::write_l(offs_t offset, u8 data)
 	LOG("a88s1 write_l, offset: %04x, data: %02x\n", offset, data);
 
 	offset += 0x100;
-	if (offset >= 0x1000)
+	if (offset >= 0x1000 && (m_submapper == 2 || BIT(offset, 11)))
 	{
 		m_reg[offset & 1] = data;
 		update_banks();
@@ -3299,26 +3649,29 @@ void nes_bmc_411120c_device::write_m(offs_t offset, u8 data)
 
  NES 2.0: mapper 353
 
- In MAME: Partially supported.
+ Outer register at $8080-$E080 (bits 13-14): bank 0 uses TxSROM
+ mirroring (CHR A17), bank 2 is a 128 KiB PRG bank with CHR A17
+ serving as PRG A17 (and unbanked CHR-RAM when CHR A17 is high),
+ bank 3 replaces PRG A17 with CPU A14 while CHR A17 is low.
 
- TODO: Banking isn't quite right. Golden Mario, the
- 4th game, should be SMB2J but loads as plain old
- Mario Bros with garbled graphics. Golden Mario
- should be on the last outer bank #3.
+ In MAME: Supported.
+
+ TODO: on the real board PRG A17 follows the live CHR A17 line,
+ which changes with every PPU fetch; here bit 7 of MMC3 register
+ R0 stands in for it.
 
  -------------------------------------------------*/
 
-void nes_bmc_810305c_device::set_prg(int prg_base, int prg_mask)
+void nes_bmc_810305c_device::prg_cb(int start, int bank)
 {
-	u8 a17 = BIT(m_mmc_vrom_bank[0], 7);
+	const bool chr_a17 = BIT(m_mmc_vrom_bank[0], 7);
 
-	nes_txrom_device::set_prg(prg_base | (m_outer == 2 && a17) << 4, prg_mask);
+	if (m_outer == 2 && chr_a17)
+		bank |= 0x10;                                   // CHR A17 serves as PRG A17
+	else if (m_outer == 3 && !chr_a17)
+		bank = (bank & ~0x10) | ((start & 2) << 3);     // CPU A14 serves as PRG A17
 
-	if (m_outer == 3 && !a17)
-	{
-		prg8_cd(m_mmc_prg_bank[0] | 0x70);
-		prg8_ef(m_mmc_prg_bank[1] | 0x70);
-	}
+	prg8_x(start, bank);
 }
 
 void nes_bmc_810305c_device::set_chr(u8 chr, int chr_base, int chr_mask)
@@ -3430,6 +3783,11 @@ void nes_bmc_820720c_device::write_h(offs_t offset, u8 data)
  MMC3 clone with banking for multigame menu.
 
  NES 2.0: mapper 348
+
+ The outer register at $6800 only responds when PRG-RAM is
+ enabled and writable ($A001 = $80-$BF). Outer bank 3 selects
+ the GNROM-like mode: MMC3 banks for $8000-$BFFF with bit 1
+ cleared, and for $C000-$FFFF with bit 1 set.
 
  In MAME: Preliminary supported.
 
@@ -3562,137 +3920,345 @@ void nes_bmc_yy841155c_device::write_m(offs_t offset, u8 data)
 
 /*-------------------------------------------------
 
- BMC-POWERJOY
+ TEC9719 (mapper 126), BS-300 / ING003C family (mapper 422) and
+ ING-022 (mapper 534) enhanced MMC3 ASICs
+
+ Games: PowerJoy 84-in-1 (126); many multicarts (422); Atari
+ Flashback Mini 7800, Intellivision 25-in-1 and others (534)
+
+ Four outer registers overlay WRAM at $6000-$7FFF (writable only
+ while $A001 bit 7 is set): $6000 PRG/CHR outer banks and sizes,
+ $6001 SL0 menu input / mirroring mode / PRG chip select,
+ $6002 CNROM CHR bank and bit locks, $6003 banking mode (MMC3,
+ NROM-128/256, UNROM, ANROM) and register lock. The ASIC addresses
+ up to 4 MiB of PRG-ROM and repurposes high PRG address lines as
+ CHR lines: mapper 126 swaps CHR A18/A19 compared to 422 and 534.
+ Mapper 534 also inverts the data written to the MMC3 IRQ latch
+ at $C000. NES 2.0 submapper 1 uses PRG A21 as chip select
+ between two 1 MiB PRG chips, submapper 2 uses $6001 bit 2, submapper 3
+ substitutes PRG A14 and CHR A14 with $6000 bit 5 (when $6000 bit 2 is
+ set) and submapper 4 (LD822 PCB) wires CHR A20..A18 to PRG A20..A18.
+ The banking follows FCEUmm's 126_422_534.c, which also lists some old
+ dumps that need their PRG/CHR halves swapped (not handled here).
+
+ NES 2.0: mappers 126, 422 and 534
+
+ In MAME: Supported.
 
  -------------------------------------------------*/
 
-void nes_pjoy84_device::prg_cb(int start, int bank)
+u8 nes_pjoy84_device::get_mmc3_bank(int bank) const
 {
-	uint8_t flip = (m_latch & 0x40) ? 2 : 0;
+	if (!(bank & 1) && BIT(m_latch, 6))
+		bank ^= 2;
+	return (bank & 2) ? (0xfe | (bank & 1)) : u8(m_mmc_prg_bank[bank & 1]);
+}
 
-	if (!(m_reg[3] & 0x03))
-		prg8_x(start, bank);
-	else if (start == flip)
+void nes_pjoy84_device::update_prg()
+{
+	int prg_and = BIT(m_reg[0], 6) ? 0x0f : 0x1f;     // 128 or 256 KiB inner PRG bank
+	int prg_or = (((m_reg[0] << 4) & 0x070) | (((m_reg[0] ^ 0x20) << 3) & 0x180)) & ~prg_and;     // outer PRG bank
+	if (m_submapper == 1)
+		prg_or = (prg_or & 0x7f) | ((prg_or >> 1) & 0x80);      // PRG A21 selects between two 1 MiB chips
+	if (m_submapper == 2)
+		prg_or = (prg_or & 0x7f) | ((m_reg[1] << 5) & 0x80);    // $6001 bit 2 selects between two 1 MiB chips
+	if (m_submapper == 3 && BIT(m_reg[0], 2))
 	{
-		if ((m_reg[3] & 0x03) == 0x03)
-			prg32(bank >> 2);
-		else
+		// PRG A14 is replaced by PRG A21
+		prg_and &= ~0x02;
+		prg_or |= BIT(m_reg[0], 5) ? 0x00 : 0x02;
+	}
+
+	// In UNROM-like mode (CT3=1, CT2=1, CT0=1) the MMC3 sees A13=0 and A14=CPU A14 during reads, making register 6 apply
+	// from $8000-$BFFF and the fixed bank from $C000-$FFFF. In NROM-128, NROM-256, ANROM and UNROM modes (CT0=1) it sees
+	// A13=0 and A14=0, making register 6 apply from $8000-$FFFF.
+	const int page_mask = ((m_reg[3] & 0x0d) == 0x0d) ? 2 : BIT(m_reg[3], 0) ? 0 : 3;
+
+	for (int page = 0; page < 4; page++)
+	{
+		u8 v = get_mmc3_bank(page & page_mask);
+
+		// UNROM and ANROM modes mean that MMC3 register 6 selects 16 and 32 KiB rather than 8 KiB banks
+		if (BIT(m_reg[3], 3))
 		{
-			prg16_89ab(bank >> 1);
-			prg16_cdef(bank >> 1);
+			switch (m_reg[3] & 0x03)
+			{
+				case 0: v = (v & 3) | ((v << 1) & ~3); break;       // PRG A14 appears twice
+				case 1: v = (page & 3) | ((v << 1) & ~1); break;    // 16 KiB mode, bit 0 OR'd with CPU A14
+				case 2: v = (v & 3) | ((v << 2) & ~3); break;       // PRG A13 and PRG A14 appear twice
+				case 3: v = (page & 3) | ((v << 2) & ~3); break;    // 32 KiB mode
+			}
+		}
+		else if (BIT(m_reg[3], 0))  // regular NROM modes
+		{
+			v = (page & 1) | (v & ~1);
+			if (BIT(m_reg[3], 1))
+				v = (page & 2) | (v & ~2);                          // NROM-256
+		}
+
+		prg8_x(page, (v & prg_and) | (prg_or & ~prg_and));
+	}
+}
+
+void nes_pjoy84_device::update_chr()
+{
+	int chr_and = BIT(m_reg[0], 7) ? 0x7f : 0xff;     // 128 or 256 KiB inner CHR bank
+	int chr_or;                                         // outer CHR bank
+	if (m_mapper == 126)    // mapper 126 swaps CHR A18 and A19
+		chr_or = (((m_reg[0] << 4) & 0x080) | (((m_reg[0] ^ 0x20) << 3) & 0x100) | ((m_reg[0] << 5) & 0x200)) & ~chr_and;
+	else if (m_submapper == 4)  // LD822 PCB: CHR A20..A18 = PRG A20..A18
+		chr_or = (((m_reg[0] << 4) & 0x080) | ((m_reg[0] << 7) & 0x100) | ((~m_reg[0] << 4) & 0x200) | ((m_reg[0] << 6) & 0x400)) & ~chr_and;
+	else
+		chr_or = ((((m_reg[0] ^ 0x20) << 4) & 0x380) | ((m_reg[0] << 8) & 0x400)) & ~chr_and;
+	if (m_submapper == 3 && BIT(m_reg[0], 2))
+	{
+		// CHR A14 is replaced by PRG A21
+		chr_and &= ~0x10;
+		chr_or |= BIT(m_reg[0], 5) ? 0x00 : 0x10;
+	}
+
+	if (BIT(m_reg[3], 4))   // CNROM mode: the 8 KiB inner CHR bank comes from outer bank register #2
+	{
+		chr8((m_reg[2] & (chr_and >> 3)) | ((chr_or & ~chr_and) >> 3), m_chr_source);
+		return;
+	}
+
+	const u8 chr_page = (m_latch & 0x80) >> 5;
+	chr1_x(chr_page ^ 0, ((m_mmc_vrom_bank[0] & ~0x01) & chr_and) | chr_or, m_chr_source);
+	chr1_x(chr_page ^ 1, ((m_mmc_vrom_bank[0] |  0x01) & chr_and) | chr_or, m_chr_source);
+	chr1_x(chr_page ^ 2, ((m_mmc_vrom_bank[1] & ~0x01) & chr_and) | chr_or, m_chr_source);
+	chr1_x(chr_page ^ 3, ((m_mmc_vrom_bank[1] |  0x01) & chr_and) | chr_or, m_chr_source);
+	chr1_x(chr_page ^ 4, (u8(m_mmc_vrom_bank[2]) & chr_and) | chr_or, m_chr_source);
+	chr1_x(chr_page ^ 5, (u8(m_mmc_vrom_bank[3]) & chr_and) | chr_or, m_chr_source);
+	chr1_x(chr_page ^ 6, (u8(m_mmc_vrom_bank[4]) & chr_and) | chr_or, m_chr_source);
+	chr1_x(chr_page ^ 7, (u8(m_mmc_vrom_bank[5]) & chr_and) | chr_or, m_chr_source);
+}
+
+void nes_pjoy84_device::update_mirroring()
+{
+	if (BIT(m_reg[3], 5))   // ANROM mirroring from MMC3 register 6 bit 4
+		set_nt_mirroring(BIT(m_mmc_prg_bank[0], 4) ? PPU_MIRROR_HIGH : PPU_MIRROR_LOW);
+	else if (BIT(m_reg[1], 1))  // extended mirroring
+	{
+		switch (m_mmc_mirror & 3)
+		{
+			case 0: set_nt_mirroring(PPU_MIRROR_VERT); break;
+			case 1: set_nt_mirroring(PPU_MIRROR_HORZ); break;
+			case 2: set_nt_mirroring(PPU_MIRROR_LOW); break;
+			case 3: set_nt_mirroring(PPU_MIRROR_HIGH); break;
 		}
 	}
+	else
+		set_nt_mirroring(BIT(m_mmc_mirror, 0) ? PPU_MIRROR_HORZ : PPU_MIRROR_VERT);
+}
+
+void nes_pjoy84_device::update_banks()
+{
+	update_prg();
+	update_chr();
+	update_mirroring();
+}
+
+void nes_pjoy84_device::prg_cb(int start, int bank)
+{
+	update_prg();
 }
 
 void nes_pjoy84_device::chr_cb(int start, int bank, int source)
 {
-	if (!(m_reg[3] & 0x10))
-		chr1_x(start, bank, source);
+	update_chr();
 }
 
-inline void nes_pjoy84_device::set_base_mask()
+u8 nes_pjoy84_device::read_m(offs_t offset)
 {
-	m_prg_base = ((m_reg[0] & (0x06 | BIT(m_reg[0], 6))) << 4) |
-	(BIT(m_reg[0], 4) << 7);
-
-	m_chr_base = ((~m_reg[0] << 0) & 0x080 & m_reg[2]) |
-	((m_reg[0] << 4) & 0x080 & m_reg[0]) |
-	((m_reg[0] << 3) & 0x100) |
-	((m_reg[0] << 5) & 0x200);
-
-	m_prg_mask = BIT(m_reg[0], 6) ? 0x0f : 0x1f;
-	m_chr_mask = BIT(m_reg[0], 7) ? 0x7f : 0xff;
+	// WRAM stays connected regardless of the MMC3 WRAM enable bit
+	return device_nes_cart_interface::read_m(offset);
 }
 
-void nes_pjoy84_device::write_m(offs_t offset, uint8_t data)
+u8 nes_pjoy84_device::read_h(offs_t offset)
+{
+	// $6001 bit 0: PRG A0 comes from the SL0 input (menu selection)
+	if (BIT(m_reg[1], 0))
+		offset = (offset & ~1) | BIT(m_sl0, 0);
+	return hi_access_rom(offset);
+}
+
+void nes_pjoy84_device::write_m(offs_t offset, u8 data)
 {
 	LOG("pjoy84 write_m, offset: %04x, data: %02x\n", offset, data);
 
-	switch (offset & 0x03)
+	device_nes_cart_interface::write_m(offset, data);   // clearing the MMC3 WRAM bit does not disable WRAM itself
+
+	// the outer registers can only be written while the MMC3 WRAM bit is set
+	if (!BIT(m_wram_protect, 7))
+		return;
+
+	const u8 reg = offset & 0x03;
+	if (reg == 2)
 	{
-		case 0x00:
-		case 0x03:
-			if (m_reg[3] & 0x80)
-				return; // else we act as if offset & 3 = 1,2
-			[[fallthrough]];
-		case 0x01:
-		case 0x02:
-			m_reg[offset & 0x03] = data;
-			set_base_mask();
-			if (m_reg[3] & 0x10)
-				chr8((m_chr_base >> 3) | (m_reg[2] & 0x0f), m_chr_source);
-			else
-				set_chr(m_chr_source, m_chr_base, m_chr_mask);
-			set_prg(m_prg_base, m_prg_mask);
-			break;
+		// CNROM bank (D0-D3), bank enable (D4-D6) and bank enable lock (D7)
+		const int latch_mask = 0xff & ~(BIT(m_reg[2], 7) ? 0xf0 : 0x00) & ~((m_reg[2] >> 3) & 0x0e);
+		m_reg[2] = (m_reg[2] & ~latch_mask) | (data & latch_mask);
+		update_chr();
 	}
+	else if (!BIT(m_reg[3], 7))
+	{
+		// lock bit clear: update any other outer bank register
+		m_reg[reg] = data;
+		update_banks();
+	}
+}
+
+void nes_pjoy84_device::write_h(offs_t offset, u8 data)
+{
+	LOG("pjoy84 write_h, offset: %04x, data: %02x\n", offset, data);
+
+	if ((m_reg[3] & 0x09) == 0x09)
+		txrom_write(1, data);       // UNROM and ANROM modes treat all writes to $8000-$FFFF as if they were going to $8001
+	else
+	{
+		if (offset >= 0x4000 && m_mapper == 534)
+			data ^= 0xff;           // mapper 534 inverts the MMC3 scanline counter reload value
+		txrom_write(offset, data);
+	}
+	update_banks();
 }
 
 /*-------------------------------------------------
 
- COOLBOY, MINDKIDS, and others with SMD132/133 chips
+ COOLBOY, MINDKIDS, and other AA6023 / SMD132 / SMD133 boards
 
  Games: many multicarts, Chinese games, and some
  modern re-releases such as Metal Storm and Holy Diver
 
- NES 2.0: mapper 268
+ MMC3 clone with six outer registers. NES 2.0 submapper bit 0
+ selects the solder pad (odd: registers at $5000-$5FFF, even: registers
+ overlay WRAM at $6000-$6FFF); submapper bits 1-3 select the revision /
+ PCB wiring: 0/1 original implementation (CHR-RAM only, or mixed
+ CHR-ROM/RAM selected by register 4), 2/3 later revision with a different
+ arrangement of register 1, 4/5 LD622D (PRG A20-21 moved to register 0),
+ 6/7 J-852C (CHR A17 selects between two PRG chips), 8/9 2 MiB regular plus
+ an extra latch and write-protectable CHR-RAM, 10/11 single-screen mirroring
+ controlled by register 0.
 
- In MAME: Partially supported.
+ NES 2.0: mapper 268, submappers 0-11
 
- TODO: There are many unimplemented features, though
- there may be no carts that use them. Some of the
- unemulated stuff: regs 4 and 5 not used, more GNROM
- bits in reg 2, "weird" modes, WRAM at 0x5000, etc.
+ In MAME: Supported.
 
  -------------------------------------------------*/
 
 void nes_smd133_device::prg_cb(int start, int bank)
 {
-	if (BIT(m_reg[3], 4))    // GNROM mode
+	const int prg_mask_mmc3 = (BIT(m_reg[3], 4) ? 0x00 : 0x0f)
+			| (BIT(m_reg[0], 6) ? 0x00 : 0x10)
+			| (BIT(m_reg[1], 7) ? 0x00 : 0x20)
+			| (BIT(m_reg[1], 6) ? 0x40 : 0x00)
+			| (BIT(m_reg[1], 5) ? 0x80 : 0x00);
+	int prg_mask_gnrom = 0;
+	int prg_offset = 0;
+
+	switch (m_submapper & ~1)
 	{
-		u8 mask = (m_reg[1] & 0x02) | 0x01;
-		bank &= ~0x0f;
-		bank |= (m_reg[3] & ~mask & 0x0f) | (start & mask);
+		default:    // original AA6023
+			prg_mask_gnrom = BIT(m_reg[3], 4) ? (BIT(m_reg[1], 1) ? 0x03 : 0x01) : 0;
+			prg_offset = (m_reg[3] & 0x0e) | ((m_reg[0] << 4) & 0x070) | ((m_reg[1] << 3) & 0x080)
+					| ((m_reg[1] << 6) & 0x300) | ((m_reg[0] << 6) & 0xc00) | ((~m_reg[1] << 12) & 0x1000);
+			break;
+
+		case 2:     // later revision with a different arrangement of register 1
+			prg_mask_gnrom = BIT(m_reg[3], 4) ? (BIT(m_reg[1], 4) ? 0x01 : 0x03) : 0;
+			prg_offset = (m_reg[3] & 0x0e) | ((m_reg[0] << 4) & 0x070) | ((m_reg[1] << 4) & 0x080)
+					| ((m_reg[1] << 6) & 0x100) | ((m_reg[1] << 8) & 0x200) | ((m_reg[0] << 6) & 0xc00);
+			break;
+
+		case 4:     // LD622D: PRG A20-21 moved to register 0
+			prg_mask_gnrom = BIT(m_reg[3], 4) ? (BIT(m_reg[1], 1) ? 0x03 : 0x01) : 0;
+			prg_offset = (m_reg[3] & 0x0e) | ((m_reg[0] << 4) & 0x070) | ((m_reg[0] << 3) & 0x180);
+			break;
+
+		case 6:     // J-852C: CHR A17 (or bit 3 of register 0) selects one of two PRG chips
+		{
+			prg_mask_gnrom = BIT(m_reg[3], 4) ? (BIT(m_reg[1], 1) ? 0x03 : 0x01) : 0;
+			prg_offset = (m_reg[3] & 0x0e) | ((m_reg[0] << 4) & 0x070) | ((m_reg[1] << 3) & 0x080)
+					| ((m_reg[1] << 6) & 0x300) | ((m_reg[0] << 6) & 0xc00);
+			const int chip_size = (m_prg_size / 0x2000) / 2;
+			prg_offset &= chip_size - 1;
+			if (BIT(m_reg[0], 7) ? BIT(m_reg[0], 3) : BIT(m_mmc_vrom_bank[0], 7))
+				prg_offset |= chip_size;
+			break;
+		}
+
+		case 8:     // 2 MiB regular plus extra latch (register 6)
+			prg_mask_gnrom = BIT(m_reg[3], 4) ? (BIT(m_reg[1], 1) ? 0x03 : 0x01) : 0;
+			prg_offset = (m_reg[3] & 0x0e) | ((m_reg[0] << 4) & 0x070) | ((m_reg[1] << 3) & 0x080)
+					| ((m_reg[6] << 8) & 0x300) | ((m_reg[6] << 6) & 0xc00);
+			break;
 	}
 
-	prg8_x(start, bank);
+	prg_offset &= ~(prg_mask_mmc3 | prg_mask_gnrom);
+	prg8_x(start, (bank & prg_mask_mmc3) | prg_offset | (start & prg_mask_gnrom));
 }
 
 void nes_smd133_device::chr_cb(int start, int bank, int source)
 {
-	if (BIT(m_reg[3], 4))    // GNROM mode
-	{
-		bank &= ~m_chr_mask;
-		bank |= (m_reg[2] & 0x0f) << 3 | start;
-	}
+	const int chr_mask_mmc3 = BIT(m_reg[3], 4) ? 0x00 : BIT(m_reg[0], 7) ? 0x7f : 0xff;
+	const int chr_mask_gnrom = BIT(m_reg[3], 4) ? 0x07 : 0x00;
+	int chr_offset = ((m_reg[0] << 9) & 0xc00) | ((m_reg[0] << 4) & 0x380) | ((m_reg[2] << 3) & 0x078);
+	chr_offset &= ~(chr_mask_mmc3 | chr_mask_gnrom);
 
-	chr1_x(start, bank, source);
+	// mixed CHR-ROM/RAM boards: a bank matching register 4 selects CHR-RAM
+	const bool mixed_ram = !m_vram.empty() && m_vrom && BIT(m_reg[4], 0) && ((bank & 0xfe) == (m_reg[4] & 0xfe));
+	chr1_x(start, (bank & chr_mask_mmc3) | chr_offset | (start & chr_mask_gnrom), mixed_ram ? CHRRAM : source);
+}
+
+void nes_smd133_device::update_mirroring()
+{
+	if ((m_submapper & ~1) == 10 && !BIT(m_reg[0], 5))
+		set_nt_mirroring(BIT(m_reg[0], 4) ? PPU_MIRROR_HIGH : PPU_MIRROR_LOW);   // single-screen mirroring
+	else
+		set_nt_mirroring(BIT(m_mmc_mirror, 0) ? PPU_MIRROR_HORZ : PPU_MIRROR_VERT);
+}
+
+void nes_smd133_device::update_banks()
+{
+	set_prg(0, 0xff);
+	set_chr(m_chr_source, 0, 0xff);
+	update_mirroring();
+}
+
+u8 nes_smd133_device::read_m(offs_t offset)
+{
+	return (m_wram_protect & 0xa0) ? device_nes_cart_interface::read_m(offset) : get_open_bus();
 }
 
 void nes_smd133_device::smd133_write(offs_t offset, u8 data)
 {
-	int reg = offset & 0x07;
+	const int index = offset & 0x07;
+	if (index > 5)
+		return;
+	if (BIT(m_reg[3], 7) && index != 2)     // register lock
+		return;
 
-	if (reg < 6 && (BIT(m_reg[3], 4) || !BIT(m_reg[3], 7)))
+	if (index == 2)
 	{
-		m_reg[reg] = data;
-
-		m_prg_base = (m_reg[0] & 0x30) << 6 | (m_reg[1] & 0x0c) << 6 | (m_reg[1] & 0x10) << 3 | (m_reg[0] & 0x07) << 4;
-		m_prg_mask = (bitswap<3>(m_reg[1], 5, 6, 7) << 5 | (m_reg[0] & 0x40) >> 2 | 0x0f) ^ 0x30;
-		set_prg(m_prg_base, m_prg_mask);
-
-		m_chr_base = (m_reg[0] & 0x80) & ((m_reg[0] & 0x08) << 4);
-		m_chr_mask = 0xff >> BIT(m_reg[0], 7);
-		set_chr(m_chr_source, m_chr_base, m_chr_mask);
+		// bit 7 locks the upper nibble, bits 4-6 lock individual lower bits
+		if (BIT(m_reg[2], 7))
+			data = (data & 0x0f) | (m_reg[2] & 0xf0);
+		data &= ((~m_reg[2] >> 3) & 0x0e) | 0xf1;
 	}
+
+	if ((m_submapper & ~1) == 8 && index == 1 && (data & 0x0c) == 0x0c)
+		m_reg[6] = data;
+
+	m_reg[index] = data;
+	update_banks();
 }
 
 void nes_smd133_device::write_l(offs_t offset, u8 data)
 {
 	LOG("smd133 write_l, offset: %04x, data: %02x\n", offset, data);
 
-	offset += 0x100;
-	if (offset >= 0x1000 && m_smd133_addr == 0x5000)
+	if (m_smd133_addr == 0x5000 && offset >= 0x0f00)
 		smd133_write(offset, data);
 }
 
@@ -3700,8 +4266,410 @@ void nes_smd133_device::write_m(offs_t offset, u8 data)
 {
 	LOG("smd133 write_m, offset: %04x, data: %02x\n", offset, data);
 
-	nes_txrom_device::write_m(offset, data);  // registers overlay WRAM
+	if ((BIT(m_wram_protect, 7) && !BIT(m_wram_protect, 6)) || BIT(m_wram_protect, 5))
+		device_nes_cart_interface::write_m(offset, data);   // registers overlay, but are independent of, WRAM
 
-	if (offset < 0x1000 && m_smd133_addr == 0x6000)
+	if (!BIT(m_submapper, 0) && offset < 0x1000)
 		smd133_write(offset, data);
+}
+
+void nes_smd133_device::write_h(offs_t offset, u8 data)
+{
+	txrom_write(offset, data);
+	update_mirroring();     // submappers 10/11 override the MMC3 mirroring register
+}
+
+void nes_smd133_device::chr_w(offs_t offset, u8 data)
+{
+	// submapper 8/9: bit 4 of register 0 write-protects the main CHR-RAM (not the extra CHR-RAM of mixed CHR-ROM/RAM boards)
+	if ((m_submapper & ~1) == 8 && BIT(m_reg[0], 4) && !m_vrom)
+		return;
+	device_nes_cart_interface::chr_w(offset, data);
+}
+
+/*-------------------------------------------------
+
+ 8025 enhanced MMC3 ASIC
+
+ Games: Waixing 2005+ re-releases and 245-in-1 Real Game (FS005/FS006),
+ Super Mario 160-in-1 Funny Time (JX9003B), GameStar Smart Genius Deluxe,
+ Game 500-in-1 (HST-162)
+
+ MMC3 clone with outer registers at $5xx0-$5xx3 (mask selected by a solder
+ pad, see the config port) for PRG/CHR banking modes and outer banks, up to
+ 32 MiB of PRG, optional extended MMC3 mode (RAMBO-1 style 1 KiB CHR banks and
+ four selectable PRG banks), UNROM/CNROM latches and several submapper
+ specific upper address lines:
+ - submapper 0 (LP-8002KB, SFC-12B): 6 MMC3 PRG bits, CHR-ROM/CHR-RAM selected by $5xx0.5
+ - submapper 1 (FK-xxx/BS-xxx): 8 MMC3 PRG bits, extended MMC3 mode, CNROM CHR latch
+ - submapper 2 (FS005): PRG A21-A25 from $5xx0/$5xx2, RAM configuration
+   register at $A001 (32 KiB WRAM, mixed CHR-ROM/RAM, single-screen
+   mirroring, outer registers can be disabled; used for copy protection)
+ - submapper 3 (JX9003B): PRG/CHR MSB registers at $5xx5/$5xx6
+ - submapper 4: PRG A21 from $5xx2 bit 7
+ - submapper 5 (HST-162): PRG MSB at $4800, $5xx1 only supplies A14-A18
+
+ NES 2.0: mapper 176, submappers 0-5. The older BMC-SUPER24IN1SC03 and
+ BMC-FK23C/FK23CA boards above are only used for UNIF files and software
+ list entries.
+
+ In MAME: Supported (checked against the NESdev register description).
+
+ TODO: PRG-RAM write protect and the FS005 PRG-RAM bank switching are
+ only roughly emulated.
+
+ -------------------------------------------------*/
+
+nes_8025_device::nes_8025_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock)
+	: nes_txrom_device(mconfig, NES_8025, tag, owner, clock)
+	, m_config(*this, "CONFIG")
+	, m_submapper(0)
+	, m_mode(0)
+	, m_prg_lsb(0)
+	, m_chr_lsb(0)
+	, m_ext(0)
+	, m_prg_msb(0)
+	, m_chr_msb(0)
+	, m_latch_data(0)
+{
+}
+
+void nes_8025_device::device_start()
+{
+	mmc3_start();
+	save_item(NAME(m_submapper));
+	save_item(NAME(m_mode));
+	save_item(NAME(m_prg_lsb));
+	save_item(NAME(m_chr_lsb));
+	save_item(NAME(m_ext));
+	save_item(NAME(m_prg_msb));
+	save_item(NAME(m_chr_msb));
+	save_item(NAME(m_latch_data));
+}
+
+void nes_8025_device::pcb_start(running_machine &machine, u8 *ciram_ptr, bool cart_mounted)
+{
+	if (m_submapper == 2)
+	{
+		// FS005: 32 KiB WRAM (four 8 KiB banks) and 8 KiB CHR-RAM
+		if (m_prgram.size() < 0x8000)
+			prgram_alloc(0x8000);
+		if (m_vram.size() < 0x2000)
+			vram_alloc(0x2000);
+	}
+	nes_txrom_device::pcb_start(machine, ciram_ptr, cart_mounted);
+}
+
+void nes_8025_device::pcb_reset()
+{
+	m_mode = m_prg_lsb = m_chr_lsb = m_ext = m_prg_msb = m_chr_msb = m_latch_data = 0;
+	mmc3_common_initialize(0xff, 0xff, 0);
+
+	// power-on values of the MMC3 registers: R6 = $00, R7 = $01, R8 = $FE, R9 = $FF, R10 = R11 = $FF
+	m_mmc_prg_bank[0] = 0x00;
+	m_mmc_prg_bank[1] = 0x01;
+	m_mmc_vrom_bank[6] = 0xff;
+	m_mmc_vrom_bank[7] = 0xff;
+
+	if (m_submapper == 2)
+		m_wram_protect = 0x00;  // RAM configuration register powers on cleared
+
+	update_banks();
+}
+
+int nes_8025_device::mmc3_prg_bank(int page, bool ext) const
+{
+	switch ((page & 1) ? page : (page ^ (BIT(m_latch, 6) ? 2 : 0)))     // PRG A14 inversion only swaps $8000 and $C000
+	{
+		case 0:  return m_mmc_prg_bank[0] & 0xff;
+		case 1:  return m_mmc_prg_bank[1] & 0xff;
+		case 2:  return ext ? (m_mmc_prg_bank[2] & 0xff) : 0xfe;
+		default: return ext ? (m_mmc_prg_bank[3] & 0xff) : 0xff;
+	}
+}
+
+int nes_8025_device::prg_bank(int page) const
+{
+	const bool ext = ext_mode();
+	u8 mode = ext ? 0 : (m_mode & 0x07);    // the PRG banking mode is ignored in extended MMC3 mode
+	if (mode > 5)
+		mode = 0;                           // modes 6 and 7 are never used
+
+	// outer PRG bank in 8 KiB units (bit 0 = A13); the PRG base register supplies A14 and up
+	int outer = (m_prg_lsb & 0x7f) << 1;
+	switch (m_submapper)
+	{
+		case 2:
+			// A21 = $5xx0.3, A22 = $5xx0.7, A23 = $5xx2.6, A24 = $5xx2.7, A25 = $5xx2.5
+			outer |= (BIT(m_mode, 3) << 8) | (BIT(m_mode, 7) << 9) | (BIT(m_chr_lsb, 6) << 10) | (BIT(m_chr_lsb, 7) << 11) | (BIT(m_chr_lsb, 5) << 12);
+			break;
+		case 3:
+			outer |= (m_prg_msb & 0x0f) << 8;               // A24-A21
+			break;
+		case 4:
+			outer |= BIT(m_chr_lsb, 7) << 8;                // A21
+			break;
+		case 5:
+			outer = ((m_prg_lsb & 0x1f) << 1) | ((m_prg_msb & 0x3f) << 6);     // $5xx1 = A18-A14, $4800 = A24-A19
+			break;
+		default:
+			break;
+	}
+
+	switch (mode)
+	{
+		default:
+		case 0:
+		case 1:
+		case 2:
+		{
+			// MMC3 PRG modes: 2 MiB (submappers 1 and 3 only) / 512 KiB, 256 KiB or 128 KiB inner banks
+			int mask;
+			if (ext)
+				mask = 0xff;
+			else if (mode == 0)
+				mask = (m_submapper == 1 || m_submapper == 3) ? 0xff : 0x3f;
+			else
+				mask = (mode == 1) ? 0x1f : 0x0f;
+			return (mmc3_prg_bank(page, ext) & mask) | (outer & ~mask);
+		}
+
+		case 3:     // NROM-128: 16 KiB at $8000-$BFFF mirrored at $C000-$FFFF
+			return (outer & ~1) | (page & 1);
+
+		case 4:     // NROM-256: 32 KiB at $8000-$FFFF
+			return (outer & ~3) | page;
+
+		case 5:     // UNROM: 16 KiB at $8000-$BFFF from the latch, inner bank #7 at $C000-$FFFF
+		{
+			const int latch = (page < 2) ? (m_latch_data & 0x07) : 0x07;
+			return ((((outer >> 1) & ~0x07) | latch) << 1) | (page & 1);
+		}
+	}
+}
+
+void nes_8025_device::set_prg(int prg_base, int prg_mask)
+{
+	for (int page = 0; page < 4; page++)
+		prg8_x(page, prg_bank(page));
+}
+
+void nes_8025_device::set_chr(u8 chr, int chr_base, int chr_mask)
+{
+	u8 source = chr;
+	if (m_submapper <= 1 && BIT(m_mode, 5) && !m_vram.empty() && m_vrom_chunks)
+		source = CHRRAM;    // boards with both CHR-ROM and CHR-RAM (e.g. SFC-12B) select between them with $5xx0.5
+	if (source == CHRRAM && m_vram.empty())
+		source = CHRROM;
+	if (source == CHRROM && !m_vrom_chunks)
+		source = CHRRAM;
+
+	// FS005: the RAM configuration register can make the first 8 KiB of the CHR address space CHR-RAM (like mapper 195)
+	const bool ram_low = ram_cfg() && BIT(m_wram_protect, 2) && !m_vram.empty();
+	auto put = [this, source, ram_low] (int slot, int bank)
+	{
+		chr1_x(slot, bank, (ram_low && bank < 8) ? CHRRAM : source);
+	};
+
+	if (!BIT(m_mode, 6))
+	{
+		// MMC3 CHR mode: 256 KiB ($5xx0.4 = 0) or 128 KiB inner banks, CHR base register supplies the upper bits
+		const int chr_and = BIT(m_mode, 4) ? 0x7f : 0xff;
+		int outer = m_chr_lsb << 3;                         // CHR A20-A13 in 1 KiB units
+		if (m_submapper == 3)
+			outer |= (m_chr_msb & 0x0f) << 11;              // CHR A24-A21
+
+		const bool ext = ext_mode();
+		const int page = (m_latch & 0x80) >> 5;
+		int bank[8];
+		if (ext)
+		{
+			// extended MMC3 mode: six 1 KiB banks plus R10 and R11
+			bank[0] = m_mmc_vrom_bank[0]; bank[1] = m_mmc_vrom_bank[6];
+			bank[2] = m_mmc_vrom_bank[1]; bank[3] = m_mmc_vrom_bank[7];
+		}
+		else
+		{
+			bank[0] = m_mmc_vrom_bank[0] & ~0x01; bank[1] = m_mmc_vrom_bank[0] | 0x01;
+			bank[2] = m_mmc_vrom_bank[1] & ~0x01; bank[3] = m_mmc_vrom_bank[1] | 0x01;
+		}
+		bank[4] = m_mmc_vrom_bank[2];
+		bank[5] = m_mmc_vrom_bank[3];
+		bank[6] = m_mmc_vrom_bank[4];
+		bank[7] = m_mmc_vrom_bank[5];
+
+		for (int i = 0; i < 8; i++)
+			put(page ^ i, (bank[i] & chr_and) | (outer & ~chr_and));
+	}
+	else
+	{
+		// CHR A10-A12 come from the PPU: an 8 KiB bank selected by the CHR base register (and the CNROM latch on submapper 1)
+		int bank8 = m_chr_lsb;
+		if (m_submapper == 1 && !BIT(m_mode, 5))
+			bank8 = BIT(m_mode, 4) ? ((m_chr_lsb & ~0x01) | (m_latch_data & 0x01)) : ((m_chr_lsb & ~0x03) | (m_latch_data & 0x03));
+		if (m_submapper == 3)
+			bank8 |= (m_chr_msb & 0x0f) << 8;
+
+		for (int i = 0; i < 8; i++)
+			put(i, (bank8 << 3) | i);
+	}
+}
+
+void nes_8025_device::update_mirroring()
+{
+	if (ram_cfg() && BIT(m_mmc_mirror, 1))      // single-screen mirroring is only available when the RAM configuration register is enabled
+		set_nt_mirroring(BIT(m_mmc_mirror, 0) ? PPU_MIRROR_HIGH : PPU_MIRROR_LOW);
+	else
+		set_nt_mirroring(BIT(m_mmc_mirror, 0) ? PPU_MIRROR_HORZ : PPU_MIRROR_VERT);
+}
+
+void nes_8025_device::update_banks()
+{
+	set_prg(0, 0);
+	set_chr(m_chr_source, 0, 0);
+	update_mirroring();
+}
+
+u8 nes_8025_device::read_l(offs_t offset)
+{
+	const u16 addr = offset + 0x4100;
+	if (addr >= 0x5000 && !regs_enabled() && !m_prgram.empty())
+		return m_prgram[(0x4000 + 0x1000 + (addr & 0x0fff)) & (m_prgram.size() - 1)];
+	return get_open_bus();
+}
+
+void nes_8025_device::write_l(offs_t offset, u8 data)
+{
+	LOG("8025 write_l, offset: %04x, data: %02x\n", offset, data);
+
+	const u16 addr = offset + 0x4100;
+
+	// submapper 5: PRG base MSB at $4800-$4FFF (mask $F800)
+	if (m_submapper == 5 && (addr & 0xf800) == 0x4800)
+	{
+		m_prg_msb = data & 0x3f;
+		update_banks();
+		return;
+	}
+
+	if (addr < 0x5000)
+		return;
+
+	if (!regs_enabled())
+	{
+		// $5000-$5FFF is the second half of WRAM bank 2 while the outer registers are disabled (FS005 copy protection)
+		if (!m_prgram.empty())
+			m_prgram[(0x4000 + 0x1000 + (addr & 0x0fff)) & (m_prgram.size() - 1)] = data;
+		return;
+	}
+
+	// the solder pad selects which of the address lines A4-A11 must be set to access the registers
+	if (!BIT(addr, 4 + (m_config.read_safe(0) & 0x07)))
+		return;
+
+	switch (addr & (m_submapper == 3 ? 0x07 : 0x03))
+	{
+		case 0:     // mode register
+			m_mode = data;
+			break;
+		case 1:     // PRG base register (LSB)
+			m_prg_lsb = data;
+			break;
+		case 2:     // CHR base register (LSB)
+			m_chr_lsb = data;
+			break;
+		case 3:     // extended mode register (submappers 1 and 2)
+			if (m_submapper != 1 && m_submapper != 2)
+				return;
+			m_ext = data;
+			break;
+		case 5:     // PRG base register (MSB, submapper 3)
+			if (m_submapper != 3)
+				return;
+			m_prg_msb = data;
+			break;
+		case 6:     // CHR base register (MSB, submapper 3)
+			if (m_submapper != 3)
+				return;
+			m_chr_msb = data;
+			break;
+		default:
+			return;
+	}
+	update_banks();
+}
+
+u8 nes_8025_device::read_m(offs_t offset)
+{
+	if (ram_cfg())
+	{
+		if (!BIT(m_wram_protect, 7) || m_prgram.empty())
+			return get_open_bus();
+		return m_prgram[(((m_wram_protect & 0x03) * 0x2000) + offset) & (m_prgram.size() - 1)];
+	}
+	return nes_txrom_device::read_m(offset);
+}
+
+void nes_8025_device::write_m(offs_t offset, u8 data)
+{
+	LOG("8025 write_m, offset: %04x, data: %02x\n", offset, data);
+
+	if (ram_cfg())
+	{
+		if (BIT(m_wram_protect, 7) && !m_prgram.empty())
+			m_prgram[(((m_wram_protect & 0x03) * 0x2000) + offset) & (m_prgram.size() - 1)] = data;
+		return;
+	}
+	nes_txrom_device::write_m(offset, data);
+}
+
+void nes_8025_device::write_h(offs_t offset, u8 data)
+{
+	LOG("8025 write_h, offset: %04x, data: %02x\n", offset, data);
+
+	m_latch_data = data;    // UNROM / CNROM latch: any write to $8000-$FFFF, no bus conflicts
+
+	// the MMC3 registers decode $E003: $x002 and $x003 (e.g. $9FFF) do nothing
+	if (!BIT(offset, 1))
+	{
+		switch (offset & 0x6001)
+		{
+			case 0x0000:    // bank select
+				m_latch = data;
+				break;
+
+			case 0x0001:    // bank data
+			{
+				const int cmd = m_latch & (ext_mode() ? 0x0f : 0x07);
+				switch (cmd)
+				{
+					case 0: case 1: case 2: case 3: case 4: case 5:
+						m_mmc_vrom_bank[cmd] = data;
+						break;
+					case 6: case 7: case 8: case 9:
+						m_mmc_prg_bank[cmd - 6] = data;
+						break;
+					case 10: case 11:
+						m_mmc_vrom_bank[cmd - 4] = data;
+						break;
+					default:
+						break;
+				}
+				break;
+			}
+
+			case 0x2000:    // mirroring
+				m_mmc_mirror = data & 0x03;
+				break;
+
+			case 0x2001:    // WRAM protect, or the RAM configuration register on submapper 2
+				m_wram_protect = data;
+				break;
+
+			default:        // IRQ registers
+				txrom_write(offset, data);
+				break;
+		}
+	}
+	update_banks();
 }

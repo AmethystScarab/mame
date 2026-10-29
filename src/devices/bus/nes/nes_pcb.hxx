@@ -125,8 +125,8 @@ static const nes_pcb pcb_list[] =
 	{ "s8259b",           SACHEN_8259B },
 	{ "s8259c",           SACHEN_8259C },
 	{ "s8259d",           SACHEN_8259D },
-	{ "s74x374",          SACHEN_74LS374 },
-	{ "s74x374a",         SACHEN_74LS374_ALT },   /* FIXME: Made up boards some different handling */
+	{ "s74x374",          SACHEN_74LS374 },       /* Sachen SA-015 / SA-630 (mapper 150) */
+	{ "s74x374a",         SACHEN_74LS374_ALT },   /* Sachen SA-020A (mapper 243) */
 	{ "tcu01",            SACHEN_TCU01 },
 	{ "tcu02",            SACHEN_TCU02 },
 	{ "sa9602b",          SACHEN_SA9602B },
@@ -137,9 +137,8 @@ static const nes_pcb pcb_list[] =
 	{ "txc_dumarc",       TXC_DUMARACING },
 	{ "txc_mjblock",      TXC_MJBLOCK },
 	{ "txc_strikew",      TXC_STRIKEW },
-	{ "txc_commandos",    TXC_COMMANDOS },
+	{ "txc_mxmdhtwo",    TXC_MXMDHTWO },
 	{ "waixing_a",        WAIXING_TYPE_A },
-	{ "waixing_a1",       WAIXING_TYPE_A1 },    /* FIXME: Made up boards the different CHRRAM banks (see Ji Jia Zhan Shi },  */
 	{ "waixing_b",        WAIXING_TYPE_B },
 	{ "waixing_c",        WAIXING_TYPE_C },
 	{ "waixing_d",        WAIXING_TYPE_D },
@@ -196,6 +195,7 @@ static const nes_pcb pcb_list[] =
 	{ "subor0",           SUBOR_TYPE0 },
 	{ "subor1",           SUBOR_TYPE1 },
 	{ "subor2",           SUBOR_TYPE2 },
+	{ "subor_karaoke",    SUBOR_KARAOKE },
 	{ "unl_158b",         UNL_158B },  // Blood of Jurassic
 	{ "cc21",             UNL_CC21 },
 	{ "xiaozy",           UNL_XIAOZY },
@@ -218,7 +218,6 @@ static const nes_pcb pcb_list[] =
 	{ "th21311",          UNL_TH21311 },
 	{ "waixing_sgz",      WAIXING_SGZ },
 	// misc bootleg boards
-	{ "sc127",            UNL_SC127 },
 	{ "mariobaby",        BTL_MARIOBABY },
 	{ "asnicol",          BTL_AISENSHINICOL },
 	{ "smb3pirate",       BTL_SMB3 },
@@ -364,6 +363,9 @@ static const nes_pcb pcb_list[] =
 	{ "bmc_yy841101c",    BMC_YY841101C },
 	{ "bmc_yy841155c",    BMC_YY841155C },
 	{ "pjoy84",           BMC_PJOY84 },
+	{ "bs300",            BMC_BS300 },
+	{ "ing022",           BMC_ING022 },
+	{ "bmc_8025",         BMC_8025 },
 	{ "bmc_gold260",      BMC_GOLD260 },
 	{ "bmc_th22913",      BMC_TH22913 },
 	{ "bmc_reset4",       BMC_4IN1RESET },
@@ -688,6 +690,8 @@ void nes_cart_slot_device::call_load_pcb()
 	{
 		if (get_feature("batt"))
 			mapper_sram_size = m_cart->get_mapper_sram_size();
+		else if (m_pcb_id == NAMCOT_163)
+			m_cart->set_mapper_sram_size(0);   // no battery: the N163's internal RAM is not saved
 	}
 
 	if (m_pcb_id == NAMCOT_163)

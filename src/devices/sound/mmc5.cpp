@@ -217,15 +217,7 @@ void mmc5_sound_device::write(offs_t offset, u8 data)
 	case mmc5_sound_t::WRE1: /* PCM output */
 		m_core.pcm.regs[1] = data;
 		if (BIT(~m_core.pcm.regs[0], 0))
-		{
-			if (data == 0x00)
-			{
-				m_core.pcm.irq_line = true;
-				m_irq_handler(m_core.pcm.irq_line & m_core.pcm.irq_enabled);
-			}
-			else
-				m_core.pcm.output = data;
-		}
+			dac_assign(data);
 		break;
 
 	case mmc5_sound_t::SMASK:
@@ -286,10 +278,27 @@ u8 mmc5_sound_device::read(offs_t offset)
 }
 
 // Write PCM data
+// NESdev MMC5 audio: a DAC assignment ($5011 write in write mode, or a $8000-$BFFF read in read mode) of $00 leaves
+// the DAC unchanged and trips the IRQ; any other value sets the DAC and clears the trip
+void mmc5_sound_device::dac_assign(u8 data)
+{
+	if (data == 0x00)
+		m_core.pcm.irq_line = true;
+	else
+	{
+		m_core.pcm.output = data;
+		m_core.pcm.irq_line = false;
+	}
+	m_irq_handler(m_core.pcm.irq_line & m_core.pcm.irq_enabled);
+}
+
 void mmc5_sound_device::pcm_w(u8 data)
 {
 	if (BIT(m_core.pcm.regs[0], 0))
-		m_core.pcm.output = data;
+	{
+		m_stream->update();
+		dac_assign(data);
+	}
 }
 
 

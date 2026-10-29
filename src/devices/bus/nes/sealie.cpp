@@ -5,6 +5,8 @@
 
  NES/Famicom cartridge emulation for Sealie Computing and related PCBs
 
+ iNES mappers: 29, 30, 409
+
 
  Here we emulate the following homebrew PCBs
 
@@ -49,7 +51,7 @@ nes_dpcmcart_device::nes_dpcmcart_device(const machine_config &mconfig, const ch
 }
 
 nes_unrom512_device::nes_unrom512_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, u32 clock)
-	: nes_nrom_device(mconfig, type, tag, owner, clock)
+	: nes_nrom_device(mconfig, type, tag, owner, clock), device_nvram_interface(mconfig, *this)
 {
 }
 
@@ -78,6 +80,14 @@ void nes_dpcmcart_device::pcb_reset()
 	prg16_cdef(m_prg_chunks - 1);
 }
 
+void nes_unrom512_device::device_start()
+{
+	nes_nrom_device::device_start();
+	save_item(NAME(m_latch));
+	save_item(NAME(m_flash_step));
+	save_item(NAME(m_flash_cmd));
+}
+
 void nes_unrom512_device::pcb_reset()
 {
 	prg16_89ab(0);
@@ -85,6 +95,75 @@ void nes_unrom512_device::pcb_reset()
 	chr8(0, CHRRAM);
 	if (m_pcb_ctrl_mirror)
 		set_nt_mirroring(PPU_MIRROR_LOW);
+	m_latch = 0;
+	m_flash_step = 0;
+
+	// NESdev: the four-screen variant's nametables are the last 8 KiB of CHR-RAM ($2000-$2FFF; the $3000-$3EFF scratch
+	// area is not separate here, it mirrors the nametables as MAME's PPU map does)
+	if (get_mirroring() == PPU_MIRROR_4SCREEN && get_vram_size() >= 0x2000)
+	{
+		const int base = (get_vram_size() - 0x2000) / 0x400;
+		for (int page = 0; page < 4; page++)
+			set_nt_page(page, VRAM_NT, base + page, 1);
+	}
+}
+
+// SST39SF0x0 command sequences (NESdev UNROM 512 "Flash ROM Save"): the flash address is the current $8000 bank
+// (latch bits 0-4) with CPU A0-A13. Program and erase complete at once, so polling reads return the final data
+void nes_unrom512_device::flash_w(offs_t offset, u8 data)
+{
+	const u32 size = m_prg_chunks * 0x4000;
+	const u32 addr = (((m_latch & 0x1f) << 14) | (offset & 0x3fff)) & (size - 1);
+	const u16 cmd = addr & 0x7fff;
+	u8 *prg = get_prg_base();
+
+	if (data == 0xf0)
+	{
+		m_flash_step = 0;   // reset / exit
+		return;
+	}
+	switch (m_flash_step)
+	{
+		case 0: m_flash_step = (cmd == 0x5555 && data == 0xaa) ? 1 : 0; break;
+		case 1: m_flash_step = (cmd == 0x2aaa && data == 0x55) ? 2 : 0; break;
+		case 2:
+			if (cmd == 0x5555 && (data == 0xa0 || data == 0x80))
+			{
+				m_flash_cmd = data;
+				m_flash_step = (data == 0xa0) ? 3 : 4;
+			}
+			else
+				m_flash_step = 0;
+			break;
+		case 3:   // byte program: a flash cell can only change 1s to 0s
+			prg[addr] &= data;
+			m_flash_step = 0;
+			break;
+		case 4: m_flash_step = (cmd == 0x5555 && data == 0xaa) ? 5 : 0; break;
+		case 5: m_flash_step = (cmd == 0x2aaa && data == 0x55) ? 6 : 0; break;
+		case 6:
+			if (data == 0x30)   // 4 KiB sector erase
+				std::fill_n(prg + (addr & ~0xfff), 0x1000, 0xff);
+			else if (data == 0x10 && cmd == 0x5555)   // chip erase
+				std::fill_n(prg, size, 0xff);
+			m_flash_step = 0;
+			break;
+		default: m_flash_step = 0; break;
+	}
+}
+
+bool nes_unrom512_device::nvram_read(util::read_stream &file)
+{
+	const u32 size = m_prg_chunks * 0x4000;
+	auto const [err, actual] = util::read(file, get_prg_base(), size);
+	return !err && (actual == size);
+}
+
+bool nes_unrom512_device::nvram_write(util::write_stream &file)
+{
+	const u32 size = m_prg_chunks * 0x4000;
+	auto const [err, actual] = util::write(file, get_prg_base(), size);
+	return !err;
 }
 
 void nes_8bitxmas_device::device_start()
@@ -178,10 +257,26 @@ void nes_unrom512_device::write_h(offs_t offset, u8 data)
 {
 	LOG("unrom512 write_h, offset: %04x, data: %02x\n", offset, data);
 
-	// this pcb is subject to bus conflict in its nonflashable configuration
-	data = account_bus_conflict(offset, data);
+	// NESdev UNROM 512: the register is at $8000-$FFFF only for submapper 0 without the battery bit and submapper 2;
+	// otherwise it is at $C000-$FFFF, and $8000-$BFFF carries the flash command sequences (battery bit) or, on
+	// submapper 4, the cartridge LED register (no LEDs to show here)
+	if (offset < 0x4000)
+	{
+		if (m_flashable)
+		{
+			flash_w(offset, data);
+			return;
+		}
+		if (m_submapper == 1 || m_submapper == 3 || m_submapper == 4)
+			return;
+	}
 
-	if (m_pcb_ctrl_mirror)
+	data = account_bus_conflict(offset, data);
+	m_latch = data;
+
+	if (m_submapper == 3)   // mapper-controlled arrangement: 0 = horizontal mirroring, 1 = vertical mirroring
+		set_nt_mirroring(BIT(data, 7) ? PPU_MIRROR_VERT : PPU_MIRROR_HORZ);
+	else if (m_pcb_ctrl_mirror)
 		set_nt_mirroring(BIT(data, 7) ? PPU_MIRROR_HIGH : PPU_MIRROR_LOW);
 	prg16_89ab(data & 0x1f);
 	chr8(BIT(data, 5, 2), CHRRAM);

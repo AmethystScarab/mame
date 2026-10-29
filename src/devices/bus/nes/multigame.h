@@ -1215,6 +1215,7 @@ protected:
 	virtual void device_start() override ATTR_COLD;
 
 	u8 m_reg[2];
+	bool m_vram_wp;
 };
 
 
@@ -1240,9 +1241,13 @@ public:
 
 	virtual void write_h(offs_t offset, u8 data) override;
 
+	virtual void pcb_reset() override;
+
 protected:
 	// construction/destruction
 	nes_bmc_k1029_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, u32 clock);
+
+	u8 m_prg_a20;
 };
 
 

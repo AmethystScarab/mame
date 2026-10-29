@@ -5,6 +5,8 @@
 
  NES/Famicom cartridge emulation for Kaiser PCBs
 
+ iNES mappers: 56, 142, 171, 175, 302, 303, 305, 306, 307, 312, 346, 347, 352, 525, 549, 554
+
 
  Here we emulate the following Kaiser bootleg PCBs
 
@@ -188,8 +190,6 @@ void nes_ks7022_device::pcb_reset()
 void nes_ks7032_device::device_start()
 {
 	common_start();
-	irq_timer = timer_alloc(FUNC(nes_ks7032_device::irq_timer_tick), this);
-	irq_timer->adjust(attotime::zero, 0, clocks_to_attotime(1));
 
 	save_item(NAME(m_latch));
 	save_item(NAME(m_irq_enable));
@@ -230,8 +230,6 @@ void nes_ks7016_device::pcb_reset()
 void nes_ks7017_device::device_start()
 {
 	common_start();
-	irq_timer = timer_alloc(FUNC(nes_ks7017_device::irq_timer_tick), this);
-	irq_timer->adjust(attotime::zero, 0, clocks_to_attotime(1));
 
 	save_item(NAME(m_latch));
 	save_item(NAME(m_irq_enable));

@@ -38,9 +38,11 @@ public:
 
 // ======================> nes_unrom512_device
 
-class nes_unrom512_device : public nes_nrom_device
+class nes_unrom512_device : public nes_nrom_device, public device_nvram_interface
 {
 public:
+	virtual void set_unrom512_flashable(bool val) override { m_flashable = val; }
+	virtual void set_unrom512_submapper(u8 val) override { m_submapper = val; }
 	// construction/destruction
 	nes_unrom512_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock);
 
@@ -49,8 +51,25 @@ public:
 	virtual void pcb_reset() override;
 
 protected:
+	virtual void device_start() override ATTR_COLD;
+
+	// flash contents are kept as non-volatile data (self-flashable boards only)
+	virtual void nvram_default() override { }
+	virtual bool nvram_read(util::read_stream &file) override;
+	virtual bool nvram_write(util::write_stream &file) override;
+	virtual bool nvram_can_write() const override { return m_flashable; }
+
 	// construction/destruction
 	nes_unrom512_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, u32 clock);
+
+private:
+	void flash_w(offs_t offset, u8 data);
+
+	bool m_flashable = false;
+	u8 m_submapper = 0;
+	u8 m_latch = 0;
+	u8 m_flash_step = 0;    // position in the SST39SF0x0 command sequence
+	u8 m_flash_cmd = 0;     // $80 (erase prefix) or $A0 (program)
 };
 
 

@@ -32,6 +32,8 @@ public:
 	virtual void nt_w(offs_t offset, uint8_t data) override;
 
 	virtual void hblank_irq(int scanline, bool vblank, bool blanked) override;
+	virtual bool wants_m2() override { return true; }
+	virtual void m2_w(int state, offs_t address, bool write) override;
 	virtual void pcb_reset() override;
 
 protected:
@@ -96,6 +98,15 @@ protected:
 	uint8_t m_ram_hi_banks[4];
 
 	//  int m_nes_vram_sprite[8];
+
+	uint8_t chr_mem_r(uint32_t addr);
+	// hardware scanline detection (NESdev MMC5 / "MMC5 Hacking Adventures"; as implemented by Mesen)
+	void ppu_read_snoop(u16 addr);
+	u16 m_last_ppu_addr = 0;
+	u8 m_nt_match = 0;
+	u8 m_ppu_idle = 0;
+	u8 m_scan_count = 0;
+	bool m_need_in_frame = false;
 
 	required_device<ppu2c0x_device> m_ppu;
 	required_device<mmc5_sound_device> m_sound;

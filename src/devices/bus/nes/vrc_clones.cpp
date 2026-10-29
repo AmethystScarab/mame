@@ -5,6 +5,8 @@
 
  NES/Famicom cartridge emulation for Konami VRC clone PCBs
 
+ iNES mappers: 183, 252, 253, 266, 298, 308, 362, 447, 520, 524, 527, 528, 529, 530
+
 
  Here we emulate several pirate PCBs based on VRC2/4 boards
 
@@ -140,8 +142,6 @@ void nes_2yudb_device::pcb_reset()
 void nes_900218_device::device_start()
 {
 	nes_konami_vrc2_device::device_start();
-	irq_timer = timer_alloc(FUNC(nes_900218_device::irq_timer_tick), this);
-	irq_timer->adjust(attotime::zero, 0, clocks_to_attotime(1));
 
 	save_item(NAME(m_irq_enable));
 	save_item(NAME(m_irq_count));
@@ -268,8 +268,6 @@ void nes_tf1201_device::device_start()
 void nes_th21311_device::device_start()
 {
 	nes_konami_vrc2_device::device_start();
-	irq_timer = timer_alloc(FUNC(nes_th21311_device::irq_timer_tick), this);
-	irq_timer->adjust(attotime::zero, 0, clocks_to_attotime(1));
 
 	save_item(NAME(m_irq_enable));
 	save_item(NAME(m_irq_count));

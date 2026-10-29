@@ -85,6 +85,7 @@
 #include "emu.h"
 #include "hashfile.h"
 #include "nes_slot.h"
+#include "cpu/m6502/rp2a03.h"
 
 #include "cpu/m6502/m6502.h"
 
@@ -367,7 +368,15 @@ void device_nes_cart_interface::bank_chr(int shift, int start, int bank, int sou
 		chr_chunks = m_vrom_chunks;
 	}
 
-	bank &= (chr_chunks << (3 - shift)) - 1;
+	if (source == CHRRAM && m_vram.size() < 0x2000)
+	{
+		// CHR-RAM smaller than 8 KiB (e.g. the 2 KiB on Waixing mapper 74 boards): m_vram_chunks is 0, which made the mask
+		// -1 and let bank numbers point past the end of the RAM - mask by the RAM's real size in 1 KiB pages instead
+		const uint32_t windows = (m_vram.size() / 0x400) >> shift;
+		bank = windows ? (bank & (windows - 1)) : 0;
+	}
+	else
+		bank &= (chr_chunks << (3 - shift)) - 1;
 	int size = 0x400 << shift;
 	int bank_start = bank * size;
 	int kbyte = 1 << shift;
@@ -392,6 +401,9 @@ void device_nes_cart_interface::set_nt_page(int page, int source, int bank, int 
 	{
 		case CART_NTRAM:
 			base_ptr = &m_ext_ntram[0];
+			break;
+		case VRAM_NT:
+			base_ptr = &m_vram[0];
 			break;
 		case VROM:
 			bank &= (m_vrom_chunks << 3) - 1;
@@ -545,6 +557,13 @@ uint8_t device_nes_cart_interface::nt_r(offs_t offset)
 //  source)
 //-------------------------------------------------
 
+uint8_t device_nes_cart_interface::get_open_bus()
+{
+	if (auto *const cpu = dynamic_cast<rp2a03_core_device *>(m_maincpu.target()))
+		return cpu->open_bus();
+	return m_open_bus;
+}
+
 uint8_t device_nes_cart_interface::read_l(offs_t offset)
 {
 	return get_open_bus();
@@ -590,9 +609,12 @@ void device_nes_cart_interface::pcb_start(running_machine &machine, uint8_t *cir
 		{
 			if (m_prg_bank_mem[i])
 			{
-				m_prg_bank_mem[i]->configure_entries(0, m_prg_size / 0x2000, m_prg, 0x2000);
-				m_prg_bank_mem[i]->set_entry(i);
-				m_prg_bank[i] = i;
+				// images smaller than 32 KiB (e.g. 8 KiB NROM such as Galaxian) mirror their banks across $8000-$FFFF;
+				// selecting entry i directly failed for entries that do not exist
+				const int entries = std::max<int>(1, m_prg_size / 0x2000);
+				m_prg_bank_mem[i]->configure_entries(0, entries, m_prg, 0x2000);
+				m_prg_bank_mem[i]->set_entry(i % entries);
+				m_prg_bank[i] = i % entries;
 			}
 		}
 	}

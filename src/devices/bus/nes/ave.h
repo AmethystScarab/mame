@@ -41,6 +41,7 @@ public:
 	nes_maxi15_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock);
 
 	virtual u8 read_h(offs_t offset) override;
+	virtual void write_h(offs_t offset, u8 data) override;
 
 	virtual void pcb_reset() override;
 
@@ -49,6 +50,8 @@ protected:
 	virtual void device_start() override ATTR_COLD;
 
 private:
+	void latch(offs_t offset, u8 value);
+
 	u8 m_reg[2];
 };
 
