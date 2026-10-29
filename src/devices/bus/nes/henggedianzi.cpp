@@ -103,7 +103,8 @@ void nes_hengg_xhzs_device::write_l(offs_t offset, uint8_t data)
 	LOG("hengg_xhzs write_l, offset: %04x, data: %02x\n", offset, data);
 	offset += 0x4100;
 
-	if (offset & 0x5000)
+	// the register answers at $5000-$5FFF only (offset & $5000 was true for every $4100-$4FFF address as well)
+	if ((offset & 0xf000) == 0x5000)
 		prg32(data >> 1);
 }
 

@@ -49,8 +49,10 @@ protected:
 	// device-level overrides
 	virtual void device_start() override ATTR_COLD;
 
-	virtual void set_prg() override { nes_sxrom_device::set_prg(0x18, 0x07); }
-	virtual void set_chr() override { nes_sxrom_device::set_chr(0x18, 0x07); }
+	// PRG A18 comes from the PAL's outer register, not from an MMC1 CHR bit (no SUROM-style PPU A12 switching)
+	virtual bool chr_bits_drive_prg() const override { return false; }
+	virtual void set_prg() override;
+	virtual void set_chr() override;
 
 private:
 	void update_banks();

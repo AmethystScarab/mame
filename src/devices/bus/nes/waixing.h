@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "machine/eepromser.h"
 #include "mmc3.h"
 
 
@@ -36,18 +37,6 @@ protected:
 };
 
 
-// ======================> nes_waixing_a1_device
-
-class nes_waixing_a1_device : public nes_waixing_a_device
-{
-public:
-	// construction/destruction
-	nes_waixing_a1_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
-
-	virtual void chr_cb(int start, int bank, int source) override;
-};
-
-
 // ======================> nes_waixing_b_device
 
 class nes_waixing_b_device : public nes_waixing_a_device
@@ -56,7 +45,18 @@ public:
 	// construction/destruction
 	nes_waixing_b_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
+	virtual void set_waixing_b_submapper(u8 val) override { m_submapper = val; }
+	virtual void waixing_write(offs_t offset, uint8_t data) override;
+	virtual void prg_cb(int start, int bank) override;
 	virtual void chr_cb(int start, int bank, int source) override;
+	virtual void pcb_reset() override;
+
+protected:
+	// device-level overrides
+	virtual void device_start() override ATTR_COLD;
+
+	u8 m_submapper;
+	u8 m_outer;
 };
 
 
@@ -92,7 +92,23 @@ public:
 	// construction/destruction
 	nes_waixing_e_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
+	virtual uint8_t read_l(offs_t offset) override;
+	virtual void write_l(offs_t offset, uint8_t data) override;
 	virtual void chr_cb(int start, int bank, int source) override;
+	virtual void chr_w(offs_t offset, uint8_t data) override;
+
+	virtual void pcb_reset() override;
+
+protected:
+	// device-level overrides
+	virtual void device_start() override ATTR_COLD;
+
+private:
+	bool gal_chr_is_ram(int bank) const;
+	uint8_t chr_bank_for_window(int window) const;
+
+	uint8_t m_ram5000[0x1000];  // 4K of non-battery-backed RAM at $5000-$5fff
+	uint8_t m_gal;              // GAL setting: the last CHR bank number with bit 7 set that was written (see waixing.cpp)
 };
 
 
@@ -106,8 +122,11 @@ public:
 
 	virtual u8 read_l(offs_t offset) override;
 	virtual void write_l(offs_t offset, u8 data) override;
+	virtual void prg_cb(int start, int bank) override;
 
 protected:
+	u8 *exram_ptr(offs_t offset);
+
 	// construction/destruction
 	nes_waixing_f_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, u32 clock);
 };
@@ -197,6 +216,7 @@ public:
 	nes_waixing_j_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
 	virtual void write_h(offs_t offset, uint8_t data) override;
+	virtual void chr_cb(int start, int bank, int source) override;
 
 	virtual void pcb_reset() override;
 
@@ -282,15 +302,28 @@ public:
 	// construction/destruction
 	nes_waixing_ffv_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
+	virtual uint8_t read_l(offs_t offset) override;
 	virtual void write_l(offs_t offset, uint8_t data) override;
+	virtual uint8_t chr_r(offs_t offset) override;
+	virtual void chr_w(offs_t offset, uint8_t data) override;
+	virtual uint8_t nt_r(offs_t offset) override;
+	virtual void nt_w(offs_t offset, uint8_t data) override;
 
 	virtual void pcb_reset() override;
 
 protected:
 	// device-level overrides
 	virtual void device_start() override ATTR_COLD;
+	virtual void device_add_mconfig(machine_config &config) override ATTR_COLD;
 
-	uint8_t m_reg[2];
+private:
+	void update_banks();
+
+	required_device<eeprom_serial_93cxx_device> m_eeprom;
+	uint8_t m_reg[4];      // $5000, $5100, $5200, $5300
+	bool m_last_nt;        // last PPU access was a nametable access (PPU A13=1)
+	uint8_t m_latch_a0;    // PPU A0 latched on the last rise of PPU A13 (1 bpp mode CHR A3)
+	uint8_t m_latch_a9;    // PPU A9 latched on the last rise of PPU A13 (1 bpp mode CHR A12)
 };
 
 
@@ -338,6 +371,10 @@ public:
 	// construction/destruction
 	nes_waixing_fs304_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
+	virtual uint8_t chr_r(offs_t offset) override;
+	virtual void chr_w(offs_t offset, uint8_t data) override;
+	virtual uint8_t nt_r(offs_t offset) override;
+	virtual void nt_w(offs_t offset, uint8_t data) override;
 	virtual void write_l(offs_t offset, uint8_t data) override;
 
 	virtual void pcb_reset() override;
@@ -346,13 +383,42 @@ protected:
 	// device-level overrides
 	virtual void device_start() override ATTR_COLD;
 
+	void update_prg();
+
 	uint8_t m_reg[4];
+	bool m_last_nt;        // last PPU access was a nametable access (PPU A13=1)
+	uint8_t m_chr_a12;      // PPU A9 latched on the last rise of PPU A13
+};
+
+
+// ======================> nes_waixing_yc030309_device
+
+class nes_waixing_yc030309_device : public nes_nrom_device
+{
+public:
+	// construction/destruction
+	nes_waixing_yc030309_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+
+	virtual uint8_t read_l(offs_t offset) override;
+	virtual void write_l(offs_t offset, uint8_t data) override;
+
+	virtual void pcb_reset() override;
+
+protected:
+	// device-level overrides
+	virtual void device_start() override ATTR_COLD;
+	virtual void device_add_mconfig(machine_config &config) override ATTR_COLD;
+
+private:
+	void update_banks();
+
+	required_device<eeprom_serial_93cxx_device> m_eeprom;
+	uint8_t m_reg[4];      // $5000, $5100, $5200 as latched after the D0/D1 swap, $5300 as written
 };
 
 
 // device type definition
 DECLARE_DEVICE_TYPE(NES_WAIXING_A,     nes_waixing_a_device)
-DECLARE_DEVICE_TYPE(NES_WAIXING_A1,    nes_waixing_a1_device)
 DECLARE_DEVICE_TYPE(NES_WAIXING_B,     nes_waixing_b_device)
 DECLARE_DEVICE_TYPE(NES_WAIXING_C,     nes_waixing_c_device)
 DECLARE_DEVICE_TYPE(NES_WAIXING_D,     nes_waixing_d_device)
@@ -368,6 +434,7 @@ DECLARE_DEVICE_TYPE(NES_WAIXING_SH2,   nes_waixing_sh2_device)
 DECLARE_DEVICE_TYPE(NES_WAIXING_SEC,   nes_waixing_sec_device)
 DECLARE_DEVICE_TYPE(NES_WAIXING_SGZLZ, nes_waixing_sgzlz_device)
 DECLARE_DEVICE_TYPE(NES_WAIXING_FFV,   nes_waixing_ffv_device)
+DECLARE_DEVICE_TYPE(NES_WAIXING_YC030309, nes_waixing_yc030309_device)
 DECLARE_DEVICE_TYPE(NES_WAIXING_WXZS,  nes_waixing_wxzs_device)
 DECLARE_DEVICE_TYPE(NES_WAIXING_DQ8,   nes_waixing_dq8_device)
 DECLARE_DEVICE_TYPE(NES_WAIXING_WXZS2, nes_waixing_wxzs2_device)

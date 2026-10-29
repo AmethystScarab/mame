@@ -1,9 +1,13 @@
 // license:BSD-3-Clause
-// copyright-holders:kmg
+// copyright-holders:kmg,Brian H. Gilbert
 /***********************************************************************************************************
 
 
  NES/Famicom cartridge emulation for MMC-1 clone PCBs
+
+ iNES mappers: 111, 297, 323, 374, 404, 543, 550
+ (mapper 111 is listed for the images with CHR-ROM only, the Chinese Ninja Ryukenden (UNL-NINJARYU): the loader gives
+ every other mapper 111 image the GTROM board, see discrete.cpp)
 
 
  Here we emulate several pirate PCBs based on MMC-1 boards
@@ -94,10 +98,9 @@ void nes_bmc_jy820845c_device::device_start()
 
 void nes_bmc_jy820845c_device::pcb_reset()
 {
-	nes_sxrom_device::pcb_reset();
-
 	m_latch0 = 0;
 	m_mode = 0;
+	nes_sxrom_device::pcb_reset();
 	update_banks();
 }
 
@@ -155,6 +158,7 @@ void nes_txc_22110_device::pcb_reset()
 	m_latch0 = 0;
 	m_mode = 0;
 	update_banks();
+	set_nt_mirroring(PPU_MIRROR_VERT);
 }
 
 
@@ -244,10 +248,28 @@ void nes_bmc_jy012005_device::write_m(offs_t offset, u8 data)
 
  -------------------------------------------------*/
 
-void nes_bmc_jy820845c_device::update_banks()    // used by menu and MHROM games
+// The MMC1 base class re-applies set_prg() and set_chr() on its own (reset writes, register updates), so both must
+// follow the outer register's mode: MMC1 mode uses the MMC1's banks, MHROM mode the latch
+void nes_bmc_jy820845c_device::set_prg()
 {
-	prg32((m_mode & 0x07) << 1 | BIT(m_latch0, 4));
-	chr8((m_mode & 0x06) << 1 | (m_latch0 & 0x03), CHRROM);
+	if ((m_mode & 0x06) == 0x06)    // MMC1 mode
+		nes_sxrom_device::set_prg(0x18, 0x07);
+	else
+		prg32((m_mode & 0x07) << 1 | BIT(m_latch0, 4));
+}
+
+void nes_bmc_jy820845c_device::set_chr()
+{
+	if ((m_mode & 0x06) == 0x06)    // MMC1 mode
+		nes_sxrom_device::set_chr(0x18, 0x07);
+	else
+		chr8((m_mode & 0x06) << 1 | (m_latch0 & 0x03), CHRROM);
+}
+
+void nes_bmc_jy820845c_device::update_banks()
+{
+	set_prg();
+	set_chr();
 }
 
 void nes_bmc_jy820845c_device::write_m(offs_t offset, u8 data)
@@ -259,13 +281,7 @@ void nes_bmc_jy820845c_device::write_m(offs_t offset, u8 data)
 	if (offset >= 0x1000 && !BIT(m_mode, 3))
 	{
 		m_mode = offset & 0x0f;
-		if ((m_mode & 0x06) == 0x06)        // MMC1 mode
-		{
-			set_prg();
-			set_chr();
-		}
-		else
-			update_banks();
+		update_banks();
 	}
 }
 
@@ -275,10 +291,8 @@ void nes_bmc_jy820845c_device::write_h(offs_t offset, u8 data)
 
 	m_latch0 = data;
 
-	if ((m_mode & 0x06) == 0x06)
-		nes_sxrom_device::write_h(offset, data);
-	else
-		update_banks();
+	nes_sxrom_device::write_h(offset, data);    // the MMC1 sees the writes in MHROM mode too and decides the mirroring
+	update_banks();                              // MHROM mode: the latch, not the MMC1, selects the banks
 }
 
 /*-------------------------------------------------
@@ -299,7 +313,11 @@ void nes_farid_slrom_device::write_m(offs_t offset, u8 data)
 {
 	LOG("farid_slrom write_m, offset: %04x, data: %02x\n", offset, data);
 	if (!BIT(m_reg[3], 4) && !BIT(m_outer, 3))    // MMC1 WRAM enabled and outer bank not locked
+	{
 		m_outer = data;
+		set_prg();
+		set_chr();
+	}
 }
 
 /*-------------------------------------------------
@@ -328,10 +346,13 @@ void nes_farid_slrom_device::write_m(offs_t offset, u8 data)
  The interesting feature of this board is that it has a
  serially written 4-bit shift register that selects the
  outer game bank (meaning it has two shift registers,
- since it also clones the MMC1's). The MSB (bit 3) seems
- to indicate menu mode (0) or game mode (1), but it's not
- clear if/how this is used. Is it a lock? We currently
- don't use the MSB nor allow it to be read back.
+ since it also clones the MMC1's). The MSB (bit 3) is 0 during
+ the menu and 1 during game play (NESdev). The cart writes 0
+ four times at power-on and the game's value (8, 9, 10, 14 or
+ 15) when a game is launched, and never writes the register
+ again, so nothing shows whether the hardware does more with
+ the MSB (a lock, say). We don't use the MSB nor allow it to be
+ read back.
 
  NES 2.0: mapper 543
 
@@ -362,7 +383,7 @@ void nes_srpg5in1_device::write_m(offs_t offset, u8 data)
 
 	u8 bank = BIT(m_outer, 1) ? bitswap<3>(m_outer, 1, 2, 0) : (m_outer & 1) << 1 | BIT(m_reg[1], 3);
 
-	if (!BIT(m_reg[3], 4))  // WRAM enabled
+	if (!BIT(m_reg[3], 4) && !m_battery.empty())  // WRAM enabled
 		m_battery[((bank * 0x2000) + offset) & (m_battery.size() - 1)] = data;
 }
 
@@ -372,7 +393,7 @@ u8 nes_srpg5in1_device::read_m(offs_t offset)
 
 	u8 bank = BIT(m_outer, 1) ? bitswap<3>(m_outer, 1, 2, 0) : (m_outer & 1) << 1 | BIT(m_reg[1], 3);
 
-	if (!BIT(m_reg[3], 4))  // WRAM enabled
+	if (!BIT(m_reg[3], 4) && !m_battery.empty())  // WRAM enabled
 		return m_battery[((bank * 0x2000) + offset) & (m_battery.size() - 1)];
 
 	return get_open_bus();
@@ -386,7 +407,9 @@ u8 nes_srpg5in1_device::read_m(offs_t offset)
 
  This board has an MMC1 clone for Operation Wolf and
  otherwise is mostly compatible with mapper 70 for
- Bandai's Space Shadow.
+ Bandai's Space Shadow. The mode register answers at
+ every $4100-$5FFF address with A8 set (mask $E100) and
+ the mirroring is fixed to vertical in both modes.
 
  NES 2.0: mapper 297
 
@@ -405,7 +428,7 @@ void nes_txc_22110_device::update_banks()    // used by menu and Space Shadow
 void nes_txc_22110_device::write_l(offs_t offset, u8 data)
 {
 	LOG("TXC 22110 write_l, offset: %04x, data: %02x\n", offset, data);
-	if (offset < 0x100)        // $4100 - $41ff
+	if (BIT(offset + 0x4100, 8))        // mask $E100
 	{
 		m_mode = data;
 		if (m_mode & 1)    // MMC1 mode
@@ -415,6 +438,7 @@ void nes_txc_22110_device::write_l(offs_t offset, u8 data)
 		}
 		else
 			update_banks();
+		set_nt_mirroring(PPU_MIRROR_VERT);
 	}
 }
 
@@ -429,4 +453,5 @@ void nes_txc_22110_device::write_h(offs_t offset, u8 data)
 		m_latch0 = data;
 		update_banks();
 	}
+	set_nt_mirroring(PPU_MIRROR_VERT);    // CIRAM A10 is wired to PA10
 }

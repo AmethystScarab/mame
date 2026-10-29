@@ -5,6 +5,8 @@
 
  NES/Famicom cartridge emulation for Konami VRC clone PCBs
 
+ iNES mappers: 183, 252, 253, 266, 298, 308, 362, 447, 520, 524, 527, 528, 529, 530, 544
+
 
  Here we emulate several pirate PCBs based on VRC2/4 boards
 
@@ -42,6 +44,7 @@ DEFINE_DEVICE_TYPE(NES_TF1201,      nes_tf1201_device,      "nes_tf1201",      "
 DEFINE_DEVICE_TYPE(NES_TH21311,     nes_th21311_device,     "nes_th21311",     "NES Cart UNL-TH2131-1 PCB")
 DEFINE_DEVICE_TYPE(NES_WAIXING_SGZ, nes_waixing_sgz_device, "nes_waixing_sgz", "NES Cart Waixing San Guo Zhi PCB")
 DEFINE_DEVICE_TYPE(NES_HENGG_SHJY3, nes_hengg_shjy3_device, "nes_hengg_shjy3", "NES Cart Henggedianzi Shen Hua Jian Yun III PCB")
+DEFINE_DEVICE_TYPE(NES_WAIXING_FS306, nes_waixing_fs306_device, "nes_waixing_fs306", "NES Cart Waixing FS306 PCB")
 
 
 nes_2yudb_device::nes_2yudb_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock)
@@ -50,7 +53,7 @@ nes_2yudb_device::nes_2yudb_device(const machine_config &mconfig, const char *ta
 }
 
 nes_900218_device::nes_900218_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock)
-	: nes_konami_vrc2_device(mconfig, NES_900218, tag, owner, clock), m_irq_count(0), m_irq_enable(0), irq_timer(nullptr)
+	: nes_konami_vrc2_device(mconfig, NES_900218, tag, owner, clock), m_irq_count(0), m_irq_enable(0)
 {
 }
 
@@ -80,7 +83,7 @@ nes_bmc_kl06_device::nes_bmc_kl06_device(const machine_config &mconfig, const ch
 }
 
 nes_cityfight_device::nes_cityfight_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock)
-	: nes_konami_vrc4_device(mconfig, NES_CITYFIGHT, tag, owner, clock)
+	: nes_konami_vrc4_device(mconfig, NES_CITYFIGHT, tag, owner, clock), m_dac(*this, "dac")
 {
 }
 
@@ -100,7 +103,7 @@ nes_tf1201_device::nes_tf1201_device(const machine_config &mconfig, const char *
 }
 
 nes_th21311_device::nes_th21311_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock)
-	: nes_konami_vrc2_device(mconfig, NES_TH21311, tag, owner, clock), m_irq_count(0), m_irq_enable(0), irq_timer(nullptr)
+	: nes_konami_vrc2_device(mconfig, NES_TH21311, tag, owner, clock), m_irq_count(0), m_irq_enable(0)
 {
 }
 
@@ -140,8 +143,6 @@ void nes_2yudb_device::pcb_reset()
 void nes_900218_device::device_start()
 {
 	nes_konami_vrc2_device::device_start();
-	irq_timer = timer_alloc(FUNC(nes_900218_device::irq_timer_tick), this);
-	irq_timer->adjust(attotime::zero, 0, clocks_to_attotime(1));
 
 	save_item(NAME(m_irq_enable));
 	save_item(NAME(m_irq_count));
@@ -268,8 +269,6 @@ void nes_tf1201_device::device_start()
 void nes_th21311_device::device_start()
 {
 	nes_konami_vrc2_device::device_start();
-	irq_timer = timer_alloc(FUNC(nes_th21311_device::irq_timer_tick), this);
-	irq_timer->adjust(attotime::zero, 0, clocks_to_attotime(1));
 
 	save_item(NAME(m_irq_enable));
 	save_item(NAME(m_irq_count));
@@ -418,15 +417,24 @@ void nes_ax5705_device::write_h(offs_t offset, u8 data)
 
  Games: City Fighter IV
 
- VRC4 clone with simple 32K PRG banking (it's a minimal
- hack of Master Fighter II banking). More interestingly
- it adds a 4-bit PCM audio register, not emulated yet.
+ VRC4 clone (A2/A3) with CPU A13/A14 swapped, its PRG banking replaced by one 32 KiB bank select at $900C,
+ and a 4-bit DAC at $980C for PCM speech (NESdev NES 2.0 Mapper 266).
 
  NES 2.0: mapper 266
 
- In MAME: Partially supported.
+ In MAME: Supported.
+
+ Tested: City Fighter IV (Asia) (En) (Pirate) plays; its speech is written to the DAC in three bursts in the first
+ 25 seconds and is heard in the recorded sound at the same times. The DAC's circuit and level are not documented.
 
  -------------------------------------------------*/
+
+void nes_cityfight_device::device_add_mconfig(machine_config &config)
+{
+	// the board's 4-bit DAC, mixed into the console audio through the cartridge connector. How the DAC is built and its
+	// output level are not documented (the NESdev talk page asks); a 4-bit R-2R ladder at half the slot's level is used
+	DAC_4BIT_R2R(config, m_dac, 0).add_route(ALL_OUTPUTS, DEVICE_SELF_OWNER, 0.5);
+}
 
 void nes_cityfight_device::write_h(offs_t offset, u8 data)
 {
@@ -439,12 +447,17 @@ void nes_cityfight_device::write_h(offs_t offset, u8 data)
 		case 0x0800:
 			break;  // PRG banking at $8000 ignored
 		case 0x1000:
-			prg32(BIT(data, 2, 2));
-			if (!(offset & 3))  // $9000 is also VRC4 mirroring
+			// NESdev NES 2.0 Mapper 266: $9000 (mask $F00C) is the VRC4's mirroring register; $900C (mask $F80C), a
+			// write the VRC4 signals on its /WR9003 pin, selects the 32 KiB PRG bank (PRG A16-A15)
+			if ((offset & 0x0c) == 0x0c)
+				prg32(BIT(data, 2, 2));
+			else if (!(offset & 0x0c))
 				nes_konami_vrc4_device::write_h(offset, data);
 			break;
 		case 0x1800:
-			LOG("Extended Audio write, data %x!", data & 0x0f); // pcmwrite(0x4011, (V & 0xf) << 3); (etabeta's original comment, FCEUX code)
+			// $980C (mask $F80C): 4-bit unsigned PCM data for the board's own DAC
+			if ((offset & 0x0c) == 0x0c)
+				m_dac->write(data & 0x0f);
 			break;
 		default:
 			nes_konami_vrc4_device::write_h(offset, data);
@@ -858,4 +871,180 @@ void nes_bmc_kl06_device::write_m(offs_t offset, u8 data)
 		set_prg();
 		set_chr();
 	}
+}
+
+
+/*-------------------------------------------------
+
+ Waixing FS306 board
+
+ Games: Bawang de Dalu (Waixing's translation of Namco's
+ Sangokushi II: Haou no Tairiku)
+
+ NESdev NES 2.0 Mapper 544: a VRC4 clone, with its A0/A1
+ inputs on CPU A10/A11 (subaddresses $000/$400/$800/$C00),
+ and a GAL that replaces two or four CHR banks with 2 KiB of
+ CHR-RAM, as on INES Mapper 253:
+ - VRC4 PRG select #0/#1, CHR select ($B000-$EFFF) and IRQ
+   ($F000-$FFFF) as on a VRC4; 512 KiB of CHR-ROM
+ - $9C00 (mask $9C04): 8 KiB PRG-ROM bank at $C000-$DFFF
+   (the VRC4's external select)
+ - $9C0C-$9C0F (mask $9C07): 1 KiB CIRAM bank for each of the
+   four nametables
+ - the GAL takes as its command the CHR bank number (CHR A10-
+   A17) of a PPU write while bit 7 of it is set, as on INES
+   Mapper 195; power-on value $80:
+     $80 = banks $028-$02B   $C0 = banks $046-$047
+     $82 = banks $000-$003   $C2 = banks $07C-$07D
+     $88 = banks $04C-$04F   $C8 = banks $004-$005 (not
+     $8A = banks $064-$067         $00A as on mapper 195)
+     $CA = no CHR-RAM; bit 4 set: no CHR-RAM
+   in both 256 KiB halves of the CHR-ROM; the 2 KiB of CHR-RAM
+   are mirrored once in the four-bank settings, and every
+   setting maps the same 2 KiB
+ - 8 KiB of battery-backed PRG-RAM at $6000-$7FFF
+
+ - the IRQ occurs one M2 cycle later than on a VRC4 (NESdev:
+   it "seems" to): the VRC4 core's assertion reaches /IRQ at
+   the next M2 rise; an acknowledge in between cancels it, and
+   an acknowledge clears /IRQ at once, as on a VRC4 (NESdev
+   documents only the assertion)
+
+ Not documented, so not emulated: the effect of the VRC4's PRG
+ swap bit on the third bank (it swaps $8000 and $C000 as on a
+ VRC4 here), and the power-on CIRAM banks (0, 1, 0, 1 here:
+ vertical mirroring).
+
+ NES 2.0: mapper 544
+
+ In MAME: Supported.
+
+ -------------------------------------------------*/
+
+nes_waixing_fs306_device::nes_waixing_fs306_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock)
+	: nes_konami_vrc4_device(mconfig, NES_WAIXING_FS306, tag, owner, clock), m_prg2(0), m_gal(0x80), m_irq_delay(0)
+{
+	std::fill(std::begin(m_ciram), std::end(m_ciram), 0);
+	m_vrc_ls_prg_a = 11;  // A11
+	m_vrc_ls_prg_b = 10;  // A10
+}
+
+void nes_waixing_fs306_device::device_start()
+{
+	nes_konami_vrc4_device::device_start();
+	save_item(NAME(m_prg2));
+	save_item(NAME(m_ciram));
+	save_item(NAME(m_gal));
+	save_item(NAME(m_irq_delay));
+}
+
+void nes_waixing_fs306_device::pcb_reset()
+{
+	m_prg2 = 0;
+	m_gal = 0x80;
+	m_irq_delay = 0;
+	m_ciram[0] = m_ciram[2] = 0;
+	m_ciram[1] = m_ciram[3] = 1;
+	nes_konami_vrc4_device::pcb_reset();
+	update_ciram();
+}
+
+void nes_waixing_fs306_device::set_prg()
+{
+	prg8_x(0 ^ m_prg_flip, m_mmc_prg_bank[0] & 0x1f);
+	prg8_x(1, m_mmc_prg_bank[1] & 0x1f);
+	prg8_x(2 ^ m_prg_flip, m_prg2 & 0x1f);
+	prg8_x(3, 0x1f);
+}
+
+bool nes_waixing_fs306_device::gal_chr_is_ram(u16 bank) const
+{
+	static const u8 first_bank[2][4] =
+	{
+		{ 0x28, 0x00, 0x4c, 0x64 },     // four banks
+		{ 0x46, 0x7c, 0x04, 0xff }      // two banks ($CA: none)
+	};
+	if (BIT(m_gal, 4))
+		return false;
+	const int two = BIT(m_gal, 6);
+	const u8 first = first_bank[two][(BIT(m_gal, 3) << 1) | BIT(m_gal, 1)];
+	if (first == 0xff)
+		return false;
+	const u8 b = bank & 0xff;      // the same banks in both 256 KiB halves
+	return (b >= first) && (b < first + (two ? 2 : 4));
+}
+
+void nes_waixing_fs306_device::set_chr()
+{
+	for (int i = 0; i < 8; i++)
+	{
+		const u16 bank = m_mmc_vrom_bank[i] & 0x1ff;
+		if (gal_chr_is_ram(bank))
+			chr1_x(i, bank, CHRRAM);   // 2 KiB of CHR-RAM: the bank wraps to it
+		else
+			chr1_x(i, bank, CHRROM);
+	}
+}
+
+void nes_waixing_fs306_device::chr_w(offs_t offset, u8 data)
+{
+	// the GAL watches the CHR bank number on PPU writes
+	const u16 bank = m_mmc_vrom_bank[(offset >> 10) & 7] & 0x1ff;
+	device_nes_cart_interface::chr_w(offset, data);
+	if (BIT(bank, 7) && (m_gal != (bank & 0xff)))
+	{
+		m_gal = bank & 0xff;
+		set_chr();
+	}
+}
+
+void nes_waixing_fs306_device::m2_w(int state, offs_t address, bool write)
+{
+	if (!state)
+		return;
+	// an assertion from the previous M2 rise reaches the edge now, before this cycle's count
+	if (m_irq_delay)
+	{
+		m_irq_delay = 0;
+		set_irq_line(ASSERT_LINE);
+	}
+	irq_clock();
+}
+
+void nes_waixing_fs306_device::vrc_irq_w(int state)
+{
+	if (state == ASSERT_LINE)
+		m_irq_delay = 1;
+	else
+	{
+		m_irq_delay = 0;
+		set_irq_line(CLEAR_LINE);
+	}
+}
+
+void nes_waixing_fs306_device::update_ciram()
+{
+	for (int i = 0; i < 4; i++)
+		set_nt_page(i, CIRAM, m_ciram[i] & 1, 1);
+}
+
+void nes_waixing_fs306_device::write_h(offs_t offset, u8 data)
+{
+	LOG("waixing fs306 write_h, offset: %04x, data: %02x\n", offset, data);
+
+	if ((offset & 0x7c00) == 0x1c00)   // $9C00-$9FFF: the VRC4's external select
+	{
+		if (BIT(offset, 2))
+		{
+			m_ciram[offset & 3] = data;
+			update_ciram();
+		}
+		else
+		{
+			m_prg2 = data;
+			set_prg();
+		}
+		return;
+	}
+	nes_konami_vrc4_device::write_h(offset, data);
 }

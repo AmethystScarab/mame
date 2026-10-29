@@ -153,7 +153,6 @@ protected:
 	virtual void device_start() override ATTR_COLD;
 	virtual void device_add_mconfig(machine_config &config) override ATTR_COLD;
 
-	TIMER_CALLBACK_MEMBER(irq_timer_tick);
 	TIMER_CALLBACK_MEMBER(serial_tick);
 
 	uint8_t m_datach_latch;

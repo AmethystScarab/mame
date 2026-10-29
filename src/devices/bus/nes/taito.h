@@ -35,6 +35,12 @@ public:
 
 	virtual void write_h(offs_t offset, u8 data) override;
 
+	// the counter is timed from the filtered PPU A12 rise the PPU reports (see the board's banner in taito.cpp);
+	// hblank_irq() is the fallback for a PPU that is not running the dot renderer
+	virtual bool wants_a12() override { return true; }
+	virtual void ppu_a12_rise() override;
+	virtual bool wants_a12_filter() override { return true; }
+	virtual bool a12_rise_accepted(const attotime &low_since, const attotime &when) override;
 	virtual void hblank_irq(int scanline, bool vblank, bool blanked) override;
 	virtual void pcb_reset() override;
 
@@ -43,6 +49,13 @@ protected:
 	virtual void device_start() override ATTR_COLD;
 
 private:
+	void irq_clock();
+	void update_irq();
+	virtual bool wants_m2() override { return true; }
+	virtual void m2_w(int state, offs_t address, bool write) override;
+	u8 m_irq_delay = 0;     // CPU cycles left before the counter is clocked
+	bool m_irq_pending = false;
+
 	u8 m_irq_count, m_irq_count_latch;
 	u8 m_irq_enable;
 };
@@ -91,7 +104,10 @@ protected:
 	// device-level overrides
 	virtual void device_start() override ATTR_COLD;
 
-	TIMER_CALLBACK_MEMBER(irq_timer_tick);
+	// the IRQ counter is clocked by M2: it is counted at the M2 rise, before that cycle's CPU access
+	virtual bool wants_m2() override { return true; }
+	virtual void m2_w(int state, offs_t address, bool write) override { if (state) irq_clock(); }
+	void irq_clock();
 
 private:
 	void set_chr();
@@ -104,8 +120,6 @@ private:
 	u16 m_irq_count;
 	u8 m_irq_count_latch;
 	u8 m_irq_enable;
-
-	emu_timer *irq_timer;
 };
 
 

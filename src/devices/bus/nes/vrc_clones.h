@@ -7,6 +7,8 @@
 
 #include "konami.h"
 
+#include "sound/dac.h"
+
 
 // ======================> nes_2yudb_device
 
@@ -48,12 +50,14 @@ protected:
 	virtual void device_start() override ATTR_COLD;
 
 	TIMER_CALLBACK_MEMBER(irq_timer_tick);
+	// M2 at the cartridge connector: the IRQ counter is clocked once per CPU cycle, at the M2 rise (before that cycle's access)
+	virtual bool wants_m2() override { return true; }
+	virtual void m2_w(int state, offs_t address, bool write) override { if (state) irq_timer_tick(0); }
 
 private:
 	u16 m_irq_count;
 	int m_irq_enable;
 
-	emu_timer *irq_timer;
 };
 
 
@@ -173,6 +177,10 @@ public:
 protected:
 	// device-level overrides
 	virtual void device_start() override ATTR_COLD;
+	virtual void device_add_mconfig(machine_config &config) override ATTR_COLD;
+
+private:
+	required_device<dac_4bit_r2r_device> m_dac;
 };
 
 
@@ -248,13 +256,15 @@ protected:
 	virtual void device_start() override ATTR_COLD;
 
 	TIMER_CALLBACK_MEMBER(irq_timer_tick);
+	// M2 at the cartridge connector: the IRQ counter is clocked once per CPU cycle, at the M2 rise (before that cycle's access)
+	virtual bool wants_m2() override { return true; }
+	virtual void m2_w(int state, offs_t address, bool write) override { if (state) irq_timer_tick(0); }
 
 private:
 	u16 m_irq_count;
 	u8 m_irq_latch;
 	int m_irq_enable;
 
-	emu_timer *irq_timer;
 };
 
 
@@ -290,6 +300,41 @@ public:
 };
 
 
+// ======================> nes_waixing_fs306_device
+
+class nes_waixing_fs306_device : public nes_konami_vrc4_device
+{
+public:
+	// construction/destruction
+	nes_waixing_fs306_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock);
+
+	virtual void write_h(offs_t offset, u8 data) override;
+	virtual void chr_w(offs_t offset, u8 data) override;
+
+	virtual void pcb_reset() override;
+
+protected:
+	// device-level overrides
+	virtual void device_start() override ATTR_COLD;
+
+	virtual void set_prg() override;
+	virtual void set_chr() override;
+
+	// the IRQ reaches the cartridge edge one M2 cycle after the VRC4 core raises it
+	virtual void m2_w(int state, offs_t address, bool write) override;
+	virtual void vrc_irq_w(int state) override;
+
+private:
+	bool gal_chr_is_ram(u16 bank) const;
+	void update_ciram();
+
+	u8 m_prg2;              // $9C00
+	u8 m_ciram[4];          // $9C0C-$9C0F
+	u8 m_gal;               // CHR-RAM configuration
+	u8 m_irq_delay;         // the VRC4 core raised /IRQ at the last M2 rise; it reaches the edge at the next one
+};
+
+
 // device type definition
 DECLARE_DEVICE_TYPE(NES_2YUDB,       nes_2yudb_device)
 DECLARE_DEVICE_TYPE(NES_900218,      nes_900218_device)
@@ -305,5 +350,6 @@ DECLARE_DEVICE_TYPE(NES_T230,        nes_t230_device)
 DECLARE_DEVICE_TYPE(NES_TF1201,      nes_tf1201_device)
 DECLARE_DEVICE_TYPE(NES_TH21311,     nes_th21311_device)
 DECLARE_DEVICE_TYPE(NES_WAIXING_SGZ, nes_waixing_sgz_device)
+DECLARE_DEVICE_TYPE(NES_WAIXING_FS306, nes_waixing_fs306_device)
 
 #endif // MAME_BUS_NES_VRC_CLONES_H
