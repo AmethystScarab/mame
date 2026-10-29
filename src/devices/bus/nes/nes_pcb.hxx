@@ -25,6 +25,7 @@ static const nes_pcb pcb_list[] =
 	{ "bandai_pt554",     BANDAI_PT554 },
 	{ "cprom",            STD_CPROM },
 	{ "axrom",            STD_AXROM },
+	{ "inx_007t",         UNL_INX007T },
 	{ "pxrom",            STD_PXROM },
 	{ "fxrom",            STD_FXROM },
 	{ "bnrom",            STD_BXROM },
@@ -47,6 +48,7 @@ static const nes_pcb pcb_list[] =
 	{ "discrete_74x377",  DIS_74X377 },
 	{ "discrete_74x161",  DIS_74X161X161X32 },
 	{ "bitcorp_dis",      DIS_74X161X138 },
+	{ "gtrom",            DIS_GTROM },
 	{ "lz93d50",          BANDAI_LZ93 },
 	{ "lz93d50_ep1",      BANDAI_LZ93EX1 },
 	{ "lz93d50_ep2",      BANDAI_LZ93EX2 },
@@ -125,8 +127,8 @@ static const nes_pcb pcb_list[] =
 	{ "s8259b",           SACHEN_8259B },
 	{ "s8259c",           SACHEN_8259C },
 	{ "s8259d",           SACHEN_8259D },
-	{ "s74x374",          SACHEN_74LS374 },
-	{ "s74x374a",         SACHEN_74LS374_ALT },   /* FIXME: Made up boards some different handling */
+	{ "s74x374",          SACHEN_74LS374 },       /* Sachen SA-015 / SA-630 (mapper 150) */
+	{ "s74x374a",         SACHEN_74LS374_ALT },   /* Sachen SA-020A (mapper 243) */
 	{ "tcu01",            SACHEN_TCU01 },
 	{ "tcu02",            SACHEN_TCU02 },
 	{ "sa9602b",          SACHEN_SA9602B },
@@ -137,9 +139,8 @@ static const nes_pcb pcb_list[] =
 	{ "txc_dumarc",       TXC_DUMARACING },
 	{ "txc_mjblock",      TXC_MJBLOCK },
 	{ "txc_strikew",      TXC_STRIKEW },
-	{ "txc_commandos",    TXC_COMMANDOS },
+	{ "txc_mxmdhtwo",    TXC_MXMDHTWO },
 	{ "waixing_a",        WAIXING_TYPE_A },
-	{ "waixing_a1",       WAIXING_TYPE_A1 },    /* FIXME: Made up boards the different CHRRAM banks (see Ji Jia Zhan Shi },  */
 	{ "waixing_b",        WAIXING_TYPE_B },
 	{ "waixing_c",        WAIXING_TYPE_C },
 	{ "waixing_d",        WAIXING_TYPE_D },
@@ -154,6 +155,7 @@ static const nes_pcb pcb_list[] =
 	{ "waixing_sgzlz",    WAIXING_SGZLZ },
 	{ "waixing_sec",      WAIXING_SECURITY },
 	{ "waixing_ffv",      WAIXING_FFV },
+	{ "waixing_yc030309", WAIXING_YC030309 },
 	{ "waixing_wxzs",     WAIXING_WXZS },
 	{ "waixing_wxzs2",    WAIXING_WXZS2 },
 	{ "waixing_dq8",      WAIXING_DQ8 },
@@ -181,6 +183,7 @@ static const nes_pcb pcb_list[] =
 	{ "ks7037",           KAISER_KS7037 },  // Metroid (FDS Conversion)
 	{ "ks7057",           KAISER_KS7057 },  // Gyruss (FDS Conversion)
 	{ "ks7058",           KAISER_KS7058 },
+	{ "jy043",            UNL_JY043 },
 	{ "gs2015",           RCM_GS2015 },
 	{ "gs2004",           RCM_GS2004 },
 	{ "gs2013",           RCM_GS2013 },
@@ -196,6 +199,7 @@ static const nes_pcb pcb_list[] =
 	{ "subor0",           SUBOR_TYPE0 },
 	{ "subor1",           SUBOR_TYPE1 },
 	{ "subor2",           SUBOR_TYPE2 },
+	{ "subor_karaoke",    SUBOR_KARAOKE },
 	{ "unl_158b",         UNL_158B },  // Blood of Jurassic
 	{ "cc21",             UNL_CC21 },
 	{ "xiaozy",           UNL_XIAOZY },
@@ -218,11 +222,11 @@ static const nes_pcb pcb_list[] =
 	{ "th21311",          UNL_TH21311 },
 	{ "waixing_sgz",      WAIXING_SGZ },
 	// misc bootleg boards
-	{ "sc127",            UNL_SC127 },
 	{ "mariobaby",        BTL_MARIOBABY },
 	{ "asnicol",          BTL_AISENSHINICOL },
 	{ "smb3pirate",       BTL_SMB3 },
 	{ "btl_contraj",      BTL_CONTRAJ },
+	{ "btl_ddragon",      BTL_DDRAGON },
 	{ "btl_dninja",       BTL_DRAGONNINJA },
 	{ "smb2j",            UNL_SMB2J },
 	{ "smb2ja",           BTL_SMB2JA },
@@ -232,6 +236,7 @@ static const nes_pcb pcb_list[] =
 	{ "09034a",           BTL_09034A },
 	{ "l001",             BTL_L001 },
 	{ "batmanfs",         BTL_BATMANFS },
+	{ "robocopfs",        BTL_ROBOCOPFS },
 	{ "palthena",         BTL_PALTHENA },
 	{ "tobidase",         BTL_TOBIDASE },  // mapper 120
 	{ "dbz5",             REXSOFT_DBZ5 },
@@ -272,6 +277,7 @@ static const nes_pcb pcb_list[] =
 	{ "bmc_vt5201",       BMC_VT5201 },  // mapper 59
 	{ "bmc_60311c",       BMC_60311C },
 	{ "bmc_80013b",       BMC_80013B },
+	{ "bmc_631601",       BMC_631601 },
 	{ "bmc_810544c",      BMC_810544C },
 	{ "bmc_82ab",         BMC_82AB },
 	{ "bmc_830425c",      BMC_830425C },
@@ -332,6 +338,7 @@ static const nes_pcb pcb_list[] =
 	{ "bmc_11160",        BMC_11160 },
 	{ "a88s1",            BMC_A88S1 },
 	{ "bmc_el86xc",       BMC_EL860947C },
+	{ "bmc_el86xc",       BMC_EL861121C },    // same board code; iNES mapper 267 (256 KiB outer banks) needs an id-to-slot entry
 	{ "fk23c",            BMC_FK23C },
 	{ "fk23ca",           BMC_FK23CA },
 	{ "nt639",            BMC_NT639 },
@@ -364,6 +371,10 @@ static const nes_pcb pcb_list[] =
 	{ "bmc_yy841101c",    BMC_YY841101C },
 	{ "bmc_yy841155c",    BMC_YY841155C },
 	{ "pjoy84",           BMC_PJOY84 },
+	{ "bs300",            BMC_BS300 },
+	{ "ing022",           BMC_ING022 },
+	{ "bmc_8025",         BMC_8025 },
+	{ "bmc_hsk007",       BMC_HSK007 },
 	{ "bmc_gold260",      BMC_GOLD260 },
 	{ "bmc_th22913",      BMC_TH22913 },
 	{ "bmc_reset4",       BMC_4IN1RESET },
@@ -399,9 +410,11 @@ static const nes_pcb pcb_list[] =
 	{ "unl_eh8813a",      UNL_EH8813A },  // Dr. Mario II
 	{ "nocash_nochr",     NOCASH_NOCHR },
 	{ "action53",         UNL_ACTION53 },
+	{ "dripgame",         UNL_DRIPGAME },
 	{ "batmap_000",       BATMAP_000 },
 	{ "batmap_srrx",      BATMAP_SRRX },
 	{ "8bitxmas",         SEALIE_8BITXMAS },
+	{ "8bitxmas17",       SEALIE_8BITXMAS17 },
 	{ "cufrom",           SEALIE_CUFROM },
 	{ "dpcmcart",         SEALIE_DPCMCART },
 	{ "unrom512",         SEALIE_UNROM512 },
@@ -688,6 +701,8 @@ void nes_cart_slot_device::call_load_pcb()
 	{
 		if (get_feature("batt"))
 			mapper_sram_size = m_cart->get_mapper_sram_size();
+		else if (m_pcb_id == NAMCOT_163)
+			m_cart->set_mapper_sram_size(0);   // no battery: the N163's internal RAM is not saved
 	}
 
 	if (m_pcb_id == NAMCOT_163)
@@ -705,6 +720,21 @@ void nes_cart_slot_device::call_load_pcb()
 		if (addr == nullptr || sscanf(addr, "%u%*c", &val) != 1 || val < 5 || val > 6)
 			logerror("Unexpected smd133-addr: %s\n", addr ? addr : "(nullptr)");
 		m_cart->set_smd133_addr(val * 0x1000);
+	}
+
+	// the FK-xxx/BS-xxx boards (BMC-FK23C, BMC-FK23CA) are the 8025 chipset's submapper 1, unless the entry names
+	// another submapper (FS005/FS006 carts filed under these slots are submapper 2)
+	if (m_pcb_id == BMC_FK23C || m_pcb_id == BMC_FK23CA)
+	{
+		const char *sub = get_feature("submapper");
+		int val = 1;
+
+		if (sub != nullptr && (sscanf(sub, "%d%*c", &val) != 1 || val < 0 || val > 5))
+		{
+			logerror("Unexpected submapper: %s\n", sub);
+			val = 1;
+		}
+		m_cart->set_8025_submapper(val);
 	}
 
 	// get outer PRG bank size for multicart boards that use this feature

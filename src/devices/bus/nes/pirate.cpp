@@ -5,6 +5,8 @@
 
  NES/Famicom cartridge emulation for pirate cart PCBs
 
+ iNES mappers: 27, 91, 107, 117, 144, 156, 176, 186, 329, 519, 521
+
 
  Here we emulate the various PCBs used by Asian & Korean pirate games
 
@@ -508,9 +510,13 @@ void nes_cc21_device::write_h(offs_t offset, u8 data)
  Games: Shu Qi Yu - Zhi Li Xiao Zhuan Yuan
 
  Very simple mapper: writes to 0x5ff1 set prg32 (to data>>1),
- while writes to 0x5ff2 set chr8
+ while writes to 0x5ff2 set chr8.
 
- iNES: mapper 176
+ Legacy iNES: mapper 176 (iNES 1.0 images that carry no submapper).
+ This board is unrelated to the NES 2.0 mapper 176 8025 enhanced-MMC3
+ family (Super24in1SC03, FK23C/FK23CA, FS005, JX9003B, ...): NES 2.0
+ images are routed by submapper to the MMC3 clone implementations in
+ mmc3_clones.cpp, see nes_ines.hxx.
 
  In MAME: Supported.
 

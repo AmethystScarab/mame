@@ -60,21 +60,23 @@
 
 /*****************************************************************************************
 
- A few Mappers suffer of hardware conflict: original dumpers have used the same mapper number for more than
- a kind of boards. In these cases (and only in these cases) we exploit nes.hsi to set up accordingly
- emulation. Games which requires this hack are the following:
+ A few mapper numbers were used by the original dumpers for more than one kind of board. For iNES 1.0 images,
+ which have no submapper, nes.hsi gives these images a variant code that the loader uses to set up the right
+ board:
  * 032 - Major League needs hardwired mirroring (missing windows and glitched field in top view, otherwise)
  * 034 - Impossible Mission II is not like BxROM games (it writes to 0x7ffd-0x7fff, instead of 0x8000). It is still
  unplayable though (see above)
- * 071 - Fire Hawk is different from other Camerica games (no hardwired mirroring). Without crc_hack no helicopter graphics
+ * 071 - Fire Hawk has mapper controlled mirroring, unlike the other Camerica games: without its variant code the
+ helicopter graphics are missing
  * 078 - Cosmo Carrier needs a different mirroring than Holy Diver
  * 113 - HES 6-in-1 requires mirroring (check Bookyman playfield), while other games break with this (check AV Soccer)
  * 153 - Famicom Jump II uses a different board (or the same in a very different way)
  * 242 - DQ8 has no mirroring (missing graphics is due to other reasons though)
 
- crc_hacks have been added also to handle a few wiring settings which would require submappers:
+ Variant codes also select a few wirings that NES 2.0 gives as submappers:
  * CHR protection pins for mapper 185
  * VRC-2, VRC-4 and VRC-6 line wiring
+ * MMC6 (HKROM) and the MMC3A style IRQ for mapper 4
 
  Remember that the MMC # does not equal the mapper #. In particular, Mapper 4 is
  in fact MMC3, Mapper 9 is MMC2 and Mapper 10 is MMC4. Makes perfect sense, right?
@@ -85,6 +87,7 @@
 #include "emu.h"
 #include "hashfile.h"
 #include "nes_slot.h"
+#include "cpu/m6502/rp2a03.h"
 
 #include "cpu/m6502/m6502.h"
 
@@ -113,9 +116,10 @@ device_nes_cart_interface::device_nes_cart_interface(const machine_config &mconf
 	, m_ciram(nullptr)
 	, m_prg_size(0)
 	, m_vrom_size(0)
-	// HACK: to reduce tagmap lookups for PPU-related IRQs, we add a hook to the
-	// main NES CPU here, even if it does not belong to this device.
-	, m_maincpu(*this, ":maincpu")
+	, m_slot(nullptr)
+	, m_maincpu(nullptr)
+	, m_builtin_cpu(device, finder_base::DUMMY_TAG)
+	, m_builtin_irq(device)
 	, m_mapper_sram(nullptr)
 	, m_misc_rom(nullptr)
 	, m_mapper_sram_size(0)
@@ -352,6 +356,15 @@ void device_nes_cart_interface::bank_chr(int shift, int start, int bank, int sou
 	uint8_t *base_ptr;
 	uint32_t chr_chunks;
 
+	if (source == CHRROM && m_vrom == nullptr)
+	{
+		// the board asked for CHR-ROM that this cart does not have (a software list entry without a CHR data area):
+		// map CHR-RAM instead of a null pointer that the PPU would read through
+		if (m_vram.empty())
+			vram_alloc(0x2000);
+		source = CHRRAM;
+	}
+
 	if (source == CHRRAM)
 	{
 		assert(!m_vram.empty());
@@ -367,7 +380,15 @@ void device_nes_cart_interface::bank_chr(int shift, int start, int bank, int sou
 		chr_chunks = m_vrom_chunks;
 	}
 
-	bank &= (chr_chunks << (3 - shift)) - 1;
+	if (source == CHRRAM && m_vram.size() < 0x2000)
+	{
+		// CHR-RAM smaller than 8 KiB (e.g. the 2 KiB on Waixing mapper 74 boards): m_vram_chunks is 0, which made the mask
+		// -1 and let bank numbers point past the end of the RAM - mask by the RAM's real size in 1 KiB pages instead
+		const uint32_t windows = (m_vram.size() / 0x400) >> shift;
+		bank = windows ? (bank & (windows - 1)) : 0;
+	}
+	else
+		bank &= (chr_chunks << (3 - shift)) - 1;
 	int size = 0x400 << shift;
 	int bank_start = bank * size;
 	int kbyte = 1 << shift;
@@ -392,6 +413,9 @@ void device_nes_cart_interface::set_nt_page(int page, int source, int bank, int 
 	{
 		case CART_NTRAM:
 			base_ptr = &m_ext_ntram[0];
+			break;
+		case VRAM_NT:
+			base_ptr = &m_vram[0];
 			break;
 		case VROM:
 			bank &= (m_vrom_chunks << 3) - 1;
@@ -471,7 +495,22 @@ void device_nes_cart_interface::set_irq_line(int state)
 {
 	assert(state == ASSERT_LINE || state == CLEAR_LINE);
 
-	m_maincpu->set_input_line(m6502_device::IRQ_LINE, state);
+	if (m_slot)
+		m_slot->irq_w(state);
+	else
+		m_builtin_irq(state);
+}
+
+//-------------------------------------------------
+//  interface_pre_start - find the slot and the CPU
+//-------------------------------------------------
+
+void device_nes_cart_interface::interface_pre_start()
+{
+	m_slot = dynamic_cast<nes_cart_slot_device *>(device().owner());
+	m_maincpu = m_slot ? m_slot->cpu() : m_builtin_cpu.target();
+	if (!m_maincpu)
+		throw emu_fatalerror("%s: no CPU configured for the NES cartridge (on its slot, or on the cartridge if it is built in)\n", device().tag());
 }
 
 //-------------------------------------------------
@@ -545,6 +584,13 @@ uint8_t device_nes_cart_interface::nt_r(offs_t offset)
 //  source)
 //-------------------------------------------------
 
+uint8_t device_nes_cart_interface::get_open_bus()
+{
+	if (auto *const cpu = dynamic_cast<rp2a03_core_device *>(m_maincpu))
+		return cpu->open_bus();
+	return m_open_bus;
+}
+
 uint8_t device_nes_cart_interface::read_l(offs_t offset)
 {
 	return get_open_bus();
@@ -590,9 +636,12 @@ void device_nes_cart_interface::pcb_start(running_machine &machine, uint8_t *cir
 		{
 			if (m_prg_bank_mem[i])
 			{
-				m_prg_bank_mem[i]->configure_entries(0, m_prg_size / 0x2000, m_prg, 0x2000);
-				m_prg_bank_mem[i]->set_entry(i);
-				m_prg_bank[i] = i;
+				// images smaller than 32 KiB (e.g. 8 KiB NROM such as Galaxian) mirror their banks across $8000-$FFFF;
+				// selecting entry i directly failed for entries that do not exist
+				const int entries = std::max<int>(1, m_prg_size / 0x2000);
+				m_prg_bank_mem[i]->configure_entries(0, entries, m_prg, 0x2000);
+				m_prg_bank_mem[i]->set_entry(i % entries);
+				m_prg_bank[i] = i % entries;
 			}
 		}
 	}
@@ -654,9 +703,11 @@ nes_cart_slot_device::nes_cart_slot_device(const machine_config &mconfig, const 
 	: device_t(mconfig, NES_CART_SLOT, tag, owner, clock)
 	, device_cartrom_image_interface(mconfig, *this)
 	, device_single_card_slot_interface<device_nes_cart_interface>(mconfig, *this)
-	, m_crc_hack(0)
+	, device_mixer_interface(mconfig, *this)
 	, m_cart(nullptr)
 	, m_pcb_id(NO_BOARD)
+	, m_cpu(*this, finder_base::DUMMY_TAG)
+	, m_irq_handler(*this)
 {
 }
 
@@ -666,6 +717,22 @@ nes_cart_slot_device::nes_cart_slot_device(const machine_config &mconfig, const 
 
 nes_cart_slot_device::~nes_cart_slot_device()
 {
+}
+
+//-------------------------------------------------
+//  cpu - the CPU configured on this slot, or on the
+//  slot a pass-through cartridge (Game Genie) is in
+//-------------------------------------------------
+
+cpu_device *nes_cart_slot_device::cpu() const
+{
+	for (const device_t *dev = this; dev; dev = dev->owner())
+	{
+		auto const *const slot = dynamic_cast<const nes_cart_slot_device *>(dev);
+		if (slot && slot->m_cpu.target())
+			return slot->m_cpu.target();
+	}
+	return nullptr;
 }
 
 //-------------------------------------------------
@@ -795,11 +862,17 @@ std::string nes_cart_slot_device::get_default_card_software(get_default_card_sof
 {
 	if (hook.image_file())
 	{
+		// the largest NES 2.0 image in use is a few MiB: anything that cannot be read in full, or is larger than
+		// any image could sensibly be, gets the default slot (and its load reports the problem)
+		static constexpr uint64_t MAX_IMAGE_SIZE = 64 * 1024 * 1024;
 		uint64_t len;
-		hook.image_file()->length(len); // FIXME: check error return, guard against excessively large files
+		if (hook.image_file()->length(len) || (len < 4) || (len > MAX_IMAGE_SIZE))
+			return software_get_default_slot("nrom");
 		std::vector<uint8_t> rom(len);
 
-		read(*hook.image_file(), &rom[0], len); // FIXME: check error return or read returning short
+		auto const [err, actual] = read(*hook.image_file(), &rom[0], len);
+		if (err || (actual != len))
+			return software_get_default_slot("nrom");
 
 		const char *slot_string = "nrom";
 		if ((rom[0] == 'N') && (rom[1] == 'E') && (rom[2] == 'S'))

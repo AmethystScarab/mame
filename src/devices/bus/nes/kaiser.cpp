@@ -5,8 +5,10 @@
 
  NES/Famicom cartridge emulation for Kaiser PCBs
 
+ iNES mappers: 56, 122, 142, 171, 175, 302, 303, 305, 306, 307, 312, 346, 347, 352, 525, 549, 554
 
- Here we emulate the following Kaiser bootleg PCBs
+
+ Here we emulate the following Kaiser bootleg PCBs (and the JY043, a simpler bootleg variant of the KS7058)
 
  * Kaiser KS106C
  * Kaiser KS202
@@ -24,6 +26,7 @@
  * Kaiser KS7037
  * Kaiser KS7057
  * Kaiser KS7058
+ * JY043
 
  ***********************************************************************************************************/
 
@@ -61,6 +64,7 @@ DEFINE_DEVICE_TYPE(NES_KS7032,  nes_ks7032_device,  "nes_ks7032",  "NES Cart Kai
 DEFINE_DEVICE_TYPE(NES_KS7037,  nes_ks7037_device,  "nes_ks7037",  "NES Cart Kaiser KS-7037 PCB")
 DEFINE_DEVICE_TYPE(NES_KS7057,  nes_ks7057_device,  "nes_ks7057",  "NES Cart Kaiser KS-7057 PCB")
 DEFINE_DEVICE_TYPE(NES_KS7058,  nes_ks7058_device,  "nes_ks7058",  "NES Cart Kaiser KS-7058 PCB")
+DEFINE_DEVICE_TYPE(NES_JY043,   nes_jy043_device,   "nes_jy043",   "NES Cart JY043 PCB")
 
 
 nes_ks106c_device::nes_ks106c_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock)
@@ -70,6 +74,11 @@ nes_ks106c_device::nes_ks106c_device(const machine_config &mconfig, const char *
 
 nes_ks7058_device::nes_ks7058_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock)
 	: nes_nrom_device(mconfig, NES_KS7058, tag, owner, clock)
+{
+}
+
+nes_jy043_device::nes_jy043_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock)
+	: nes_nrom_device(mconfig, NES_JY043, tag, owner, clock)
 {
 }
 
@@ -188,8 +197,6 @@ void nes_ks7022_device::pcb_reset()
 void nes_ks7032_device::device_start()
 {
 	common_start();
-	irq_timer = timer_alloc(FUNC(nes_ks7032_device::irq_timer_tick), this);
-	irq_timer->adjust(attotime::zero, 0, clocks_to_attotime(1));
 
 	save_item(NAME(m_latch));
 	save_item(NAME(m_irq_enable));
@@ -230,8 +237,6 @@ void nes_ks7016_device::pcb_reset()
 void nes_ks7017_device::device_start()
 {
 	common_start();
-	irq_timer = timer_alloc(FUNC(nes_ks7017_device::irq_timer_tick), this);
-	irq_timer->adjust(attotime::zero, 0, clocks_to_attotime(1));
 
 	save_item(NAME(m_latch));
 	save_item(NAME(m_irq_enable));
@@ -389,6 +394,33 @@ void nes_ks7058_device::write_h(offs_t offset, u8 data)
 			chr4_4(data, CHRROM);
 			break;
 	}
+}
+
+/*-------------------------------------------------
+
+ JY043 board, a simpler bootleg variant of the Kaiser KS7058
+
+ Games: Tuidaohu Mahjong (the J.Y. Company dump)
+
+ 32K of unbanked PRG and two 4K CHR windows into 32K of CHR-ROM. Writes anywhere in $8000-$FFFF set the CHR bank
+ (CHR A14-A12, three bits): even addresses for PPU $0000-$0FFF, odd addresses for PPU $1000-$1FFF. The nametable
+ arrangement is a solder pad, which the header's mirroring flag stands for.
+ The KS7058 decodes its registers differently, only in $F000-$FFFF and by address bit 7.
+
+ NESdev wiki: INES Mapper 122
+
+ iNES: mapper 122
+
+ -------------------------------------------------*/
+
+void nes_jy043_device::write_h(offs_t offset, u8 data)
+{
+	LOG("jy043 write_h, offset: %04x, data: %02x\n", offset, data);
+
+	if (BIT(offset, 0))
+		chr4_4(data & 7, CHRROM);
+	else
+		chr4_0(data & 7, CHRROM);
 }
 
 /*-------------------------------------------------

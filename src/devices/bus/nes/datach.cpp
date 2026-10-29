@@ -5,6 +5,8 @@
 
  NES/Famicom cartridge emulation for Bandai Datach PCBs
 
+ iNES mappers: 157
+
 
  Here we emulate the Bandai Datach Joint ROM System [mapper 157].
  The base unit features: a Bandai LZ93D50 + 24C02 EEPROM PCB
@@ -230,13 +232,12 @@ nes_datach_device::nes_datach_device(const machine_config &mconfig, const char *
 void nes_datach_device::device_start()
 {
 	common_start();
-	irq_timer = timer_alloc(FUNC(nes_datach_device::irq_timer_tick), this);
 	serial_timer = timer_alloc(FUNC(nes_datach_device::serial_tick), this);
-	irq_timer->adjust(attotime::zero, 0, clocks_to_attotime(1));
 	serial_timer->adjust(attotime::zero, 0, clocks_to_attotime(1000));
 
 	save_item(NAME(m_irq_enable));
 	save_item(NAME(m_irq_count));
+	save_item(NAME(m_irq_latch));
 	save_item(NAME(m_datach_latch));
 }
 
@@ -248,6 +249,7 @@ void nes_datach_device::pcb_reset()
 
 	m_irq_enable = 0;
 	m_irq_count = 0;
+	m_irq_latch = 0;
 	m_datach_latch = 0;
 	m_i2c_in_use = EEPROM_INTERNAL;
 }
@@ -333,6 +335,7 @@ void nes_datach_device::write_h(offs_t offset, uint8_t data)
 			break;
 		case 0x08:
 			m_subslot->write_prg_bank(data & 0x0f);
+			prg16_89ab(data & 0x0f);   // used when the game is loaded as a mapper 157 image instead of a Datach ROM
 			break;
 		case 0x0d:
 #if TEST_EEPROM
@@ -374,30 +377,6 @@ void nes_datach_device::device_add_mconfig(machine_config &config)
 	I2C_24C02(config, m_i2cmem);
 }
 
-
-//-------------------------------------------------
-//  irq_timer_tick - handle IRQ timer
-//-------------------------------------------------
-
-TIMER_CALLBACK_MEMBER(nes_datach_device::irq_timer_tick)
-{
-	if (m_irq_enable)
-	{
-		// 16bit counter, IRQ fired when the counter goes from 1 to 0
-		// after firing, the counter is *not* reloaded, but next clock
-		// counter wraps around from 0 to 0xffff
-		if (!m_irq_count)
-			m_irq_count = 0xffff;
-		else
-			m_irq_count--;
-
-		if (!m_irq_count)
-		{
-			set_irq_line(ASSERT_LINE);
-			m_irq_enable = 0;
-		}
-	}
-}
 
 //-------------------------------------------------
 //  serial_tick - tick in a serial bit

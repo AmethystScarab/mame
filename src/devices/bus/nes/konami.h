@@ -74,14 +74,15 @@ protected:
 	// device-level overrides
 	virtual void device_start() override ATTR_COLD;
 
-	TIMER_CALLBACK_MEMBER(irq_timer_tick);
+	// the IRQ counter is clocked by M2: it is counted at the M2 rise, before that cycle's CPU access
+	virtual bool wants_m2() override { return true; }
+	virtual void m2_w(int state, offs_t address, bool write) override { if (state) irq_clock(); }
+	void irq_clock();
 
 private:
 	u16 m_irq_count, m_irq_count_latch;
 	int m_irq_enable, m_irq_enable_latch;
 	int m_irq_mode;
-
-	emu_timer *irq_timer;
 };
 
 
@@ -106,7 +107,10 @@ protected:
 	// device-level overrides
 	virtual void device_start() override ATTR_COLD;
 
-	TIMER_CALLBACK_MEMBER(irq_timer_tick);
+	// the IRQ counter is clocked by M2: it is counted at the M2 rise, before that cycle's CPU access
+	virtual bool wants_m2() override { return true; }
+	virtual void m2_w(int state, offs_t address, bool write) override { if (state) irq_clock(); }
+	void irq_clock();
 
 	void set_mirror(u8 data);
 	void set_prg(int prg_base, int prg_mask);
@@ -126,8 +130,6 @@ protected:
 	int m_irq_enable, m_irq_enable_latch;
 	int m_irq_mode;
 	int m_irq_prescale;
-
-	emu_timer *irq_timer;
 };
 
 
@@ -140,13 +142,19 @@ public:
 	nes_konami_vrc6_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock);
 
 	virtual void write_h(offs_t offset, u8 data) override;
+	virtual void pcb_reset() override;
 
 protected:
 	// device-level overrides
+	virtual void device_start() override ATTR_COLD;
 	virtual void device_add_mconfig(machine_config &config) override ATTR_COLD;
 
 private:
+	void vrc6_update_ppu();
+
 	required_device<vrc6snd_device> m_vrc6snd;
+	u8 m_vrc6_chr[8];   // $D000-$E003 CHR registers
+	u8 m_vrc6_mode;     // $B003 PPU banking style
 };
 
 

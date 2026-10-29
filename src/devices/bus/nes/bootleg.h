@@ -6,28 +6,6 @@
 #include "nxrom.h"
 
 
-// ======================> nes_sc127_device
-
-class nes_sc127_device : public nes_nrom_device
-{
-public:
-	// construction/destruction
-	nes_sc127_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
-	virtual void write_h(offs_t offset, uint8_t data) override;
-
-	virtual void hblank_irq(int scanline, bool vblank, bool blanked) override;
-	virtual void pcb_reset() override;
-
-protected:
-	// device-level overrides
-	virtual void device_start() override ATTR_COLD;
-
-private:
-	uint16_t m_irq_count;
-	int m_irq_enable;
-};
-
-
 // ======================> nes_mbaby_device
 
 class nes_mbaby_device : public nes_nrom_device
@@ -42,23 +20,28 @@ public:
 	virtual void pcb_reset() override;
 
 protected:
+	nes_mbaby_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, u32 clock);
+
 	// device-level overrides
 	virtual void device_start() override ATTR_COLD;
 
 	TIMER_CALLBACK_MEMBER(irq_timer_tick);
+	// M2 at the cartridge connector: the IRQ counter is clocked once per CPU cycle, at the M2 rise (before that cycle's access)
+	virtual bool wants_m2() override { return true; }
+	virtual void m2_w(int state, offs_t address, bool write) override { if (state) irq_timer_tick(0); }
 
-private:
 	u16 m_irq_count;
 	int m_irq_enable;
 	u8 m_latch;
 
+private:
 	emu_timer *irq_timer;
 };
 
 
 // ======================> nes_asn_device
 
-class nes_asn_device : public nes_nrom_device
+class nes_asn_device : public nes_mbaby_device
 {
 public:
 	// construction/destruction
@@ -68,13 +51,6 @@ public:
 	virtual void write_h(offs_t offset, uint8_t data) override;
 
 	virtual void pcb_reset() override;
-
-protected:
-	// device-level overrides
-	virtual void device_start() override ATTR_COLD;
-
-private:
-	uint8_t m_latch;
 };
 
 
@@ -96,6 +72,9 @@ protected:
 	virtual void device_start() override ATTR_COLD;
 
 	TIMER_CALLBACK_MEMBER(irq_timer_tick);
+	// M2 at the cartridge connector: the IRQ counter is clocked once per CPU cycle, at the M2 rise (before that cycle's access)
+	virtual bool wants_m2() override { return true; }
+	virtual void m2_w(int state, offs_t address, bool write) override { if (state) irq_timer_tick(0); }
 
 private:
 	u16 m_irq_count;
@@ -118,6 +97,40 @@ public:
 };
 
 
+// ======================> nes_btl_dd_device
+
+class nes_btl_dd_device : public nes_nrom_device
+{
+public:
+	// construction/destruction
+	nes_btl_dd_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock);
+
+	virtual void write_h(offs_t offset, u8 data) override;
+
+	virtual void pcb_reset() override;
+
+protected:
+	// device-level overrides
+	virtual void device_start() override ATTR_COLD;
+
+	TIMER_CALLBACK_MEMBER(irq_timer_tick);
+	// M2 at the cartridge connector: the IRQ counter is clocked once per CPU cycle, at the M2 rise (before that cycle's access)
+	virtual bool wants_m2() override { return true; }
+	virtual void m2_w(int state, offs_t address, bool write) override { if (state) irq_timer_tick(0); }
+
+private:
+	void update_banks();
+
+	u8 m_prg_reg[4];
+	u8 m_chr_reg[8];
+	u8 m_mirror[4];
+	u8 m_irq_count;
+	int m_irq_enable;
+
+	emu_timer *irq_timer;
+};
+
+
 // ======================> nes_btl_dn_device
 
 class nes_btl_dn_device : public nes_nrom_device
@@ -127,15 +140,23 @@ public:
 	nes_btl_dn_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 	virtual void write_h(offs_t offset, uint8_t data) override;
 
-	virtual void hblank_irq(int scanline, bool vblank, bool blanked) override;
 	virtual void pcb_reset() override;
 
 protected:
 	// device-level overrides
 	virtual void device_start() override ATTR_COLD;
 
+	TIMER_CALLBACK_MEMBER(irq_timer_tick);
+	// M2 at the cartridge connector: the IRQ prescaler is clocked once per CPU cycle, at the M2 rise (before that cycle's access)
+	virtual bool wants_m2() override { return true; }
+	virtual void m2_w(int state, offs_t address, bool write) override { if (state) irq_timer_tick(0); }
+
 private:
-	uint16_t m_irq_count;
+	u8 m_clock_mode;
+	u8 m_pending;
+	u8 m_counter1;
+	u8 m_counter2;
+	u8 m_prescaler;
 };
 
 
@@ -160,6 +181,9 @@ protected:
 	virtual void device_start() override ATTR_COLD;
 
 	TIMER_CALLBACK_MEMBER(irq_timer_tick);
+	// M2 at the cartridge connector: the IRQ counter is clocked once per CPU cycle, at the M2 rise (before that cycle's access)
+	virtual bool wants_m2() override { return true; }
+	virtual void m2_w(int state, offs_t address, bool write) override { if (state) irq_timer_tick(0); }
 
 private:
 	void update_irq(u8 data);
@@ -189,6 +213,9 @@ protected:
 	virtual void device_start() override ATTR_COLD;
 
 	TIMER_CALLBACK_MEMBER(irq_timer_tick);
+	// M2 at the cartridge connector: the IRQ counter is clocked once per CPU cycle, at the M2 rise (before that cycle's access)
+	virtual bool wants_m2() override { return true; }
+	virtual void m2_w(int state, offs_t address, bool write) override { if (state) irq_timer_tick(0); }
 
 private:
 	u16 m_irq_count;
@@ -219,13 +246,17 @@ protected:
 	virtual void device_start() override ATTR_COLD;
 
 	TIMER_CALLBACK_MEMBER(irq_timer_tick);
+	// M2 at the cartridge connector: the IRQ counter is clocked once per CPU cycle, at the M2 rise (before that cycle's access)
+	virtual bool wants_m2() override { return true; }
+	virtual void m2_w(int state, offs_t address, bool write) override { if (state) irq_timer_tick(0); }
 
 	u16 m_irq_count;
 	int m_irq_enable;
 	u8 m_reg;
 
+	virtual void write_45(offs_t offset, u8 data);
+
 private:
-	void write_45(offs_t offset, u8 data);
 	const u8 m_bank67;
 
 	emu_timer *irq_timer;
@@ -287,6 +318,9 @@ protected:
 	virtual void device_start() override ATTR_COLD;
 
 	TIMER_CALLBACK_MEMBER(irq_timer_tick);
+	// M2 at the cartridge connector: the IRQ counter is clocked once per CPU cycle, at the M2 rise (before that cycle's access)
+	virtual bool wants_m2() override { return true; }
+	virtual void m2_w(int state, offs_t address, bool write) override { if (state) irq_timer_tick(0); }
 
 private:
 	u16 m_irq_count;
@@ -314,6 +348,9 @@ protected:
 	virtual void device_start() override ATTR_COLD;
 
 	TIMER_CALLBACK_MEMBER(irq_timer_tick);
+	// M2 at the cartridge connector: the IRQ counter is clocked once per CPU cycle, at the M2 rise (before that cycle's access)
+	virtual bool wants_m2() override { return true; }
+	virtual void m2_w(int state, offs_t address, bool write) override { if (state) irq_timer_tick(0); }
 
 private:
 	u16 m_irq_count;
@@ -335,16 +372,31 @@ public:
 	virtual void pcb_reset() override;
 
 protected:
+	nes_batmanfs_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, u32 clock, bool sub1);
+
 	// device-level overrides
 	virtual void device_start() override ATTR_COLD;
 
 	TIMER_CALLBACK_MEMBER(irq_timer_tick);
+	// M2 at the cartridge connector: the IRQ counter is clocked once per CPU cycle, at the M2 rise (before that cycle's access)
+	virtual bool wants_m2() override { return true; }
+	virtual void m2_w(int state, offs_t address, bool write) override { if (state) irq_timer_tick(0); }
 
 private:
+	const bool m_sub1;     // submapper 1: RoboCop
 	u16 m_irq_count;
 	int m_irq_enable;
 
 	emu_timer *irq_timer;
+};
+
+// ======================> nes_robocopfs_device
+
+class nes_robocopfs_device : public nes_batmanfs_device
+{
+public:
+	// construction/destruction
+	nes_robocopfs_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock);
 };
 
 
@@ -585,11 +637,15 @@ protected:
 	virtual void device_start() override ATTR_COLD;
 
 	TIMER_CALLBACK_MEMBER(irq_timer_tick);
+	// M2 at the cartridge connector: the IRQ counter is clocked once per CPU cycle, at the M2 rise (before that cycle's access)
+	virtual bool wants_m2() override { return true; }
+	virtual void m2_w(int state, offs_t address, bool write) override { if (state) irq_timer_tick(0); }
 
 private:
 	uint16_t m_irq_count;
 	int m_irq_enable;
 	uint8_t m_reg;
+	uint8_t m_wram[0x2000];     // the board's own fixed 8K of PRG-RAM at $B800-$D7FF, whatever the header says
 
 	emu_timer *irq_timer;
 	attotime timer_freq;
@@ -690,6 +746,9 @@ protected:
 	virtual void device_start() override ATTR_COLD;
 
 	TIMER_CALLBACK_MEMBER(irq_timer_tick);
+	// M2 at the cartridge connector: the IRQ counter is clocked once per CPU cycle, at the M2 rise (before that cycle's access)
+	virtual bool wants_m2() override { return true; }
+	virtual void m2_w(int state, offs_t address, bool write) override { if (state) irq_timer_tick(0); }
 
 private:
 	void write_45(offs_t offset, u8 data);
@@ -702,11 +761,11 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(NES_SC127,          nes_sc127_device)
 DECLARE_DEVICE_TYPE(NES_MARIOBABY,      nes_mbaby_device)
 DECLARE_DEVICE_TYPE(NES_ASN,            nes_asn_device)
 DECLARE_DEVICE_TYPE(NES_SMB3PIRATE,     nes_smb3p_device)
 DECLARE_DEVICE_TYPE(NES_BTL_CONTRAJ,    nes_btl_cj_device)
+DECLARE_DEVICE_TYPE(NES_BTL_DDRAGON,    nes_btl_dd_device)
 DECLARE_DEVICE_TYPE(NES_BTL_DNINJA,     nes_btl_dn_device)
 DECLARE_DEVICE_TYPE(NES_SMB2J,          nes_smb2j_device)
 DECLARE_DEVICE_TYPE(NES_SMB2JA,         nes_smb2ja_device)
@@ -716,6 +775,7 @@ DECLARE_DEVICE_TYPE(NES_0353,           nes_0353_device)
 DECLARE_DEVICE_TYPE(NES_09034A,         nes_09034a_device)
 DECLARE_DEVICE_TYPE(NES_L001,           nes_l001_device)
 DECLARE_DEVICE_TYPE(NES_BATMANFS,       nes_batmanfs_device)
+DECLARE_DEVICE_TYPE(NES_ROBOCOPFS,      nes_robocopfs_device)
 DECLARE_DEVICE_TYPE(NES_PALTHENA,       nes_palthena_device)
 DECLARE_DEVICE_TYPE(NES_TOBIDASE,       nes_tobidase_device)
 DECLARE_DEVICE_TYPE(NES_DH08,           nes_dh08_device)

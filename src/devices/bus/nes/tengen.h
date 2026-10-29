@@ -8,6 +8,8 @@
 
 // ======================> nes_tengen032_device
 
+class ppu2c0x_device;
+
 class nes_tengen032_device : public nes_nrom_device
 {
 public:
@@ -28,6 +30,15 @@ protected:
 	virtual void set_chr();
 
 	TIMER_CALLBACK_MEMBER(irq_timer_tick);
+	TIMER_CALLBACK_MEMBER(irq_delay_tick);
+	// M2 at the cartridge connector: the cycle-mode prescaler (one counter clock every 4 CPU cycles) and the 4-cycle IRQ
+	// delay count M2 rises (before that cycle's access) instead of MAME timers
+	virtual bool wants_m2() override { return true; }
+	virtual void m2_w(int state, offs_t address, bool write) override;
+	u8 m_m2_prescale = 4;   // M2 rises left until the next cycle-mode clock
+	u8 m_irq_delay = 0;     // M2 rises left until a pending IRQ is asserted (0 = none)
+	emu_timer *irq_delay_timer = nullptr;
+	ppu2c0x_device *m_ppu_dev = nullptr;   // asked whether it supplies A12 rises (dot renderer)
 
 	u8 m_latch;
 	u8 m_mmc_vrom_bank[8];

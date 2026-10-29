@@ -5,6 +5,12 @@
 
  NES/Famicom cartridge emulation for Multigame Carts PCBs
 
+ iNES mappers: 15, 39, 41, 46, 51, 53, 54, 57, 58, 59, 60, 62, 63, 174, 200, 201, 202, 203, 204,
+               212, 213, 214, 217, 221, 225, 226, 227, 228, 229, 230, 231, 233, 235, 236, 237, 255,
+               261, 265, 274, 285, 288, 289, 290, 294, 299, 300, 301, 314, 319, 320, 324, 331, 332,
+               335, 336, 337, 338, 340, 341, 349, 350, 354, 380, 381, 382, 389, 396, 428, 431, 433,
+               434, 437, 438, 452, 541
+
 
  Here we emulate several PCBs used in multigame pirate carts (not MMC-3 based)
 
@@ -49,6 +55,7 @@ DEFINE_DEVICE_TYPE(NES_VT5201,         nes_vt5201_device,         "nes_vt5201", 
 DEFINE_DEVICE_TYPE(NES_BMC_60311C,     nes_bmc_60311c_device,     "nes_bmc_60311c",     "NES Cart BMC 60311C PCB")
 DEFINE_DEVICE_TYPE(NES_BMC_80013B,     nes_bmc_80013b_device,     "nes_bmc_80013b",     "NES Cart BMC 80013-B PCB")
 DEFINE_DEVICE_TYPE(NES_BMC_810544C,    nes_bmc_810544c_device,    "nes_bmc_810544c",    "NES Cart BMC 810544-C-A1 PCB")
+DEFINE_DEVICE_TYPE(NES_BMC_631601,     nes_bmc_631601_device,     "nes_bmc_631601",     "NES Cart BMC 63-1601 PCB")
 DEFINE_DEVICE_TYPE(NES_BMC_830425C,    nes_bmc_830425c_device,    "nes_bmc_830425c",    "NES Cart BMC 830425C-4391T PCB")
 DEFINE_DEVICE_TYPE(NES_BMC_830928C,    nes_bmc_830928c_device,    "nes_bmc_830928c",    "NES Cart BMC 830928C PCB")
 DEFINE_DEVICE_TYPE(NES_BMC_850437C,    nes_bmc_850437c_device,    "nes_bmc_850437c",    "NES Cart BMC 850437C PCB")
@@ -208,6 +215,11 @@ nes_bmc_80013b_device::nes_bmc_80013b_device(const machine_config &mconfig, cons
 
 nes_bmc_810544c_device::nes_bmc_810544c_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock)
 	: nes_nrom_device(mconfig, NES_BMC_810544C, tag, owner, clock)
+{
+}
+
+nes_bmc_631601_device::nes_bmc_631601_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock)
+	: nes_nrom_device(mconfig, NES_BMC_631601, tag, owner, clock), m_outer(0), m_inner(0)
 {
 }
 
@@ -484,7 +496,7 @@ nes_bmc_60311c_device::nes_bmc_60311c_device(const machine_config &mconfig, cons
 }
 
 nes_bmc_ctc12in1_device::nes_bmc_ctc12in1_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, u32 clock)
-	: nes_vram_protect_device(mconfig, type, tag, owner, clock)
+	: nes_vram_protect_device(mconfig, type, tag, owner, clock), m_vram_wp(false)
 {
 }
 
@@ -499,7 +511,7 @@ nes_bmc_891227_device::nes_bmc_891227_device(const machine_config &mconfig, cons
 }
 
 nes_bmc_k1029_device::nes_bmc_k1029_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, u32 clock)
-	: nes_vram_protect_device(mconfig, type, tag, owner, clock)
+	: nes_vram_protect_device(mconfig, type, tag, owner, clock), m_prg_a20(0)
 {
 }
 
@@ -686,6 +698,21 @@ void nes_bmc_810544c_device::pcb_reset()
 	prg16_89ab(0);
 	prg16_cdef(0);
 	chr8(0, CHRROM);
+}
+
+void nes_bmc_631601_device::device_start()
+{
+	common_start();
+	save_item(NAME(m_outer));
+	save_item(NAME(m_inner));
+}
+
+void nes_bmc_631601_device::pcb_reset()
+{
+	m_outer = 0;
+	m_inner = 0;
+	set_nt_mirroring(PPU_MIRROR_VERT);
+	update_banks();
 }
 
 void nes_bmc_830425c_device::device_start()
@@ -1132,6 +1159,7 @@ void nes_bmc_ctc12in1_device::device_start()
 {
 	nes_vram_protect_device::device_start();
 	save_item(NAME(m_reg));
+	save_item(NAME(m_vram_wp));
 }
 
 void nes_bmc_ctc12in1_device::pcb_reset()
@@ -1141,6 +1169,20 @@ void nes_bmc_ctc12in1_device::pcb_reset()
 	prg16_cdef(0);
 
 	m_reg[0] = m_reg[1] = 0;
+	m_vram_wp = false;
+
+	// all bits clear is NROM-128 mode with vertical mirroring, where CHR-RAM is write-protected
+	set_nt_mirroring(PPU_MIRROR_VERT);
+	m_vram_protect = true;
+}
+
+void nes_bmc_k1029_device::pcb_reset()
+{
+	nes_vram_protect_device::pcb_reset();
+
+	// power-on and reset state is all bits clear: NROM-256 mode with vertical mirroring and write-protected CHR-RAM
+	set_nt_mirroring(PPU_MIRROR_VERT);
+	m_vram_protect = true;
 }
 
 void nes_bmc_fam250_device::device_start()
@@ -1148,11 +1190,12 @@ void nes_bmc_fam250_device::device_start()
 	nes_bmc_k1029_device::device_start();
 	save_item(NAME(m_latch));
 	save_item(NAME(m_reg));
+	save_item(NAME(m_prg_a20));
 }
 
 void nes_bmc_fam250_device::pcb_reset()
 {
-	nes_bmc_k1029_device::pcb_reset();
+	nes_vram_protect_device::pcb_reset();
 
 	m_latch = 0;
 	m_reg = 0;
@@ -1655,6 +1698,63 @@ void nes_bmc_810544c_device::write_h(offs_t offset, u8 data)
 
 	chr8(offset & 0x0f, CHRROM);
 	set_nt_mirroring(BIT(offset, 4) ? PPU_MIRROR_HORZ : PPU_MIRROR_VERT);
+}
+
+/*-------------------------------------------------
+
+ BMC-63-1601
+
+ Games: 16-in-1 (1682), 2 MiB of UNROM games
+
+ UNROM with an outer bank register at $4100 (mask $C100, so any
+ address with A14 and A8 set and A15 clear): bits 3-0 select the
+ 128 KiB outer PRG-ROM bank (PRG A20-A17) and bit 4 the mirroring
+ (0 = vertical, 1 = horizontal). The inner bank register is the
+ usual UNROM one at $8000-$FFFF, with bank 7 of the outer bank
+ fixed at $C000.
+
+ NES 2.0: mapper 294
+
+ In MAME: Supported from the NESdev description; no mapper 294
+ cart was available to test.
+
+ -------------------------------------------------*/
+
+void nes_bmc_631601_device::update_banks()
+{
+	prg16_89ab(m_outer << 3 | m_inner);
+	prg16_cdef(m_outer << 3 | 0x07);
+}
+
+void nes_bmc_631601_device::write_outer(u8 data)
+{
+	m_outer = data & 0x0f;
+	set_nt_mirroring(BIT(data, 4) ? PPU_MIRROR_HORZ : PPU_MIRROR_VERT);
+	update_banks();
+}
+
+void nes_bmc_631601_device::write_l(offs_t offset, u8 data)
+{
+	LOG("bmc_631601 write_l, offset: %04x, data: %02x\n", offset, data);
+
+	if (BIT(offset + 0x100, 8))
+		write_outer(data);
+}
+
+void nes_bmc_631601_device::write_m(offs_t offset, u8 data)
+{
+	LOG("bmc_631601 write_m, offset: %04x, data: %02x\n", offset, data);
+
+	if (BIT(offset, 8))
+		write_outer(data);
+}
+
+void nes_bmc_631601_device::write_h(offs_t offset, u8 data)
+{
+	LOG("bmc_631601 write_h, offset: %04x, data: %02x\n", offset, data);
+
+	m_inner = data & 0x07;
+	update_banks();
 }
 
 /*-------------------------------------------------
@@ -3306,6 +3406,11 @@ void nes_bmc_60311c_device::write_h(offs_t offset, u8 data)
 
  Games: 12 in 1 Game Card
 
+ The register at 0x8000-0xbfff is PPMB B... (banking mode, mirroring and the 128K
+ outer bank) and the one at 0xc000-0xffff holds the 16K inner bank in its low three
+ bits. Address bit 13 of the second write is the CHR-RAM write-protect bit, which is
+ latched with it. CHR-RAM is always write-protected in the NROM modes.
+
  NES 2.0: mapper 337
 
  In MAME: Supported.
@@ -3340,7 +3445,9 @@ void nes_bmc_ctc12in1_device::write_h(offs_t offset, u8 data)
 			break;
 	}
 
-	m_vram_protect = !BIT(m_reg[0], 7) || (offset & 0x6000) == 0x6000;
+	if (BIT(offset, 14))
+		m_vram_wp = BIT(offset, 13);
+	m_vram_protect = !BIT(m_reg[0], 7) || m_vram_wp;
 	set_nt_mirroring(BIT(m_reg[0], 5) ? PPU_MIRROR_HORZ : PPU_MIRROR_VERT);
 }
 
@@ -3354,7 +3461,8 @@ void nes_bmc_ctc12in1_device::write_h(offs_t offset, u8 data)
 
  This board is similar to CTC-12IN1 above but with
  the mirroring and banking mode bits moved and with
- support for Contra on a separate 128K chip.
+ support for Contra on a separate 128K chip. Unlike CTC-12IN1 it has no
+ CHR-RAM write-protect bit: CHR-RAM is write-protected in the NROM modes only.
 
  In MAME: Supported.
 
@@ -3371,6 +3479,7 @@ void nes_bmc_891227_device::write_h(offs_t offset, u8 data)
 		 data = bitswap<8>(data, 6, 5, 7, 4, 3, 2, 1, 0);
 
 	nes_bmc_ctc12in1_device::write_h(offset, data);
+	m_vram_protect = !BIT(m_reg[0], 7);
 
 	if ((m_reg[0] & 0xc0) == 0xc0)  // Contra only mode
 	{
@@ -3389,6 +3498,9 @@ void nes_bmc_891227_device::write_h(offs_t offset, u8 data)
  famous Contra 100 and 168 multicarts. It sports an
  extra mode to support a Bubble Bobble FDS bootleg.
 
+ The register is latched from the address and data bits (mode in A2-A0, CHR-RAM
+ write-protect in A3, PRG A20 in A8) and only responds at 0xf000-0xffff here.
+
  NES 2.0: mapper 354
 
  In MAME: Supported.
@@ -3403,7 +3515,7 @@ u8 nes_bmc_fam250_device::read_m(offs_t offset)
 	LOGMASKED(LOG_HIFREQ, "fam250 read_m, offset: %04x\n", offset);
 
 	if (m_latch == 5)    // only the Bubble Bobble FDS bootleg uses this
-		return m_prg[(((m_reg & 0x1f) << 1 | BIT(m_reg, 7)) * 0x2000 + offset) & (m_prg_size - 1)];
+		return m_prg[((((m_reg & 0x3f) | m_prg_a20 << 6) << 1 | BIT(m_reg, 7)) * 0x2000 + offset) & (m_prg_size - 1)];
 	else
 		return get_open_bus();
 }
@@ -3414,12 +3526,13 @@ void nes_bmc_fam250_device::write_h(offs_t offset, u8 data)
 
 	if (offset >= 0x7000)
 	{
+		m_prg_a20 = BIT(offset, 8);
 		nes_bmc_k1029_device::write_h(offset, data);
 
 		m_latch = offset & 0x07;
 		m_reg = data;
 		if (m_latch == 5)
-			prg32((m_reg & 0x18) >> 1 | 0x03);
+			prg32((m_reg & 0x38) >> 1 | 0x03 | m_prg_a20 << 5);
 
 		m_vram_protect = BIT(offset, 3);
 	}
@@ -3430,6 +3543,11 @@ void nes_bmc_fam250_device::write_h(offs_t offset, u8 data)
  BMC-K-1029
 
  Games: 100 in 1 Contra Function 16, 168 in 1
+
+ The latch holds the address bits A1-A0 (which select the banking mode) along
+ with the data bits. Its power-on and reset state is all bits clear, which is
+ NROM-256 mode with vertical mirroring and write-protected CHR-RAM. CHR-RAM is
+ writable only in the UNROM and NROM-64 modes.
 
  iNES: mapper 15
 
@@ -3445,7 +3563,7 @@ void nes_bmc_k1029_device::write_h(offs_t offset, u8 data)
 {
 	LOG("bmc_k1029 write_h, offset: %04x, data: %02x\n", offset, data);
 
-	u8 bank = data & 0x3f;
+	u8 bank = (data & 0x3f) | m_prg_a20 << 6;
 	switch (offset & 3)
 	{
 		case 0:
@@ -3520,6 +3638,9 @@ void nes_n625092_device::write_h(offs_t offset, u8 data)
 
  Games: Powerful 250 in 1, Powerful 255 in 1, 82 in 1
 
+ Submapper 1 (82AB) has one PRG bank bit less than submapper 0, with the CHR-RAM
+ write-protect bit moved into its place.
+
  iNES: mapper 63
 
  In MAME: Supported.
@@ -3530,7 +3651,7 @@ void nes_bmc_th22913_device::write_h(offs_t offset, u8 data)
 {
 	LOG("bmc_th22913 write_h, offset: %04x, data: %02x\n", offset, data);
 
-	u8 bank = offset >> 2;
+	u8 bank = (offset >> 2) & ((1 << (m_vram_prot_bit - 2)) - 1);
 	u8 mode = BIT(offset, 1);
 	prg16_89ab(bank & ~mode);
 	prg16_cdef(bank | mode);

@@ -24,6 +24,10 @@ public:
 	virtual void chr_cb(int start, int bank, int source);
 
 	virtual void hblank_irq(int scanline, bool vblank, bool blanked) override;
+	virtual bool wants_a12() override { return true; }
+	virtual void ppu_a12_rise() override;
+	virtual bool wants_a12_filter() override { return true; }
+	virtual bool a12_rise_accepted(const attotime &low_since, const attotime &when) override;
 	virtual void pcb_reset() override;
 
 protected:

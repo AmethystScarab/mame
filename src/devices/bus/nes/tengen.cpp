@@ -5,6 +5,8 @@
 
  NES/Famicom cartridge emulation for Tengen PCBs
 
+ iNES mappers: 64, 158
+
 
  Here we emulate the following PCBs
 
@@ -59,15 +61,16 @@ nes_tengen037_device::nes_tengen037_device(const machine_config &mconfig, const 
 void nes_tengen032_device::device_start()
 {
 	common_start();
-	irq_timer = timer_alloc(FUNC(nes_tengen032_device::irq_timer_tick), this);
+	m_ppu_dev = machine().root_device().subdevice<ppu2c0x_device>("ppu");
 	timer_freq = clocks_to_attotime(4);
-	irq_timer->adjust(attotime::zero, 0, timer_freq);
 
 	save_item(NAME(m_mmc_prg_bank));
 	save_item(NAME(m_mmc_vrom_bank));
 	save_item(NAME(m_latch));
 
 	save_item(NAME(m_irq_mode));
+	save_item(NAME(m_m2_prescale));
+	save_item(NAME(m_irq_delay));
 	save_item(NAME(m_irq_reset));
 	save_item(NAME(m_irq_enable));
 	save_item(NAME(m_irq_pending));
@@ -87,6 +90,8 @@ void nes_tengen032_device::pcb_reset()
 	m_latch = 0;
 	m_irq_mode = 0;
 	m_irq_reset = 0;
+	m_irq_delay = 0;
+	m_m2_prescale = 4;
 	m_irq_enable = 0;
 	m_irq_pending = 0;
 	m_irq_count = 0;
@@ -138,8 +143,21 @@ inline void nes_tengen032_device::irq_clock(int blanked)
 	else
 		m_irq_count--;
 
+	// NESdev RAMBO-1: when the counter is now 0 and IRQs are enabled, the IRQ is triggered after 4 CPU cycles
 	if (m_irq_enable && !blanked && !m_irq_count)
+	{
 		m_irq_pending = 1;
+		m_irq_delay = 4;
+	}
+}
+
+TIMER_CALLBACK_MEMBER(nes_tengen032_device::irq_delay_tick)
+{
+	if (m_irq_pending)
+	{
+		set_irq_line(ASSERT_LINE);
+		m_irq_pending = 0;
+	}
 }
 
 // we use the HBLANK IRQ latch from PPU for the scanline based IRQ mode
@@ -147,16 +165,25 @@ inline void nes_tengen032_device::irq_clock(int blanked)
 
 TIMER_CALLBACK_MEMBER(nes_tengen032_device::irq_timer_tick)
 {
-	if (m_irq_pending)
-	{
-		set_irq_line(ASSERT_LINE);
-		m_irq_pending = 0;
-	}
-
+	// CPU cycle mode prescaler: one counter clock every 4 CPU cycles
 	if (m_irq_mode)
 		irq_clock(0);
 }
 
+
+void nes_tengen032_device::m2_w(int state, offs_t address, bool write)
+{
+	if (!state)
+		return;
+	// the delay is counted first, so a delay started by this cycle's clock lasts 4 full cycles
+	if (m_irq_delay && !--m_irq_delay)
+		irq_delay_tick(0);
+	if (!--m_m2_prescale)
+	{
+		m_m2_prescale = 4;
+		irq_timer_tick(0);
+	}
+}
 
 void nes_tengen032_device::hblank_irq(int scanline, bool vblank, bool blanked)
 {
@@ -169,8 +196,17 @@ void nes_tengen032_device::hblank_irq(int scanline, bool vblank, bool blanked)
 	}
 }
 
+// NESdev PPU rendering: a pattern-table fetch takes 2 PPU dots (address latched on the 1st, read on the 2nd).
+// The dot renderer defers its fetches until the PPU is asked to catch up (CPU register access or frame render),
+// so without flushing that pending work first, a CHR bank switch here can retroactively apply to dots whose
+// fetches should have used the previous bank - tearing a tile between the old and new CHR data. nes_txrom_device
+// never hits this because MMC3 only ever switches PRG banks here; RAMBO-1's road/split-screen effects, which
+// rebank CHR inside the IRQ handler on a near-per-scanline basis, exercise exactly the pattern that exposes it.
 void nes_tengen032_device::set_prg()
 {
+	if (m_ppu_dev)
+		m_ppu_dev->catch_up();
+
 	u8 prg_flip = (m_latch & 0x40) >> 5;
 
 	prg8_89(m_mmc_prg_bank[0 ^ prg_flip]);
@@ -180,6 +216,9 @@ void nes_tengen032_device::set_prg()
 
 void nes_tengen032_device::set_chr()
 {
+	if (m_ppu_dev)
+		m_ppu_dev->catch_up();
+
 	u8 chr_flip = (m_latch & 0x80) >> 5;
 
 	if (m_latch & 0x20)
@@ -255,20 +294,24 @@ void nes_tengen032_device::write_h(offs_t offset, u8 data)
 			break;
 
 		case 0x4001: // $c001 - IRQ scanline latch
+			// NESdev: the write requests a reload and resets the cycle-mode prescaler, so the next clock is 4 cycles later
 			m_irq_mode = data & 0x01;
-			if (m_irq_mode)
-				irq_timer->adjust(attotime::zero, 0, timer_freq);
+			m_m2_prescale = 4;
 			m_irq_reset = 1;
 			break;
 
 		case 0x6000:
 			m_irq_enable = 0;
 			m_irq_pending = 0;
+			m_irq_delay = 0;
 			set_irq_line(CLEAR_LINE);
 			break;
 
 		case 0x6001:
 			m_irq_enable = 1;
+			m_irq_pending = 0;
+			m_irq_delay = 0;
+			set_irq_line(CLEAR_LINE);
 			break;
 
 		default:

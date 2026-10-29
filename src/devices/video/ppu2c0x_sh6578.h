@@ -26,6 +26,7 @@ protected:
 
 	virtual void device_start() override ATTR_COLD;
 	virtual void device_reset() override ATTR_COLD;
+	virtual bool use_dot_renderer() const override { return false; }
 
 	virtual void draw_sprite_pixel(int sprite_xpos, int color, int pixel, uint8_t pixel_data, bitmap_rgb32 &bitmap) override;
 	//virtual void draw_sprites(uint8_t *line_priority) override;

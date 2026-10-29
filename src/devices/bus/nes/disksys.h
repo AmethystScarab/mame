@@ -25,9 +25,9 @@ public:
 	virtual void write_m(offs_t offset, uint8_t data) override;
 	virtual void write_h(offs_t offset, uint8_t data) override;
 
-	virtual void disk_flip_side() override;
+	void disk_flip_side();
+	DECLARE_INPUT_CHANGED_MEMBER(flip_side_changed);
 
-	virtual void hblank_irq(int scanline, bool vblank, bool blanked) override;
 	virtual void pcb_reset() override;
 
 protected:
@@ -35,6 +35,7 @@ protected:
 	virtual void device_start() override ATTR_COLD;
 
 	virtual void device_add_mconfig(machine_config &config) override ATTR_COLD;
+	virtual ioport_constructor device_input_ports() const override ATTR_COLD;
 	virtual const tiny_rom_entry *device_rom_region() const override ATTR_COLD;
 
 	required_region_ptr<uint8_t> m_2c33_rom;
@@ -44,12 +45,31 @@ private:
 	static void unload_proc(device_image_interface &image);
 
 	TIMER_CALLBACK_MEMBER(irq_timer_tick);
+	// M2 at the cartridge connector: the IRQ counter is clocked once per CPU cycle, at the M2 rise (before that cycle's access)
+	virtual bool wants_m2() override { return true; }
+	virtual void m2_w(int state, offs_t address, bool write) override { if (state) irq_timer_tick(0); }
+	// Brad Taylor's FDS technical reference documents a disk/RAM-adaptor transfer rate of 96.4 kHz +/-10%
+	// (https://archive.nesdev.org/fdstech.txt); at NTSC's ~1.7898 MHz CPU clock that is ~18.57 CPU cycles per
+	// bit, i.e. ~149 CPU cycles per 8-bit byte - matching the ~12 KB/s transfer rate independently confirmed on
+	// the NESdev forum ("Using FDS Disk IRQ (not Timer IRQ) for frame timing") and already used by puNES as
+	// drive_delay. The transfer IRQ is timed from this rate, not from the PPU hblank callback.
+	TIMER_CALLBACK_MEMBER(transfer_tick);
+	static constexpr unsigned TRANSFER_CYCLES = 149;
 
-	std::unique_ptr<uint8_t[]> m_fds_data;    // here, we store a copy of the disk
+	// the disk in the drive (saved with the machine state, so a state keeps what games wrote to the disk), and the disk
+	// as it was when it was put in the drive, to tell whether it was written to; both hold up to MAX_SIDES sides
+	static constexpr unsigned SIDE_SIZE = 65500;
+	static constexpr unsigned MAX_SIDES = 16;
+	std::unique_ptr<uint8_t[]> m_fds_data;
+	std::unique_ptr<uint8_t[]> m_fds_loaded;
+	bool m_write_started;                     // writing: the gap is over, the start mark was written, block data follows
+	bool m_write_pending_valid;               // writing: m_write_pending was written to $4024 but has not been clocked onto the disk yet
+	uint8_t m_write_pending;
 	required_device<legacy_floppy_image_device> m_disk;
 	required_device<rp2c33_sound_device> m_sound;
 
 	emu_timer *irq_timer;
+	emu_timer *transfer_timer;
 
 	void load_disk(device_image_interface &image);
 	void unload_disk(device_image_interface &image);

@@ -24,6 +24,7 @@ enum vtxx_pal_mode {
 
 class ppu_vt03_device : public ppu2c0x_device {
 public:
+	virtual bool use_dot_renderer() const override { return false; }
 	ppu_vt03_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock);
 	ppu_vt03_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, u32 clock);
 

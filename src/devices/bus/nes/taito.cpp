@@ -5,17 +5,21 @@
 
  NES/Famicom cartridge emulation for Taito PCBs
 
+ iNES mappers: 33, 48, 80, 207, 552
+
 
  Here we emulate the following PCBs
 
  * Taito TC0190FMC/TC0190FMR [mapper 33]
  * Taito TC0190FMC+PAL16R4 [mapper 48]
  * Taito X1-005 [mapper 80, 207]
- * Taito X1-017 [mapper 82]
+ * Taito X1-017 [mapper 552; mapper 82, used by old dumps with mis-ordered PRG, is not handled]
 
  TODO:
  - Akira does not work. Investigate why!
- - Don Doko Don 2 freezes when you get to the first boss
+ - Don Doko Don 2 freezes when you get to the first boss (mapper 48). The IRQ counter is clocked from the
+   chip's PPU A12 input (see nes_tc0190fmc_pal16r4_device::ppu_a12_rise() below); it has not been re-tested
+   whether that was the cause of the freeze
 
 
  ***********************************************************************************************************/
@@ -66,7 +70,7 @@ nes_x1_005_device::nes_x1_005_device(const machine_config &mconfig, const char *
 }
 
 nes_x1_017_device::nes_x1_017_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock)
-	: nes_nrom_device(mconfig, NES_X1_017, tag, owner, clock), m_latch(0), m_irq_count(0), m_irq_count_latch(0), m_irq_enable(0), irq_timer(nullptr)
+	: nes_nrom_device(mconfig, NES_X1_017, tag, owner, clock), m_latch(0), m_irq_count(0), m_irq_count_latch(0), m_irq_enable(0)
 {
 }
 
@@ -119,8 +123,6 @@ void nes_x1_005_device::pcb_reset()
 void nes_x1_017_device::device_start()
 {
 	common_start();
-	irq_timer = timer_alloc(FUNC(nes_x1_017_device::irq_timer_tick), this);
-	irq_timer->adjust(attotime::zero, 0, clocks_to_attotime(1));
 
 	save_item(NAME(m_irq_enable));
 	save_item(NAME(m_irq_count));
@@ -165,6 +167,11 @@ void nes_x1_017_device::pcb_reset()
  Insector X, Operation Wolf, Power Blazer, Takeshi no
  Sengoku Fuuunji
 
+ The registers are only decoded at 0x8000-0xbfff, by address bits A15, A13, A1
+ and A0: 0x8000 is .MPP PPPP (mirroring and the 8K PRG bank at 0x8000), 0x8001
+ is the 8K PRG bank at 0xa000, 0x8002 and 0x8003 are the 2K CHR banks and
+ 0xa000-0xa003 are the 1K CHR banks.
+
  iNES: mapper 33
 
  In MAME: Supported.
@@ -179,10 +186,10 @@ void nes_tc0190fmc_device::write_h(offs_t offset, u8 data)
 	{
 		case 0x0000:
 			set_nt_mirroring(BIT(data, 6) ? PPU_MIRROR_HORZ : PPU_MIRROR_VERT);
-			prg8_89(data);
+			prg8_89(data & 0x3f);
 			break;
 		case 0x0001:
-			prg8_ab(data);
+			prg8_ab(data & 0x3f);
 			break;
 		case 0x0002:
 		case 0x0003:
@@ -216,19 +223,38 @@ void nes_tc0190fmc_device::write_h(offs_t offset, u8 data)
 
  -------------------------------------------------*/
 
+void nes_tc0190fmc_pal16r4_device::irq_clock(bool blanked)
+{
+	if (m_irq_count)
+	{
+		m_irq_count--;
+		if (m_irq_enable && !blanked && !m_irq_count)
+			set_irq_line(ASSERT_LINE);
+	}
+	else
+		m_irq_count = m_irq_count_latch;
+}
+
+// primary path: counter is clocked by the same filtered PPU A12 rise as the MMC3 (see header note in taito.h)
+void nes_tc0190fmc_pal16r4_device::ppu_a12_rise()
+{
+	irq_clock(false);
+}
+
+// NESdev MMC3 filter, reused here per the file header's own "same as MMC3 irq" note; unconfirmed whether the
+// real TC0690 uses this exact threshold
+bool nes_tc0190fmc_pal16r4_device::a12_rise_accepted(const attotime &low_since, const attotime &when)
+{
+	return (when > low_since) && ((cpu_cycles_at(when) - cpu_cycles_at(low_since)) >= 4);
+}
+
+// fallback path for a PPU not running in dot-renderer mode; see wants_a12()/m_a12_driven
 void nes_tc0190fmc_pal16r4_device::hblank_irq(int scanline, bool vblank, bool blanked)
 {
+	if (m_a12_driven)
+		return;
 	if (scanline < ppu2c0x_device::BOTTOM_VISIBLE_SCANLINE)
-	{
-		if (m_irq_count)
-		{
-			m_irq_count--;
-			if (m_irq_enable && !blanked && !m_irq_count)
-				set_irq_line(ASSERT_LINE);
-		}
-		else
-			m_irq_count = m_irq_count_latch;
-	}
+		irq_clock(blanked);
 }
 
 void nes_tc0190fmc_pal16r4_device::write_h(offs_t offset, u8 data)
@@ -274,6 +300,10 @@ void nes_tc0190fmc_pal16r4_device::write_h(offs_t offset, u8 data)
 
  Actually, Fudou Myouou Den uses a variant of the board with
  CIRAM, making necessary two distinct mappers & pcb_id.
+
+ The registers are at 0x7ef0-0x7eff (and 0x7e70-0x7e7f, since A7 is not connected).
+ Writing 0xa3 to 0x7ef8 or 0x7ef9 enables the 128 bytes of internal RAM at
+ 0x7f00-0x7fff.
 
  iNES: mappers 80 & 207
 
@@ -358,7 +388,7 @@ u8 nes_x1_005_device::read_m(offs_t offset)
 
  -------------------------------------------------*/
 
-TIMER_CALLBACK_MEMBER(nes_x1_017_device::irq_timer_tick)
+void nes_x1_017_device::irq_clock()
 {
 	if ((m_irq_enable & 0x05) == 1 && m_irq_count) // counting enabled?
 		m_irq_count--;

@@ -64,6 +64,34 @@ public:
 	virtual void write_h(offs_t offset, uint8_t data) override;
 
 	virtual void pcb_reset() override;
+
+protected:
+	nes_axrom_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
+};
+
+
+// ======================> nes_inx_007t_device
+
+class nes_inx_007t_device : public nes_axrom_device
+{
+public:
+	// construction/destruction
+	nes_inx_007t_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock);
+
+	virtual void write_l(offs_t offset, u8 data) override;
+	virtual void write_h(offs_t offset, u8 data) override;
+
+	virtual void pcb_reset() override;
+
+protected:
+	// device-level overrides
+	virtual void device_start() override ATTR_COLD;
+
+private:
+	void update_prg();
+
+	u8 m_outer;
+	u8 m_inner;
 };
 
 
@@ -194,6 +222,7 @@ DECLARE_DEVICE_TYPE(NES_NROM,     nes_nrom_device)
 DECLARE_DEVICE_TYPE(NES_NROM368,  nes_nrom368_device)
 DECLARE_DEVICE_TYPE(NES_FCBASIC,  nes_fcbasic_device)
 DECLARE_DEVICE_TYPE(NES_AXROM,    nes_axrom_device)
+DECLARE_DEVICE_TYPE(NES_INX_007T, nes_inx_007t_device)
 DECLARE_DEVICE_TYPE(NES_BXROM,    nes_bxrom_device)
 DECLARE_DEVICE_TYPE(NES_CNROM,    nes_cnrom_device)
 DECLARE_DEVICE_TYPE(NES_CPROM,    nes_cprom_device)
